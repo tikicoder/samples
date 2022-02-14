@@ -41,3 +41,6 @@ winget install -e --id Canonical.Ubuntu
 
 write-host "Chrome installing"
 winget install -e --id Google.Chrome
+
+write-host "Slack installing"
+winget install -e --id SlackTechnologies.Slack
