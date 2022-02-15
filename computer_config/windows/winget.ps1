@@ -13,7 +13,7 @@ write-host "VisualStudioCode installing"
 winget install -e --id Microsoft.VisualStudioCode
 
 write-host "PowerShell installing"
-winget install -e --id winget install -e --id Microsoft.PowerShell
+winget install -e --id Microsoft.PowerShell
 
 write-host "AzureStorageExplorer installing"
 winget install -e --id Microsoft.AzureStorageExplorer
@@ -44,3 +44,7 @@ winget install -e --id Google.Chrome
 
 write-host "Slack installing"
 winget install -e --id SlackTechnologies.Slack
+
+write-host "Docker installing"
+winget install -e --id Docker.DockerDesktop
+
