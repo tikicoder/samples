@@ -1,5 +1,25 @@
 {
-  "settings": {},
+  "wsl_extensions": [
+    "bencoleman.armview",
+    "hashicorp.terraform",
+    "HookyQR.beautify",
+    "ms-azuretools.vscode-bicep",
+    "ms-dotnettools.vscode-dotnet-runtime",
+    "ms-kubernetes-tools.kind-vscode",
+    "ms-kubernetes-tools.vscode-kubernetes-tools",
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-toolsai.jupyter",
+    "ms-toolsai.jupyter-keymap",
+    "ms-toolsai.jupyter-renderers",
+    "ms-vscode.powershell",
+    "msazurermtools.azurerm-vscode-tools",
+    "redhat.vscode-commons",
+    "redhat.vscode-yaml"
+  ],
+  "settings": {
+    "editor.tabSize": 2
+  },
   "extensions": [
     "hashicorp.terraform",
     "HookyQR.beautify",

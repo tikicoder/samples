@@ -8,7 +8,8 @@
 param (
     [boolean] $isRestore = $false,
     [string] $pathToVSSettings = "${env:APPDATA}/Code/User/settings.json",
-    [string] $pathToVSSettingsBak = "${PSScriptRoot}/settings.bak"
+    [string] $pathToVSSettingsBak = "${PSScriptRoot}/settings.bak",
+    [string] $wsl_command = $null
 )
 
 if ( $isRestore ) {
@@ -18,17 +19,28 @@ if ( $isRestore ) {
     $vsCodeCustomStoreSettings.extensions | ForEach-Object { code --install-extension $_  }
     $vsCodeCustomStoreSettings.settings | ConvertTo-Json > "${pathToVSSettingsBak}.json"
     Write-Host "Restored to ${pathToVSSettings}"
+
+    if (-not $null -eq $wsl_command) {
+        $vsCodeCustomStoreSettings.extensions | ForEach-Object { 
+            $scriptBlock_wsl = [Scriptblock]::Create("$($wsl_command) run `"code --install-extension $_`"")
+            Invoke-Command -ScriptBlock $scriptBlock_wsl
+        }
+    }
+
     exit
 }
 
 
 
-$vsCodeCustomStoreSettings = New-Object -Type PSObject -Property @{
+$vsCodeCustomStoreSettings = @{
     'extensions'   = $(code --list-extensions | ConvertTo-Json | ConvertFrom-Json)
     'settings' =  $(Get-Content $pathToVSSettings | ConvertFrom-Json)
 }
 
-
+if (-not $null -eq $wsl_command) {
+    $scriptBlock_wsl = [Scriptblock]::Create("$($wsl_command) run `"code --list-extensions`"")
+    $vsCodeCustomStoreSettings.wsl_extensions =  $( Invoke-Command -ScriptBlock $scriptBlock_wsl) | ConvertTo-Json | ConvertFrom-Json
+}
 
 
 $vsCodeCustomStoreSettings | ConvertTo-Json > $pathToVSSettingsBak
