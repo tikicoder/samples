@@ -1,15 +1,20 @@
 #!/bin/bash
 
-user_home=${HOME}
-mkdir -p ${HOME}/.local/bin
+user_name=$(whoami)
+user_home="${HOME}"
+mkdir -p "${HOME}/.local/bin"
 PATH="$HOME/.local/bin:$PATH"
 
 yq_version="v4.16.2"
+tmp_directory="/tmp/general_setup_config"
 
-sudo su
-mkdir -p /tmp/general_init
-cd /tmp/general_init
+mkdir -p $tmp_directory
+cd $tmp_directory
 
+echo "$tmp_directory/missing_root_certs/*.crt"
+cp $tmp_directory/missing_root_certs/*.crt /usr/local/share/ca-certificates/
+
+update-ca-certificates --fresh
 
 apt update
 apt upgrade -y

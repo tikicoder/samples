@@ -1,4 +1,4 @@
-
+$scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 
 
 wsl --set-default-version 2
