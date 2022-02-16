@@ -2,11 +2,14 @@
 
 user_name=$(whoami)
 user_home="${HOME}"
+user_aliases="${user_home}/.bash_aliases"
+
 mkdir -p "${HOME}/.local/bin"
 PATH="$HOME/.local/bin:$PATH"
 
 yq_version="v4.16.2"
 tmp_directory="/tmp/general_setup_config"
+wsl_config_path="/etc/wsl.conf"
 
 mkdir -p $tmp_directory
 cd $tmp_directory
@@ -21,20 +24,29 @@ apt upgrade -y
 
 
 # WSL COnfiguration update
-echo "" >> /etc/wsl.conf
-echo "[automount]" >> /etc/wsl.conf
-echo "enabled = true" >> /etc/wsl.conf
-echo 'options = "metadata,umask=22,fmask=11"' >> /etc/wsl.conf
+if [ ! -f "$wsl_config_path" ]; then
+  touch $wsl_config_path
+fi
+
+if [ $(grep -ic "\[automount\]" $wsl_config_path) -lt 1  ]; then
+  echo "[automount]" >> $wsl_config_path
+  echo "enabled = true" >> $wsl_config_path
+  echo 'options = "metadata,umask=22,fmask=11"' >> $wsl_config_path
+fi
+
 
 # general prerequest
-apt-get install software-properties-common
+apt install software-properties-common
 
 # general prerequest - Python
-add-apt-repository ppa:deadsnakes/ppa
+if [ $(grep -irc "deadsnakes/ppa" /etc/apt/sources.list.d/ | awk -F: '{print $2 }' | awk '{ sum += $1 } END { print sum }') -lt 1  ]; then
+  add-apt-repository ppa:deadsnakes/ppa -y
+fi
 
 
 # Python 3.9
 apt install -y python3.9
+
 
 # JQ
 apt install -y jq
@@ -64,7 +76,7 @@ unzip awscliv2.zip
 
 
 
-# Install Poetryr
+# Install Poetry
 curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 
 
@@ -72,5 +84,6 @@ cd /tmp
 rm -Rf /tmp/general_init
 
 
-
-echo "" >> "${user_home}/.bash_aliases"
+if [ ! -f "$user_aliases" ]; then
+  touch $user_aliases
+fi
