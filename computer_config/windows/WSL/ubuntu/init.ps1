@@ -25,3 +25,5 @@ foreach ( $file in $missing_root_certs){
 
 Ubuntu run "sudo $tmp_setup_path/sudo_init.sh"
 Ubuntu run "$tmp_setup_path/init.sh"
+
+& ..\..\..\..\general_programming_scripting\powershell\vsCode\vsCodeManuallBackup.ps1 -isRestore $true -wsl_command Ubuntu
