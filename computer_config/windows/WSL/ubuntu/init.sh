@@ -39,6 +39,7 @@ cd $tmp_directory
 
 # nvm installer
 wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+source ~/.bashrc
 
 #mikefarah yaml (JQ but for yaml)
 wget https://github.com/mikefarah/yq/releases/download/${yq_version}/yq_linux_amd64 -q -O ~/.local/bin/yq
