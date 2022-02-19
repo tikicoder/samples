@@ -1,3 +1,6 @@
+write-host "Enable Hyper-V"
+# Needed for Docker
+DISM /Online /Enable-Feature /All /FeatureName:Microsoft-Hyper-V /norestart
 
 write-host "WSL configure"
 # https://docs.microsoft.com/en-us/windows/wsl/install-manual

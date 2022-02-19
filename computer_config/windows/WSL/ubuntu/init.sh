@@ -64,10 +64,8 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githu
 apt update
 apt install -y gh
 
-
 # Azure CLI
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-
 
 #AWS CLI
 curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip"
@@ -79,6 +77,31 @@ unzip awscliv2.zip
 # Install Poetry
 curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 
+
+
+# Install steampipe
+sudo /bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/turbot/steampipe/main/install.sh)"
+steampipe plugin install steampipe
+
+
+
+
+# Install dotNet
+wget https://packages.microsoft.com/config/ubuntu/21.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+rm packages-microsoft-prod.deb
+
+# Install dotNet SDK 6
+sudo apt-get update; \
+  sudo apt-get install -y apt-transport-https && \
+  sudo apt-get update && \
+  sudo apt-get install -y dotnet-sdk-6.0
+
+# Install dotNet SDK 5
+sudo apt-get install -y dotnet-sdk-5.0
+
+# Installing ClojureCLR as a dotnet tool
+dotnet tool install --global Clojure.Main
 
 cd /tmp
 rm -Rf /tmp/general_init
