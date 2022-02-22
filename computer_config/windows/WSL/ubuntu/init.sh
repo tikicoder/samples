@@ -53,6 +53,9 @@ az config set auto-upgrade.enable=yes
 # https://docs.microsoft.com/en-us/cli/azure/azure-cli-extensions-overview
 az config set extension.use_dynamic_install=yes_prompt
 
+# Install Poetry
+curl -sSL https://install.python-poetry.org | python3 -
+
 cd /tmp
 rm -Rf $tmp_directory
 

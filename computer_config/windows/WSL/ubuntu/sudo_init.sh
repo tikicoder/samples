@@ -75,13 +75,7 @@ curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 #AWS CLI
 curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip"
 unzip awscliv2.zip
-./aws/install
-
-
-
-# Install Poetry
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-
+sudo ./aws/install
 
 
 # Install steampipe
