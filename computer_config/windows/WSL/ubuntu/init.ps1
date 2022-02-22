@@ -18,7 +18,7 @@ Ubuntu run "mkdir -p $tmp_setup_path/missing_root_certs"
 
 $files_copy = Get-ChildItem "$($scriptPath_init)/*.sh" -File -Recurse
 foreach ( $file in $files_copy){
-  Copy-item -Path $file.FullName -Destination "\\wsl$\Ubuntu\$tmp_setup_path\init.sh"
+  Copy-item -Path $file.FullName -Destination "\\wsl$\Ubuntu\$tmp_setup_path\$($file.Name)"
 }
 
 Copy-item -Path $(Join-Path -Path $scriptPath_init -ChildPath "init.sh") -Destination "\\wsl$\Ubuntu\$tmp_setup_path\init.sh"
