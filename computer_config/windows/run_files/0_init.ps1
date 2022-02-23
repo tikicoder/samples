@@ -1,3 +1,5 @@
+$scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
+
 write-host "Enable Hyper-V"
 # Needed for Docker
 DISM /Online /Enable-Feature /All /FeatureName:Microsoft-Hyper-V /norestart

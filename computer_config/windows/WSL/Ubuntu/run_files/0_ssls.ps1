@@ -13,4 +13,4 @@ foreach ( $file in $missing_root_certs){
 }
 
 
-wsl update-ca-certificates --fresh
+wsl -d Ubuntu update-ca-certificates --fresh

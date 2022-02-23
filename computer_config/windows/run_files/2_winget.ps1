@@ -1,3 +1,4 @@
+$scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 
 write-host "7zip installing"
 winget install -e --id 7zip.7zip

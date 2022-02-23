@@ -22,7 +22,7 @@ if ( $isRestore ) {
 
     if (-not $null -eq $wsl_command) {
         $vsCodeCustomStoreSettings.extensions | ForEach-Object { 
-            $scriptBlock_wsl = [Scriptblock]::Create("$($wsl_command) run `"code --install-extension $_`"")
+            $scriptBlock_wsl = [Scriptblock]::Create("wsl -d $($wsl_command) code --install-extension $_")
             Invoke-Command -ScriptBlock $scriptBlock_wsl
         }
     }
@@ -38,7 +38,7 @@ $vsCodeCustomStoreSettings = @{
 }
 
 if (-not $null -eq $wsl_command) {
-    $scriptBlock_wsl = [Scriptblock]::Create("$($wsl_command) run `"code --list-extensions`"")
+    $scriptBlock_wsl = [Scriptblock]::Create("wsl -d $($wsl_command) code --list-extensions")
     $vsCodeCustomStoreSettings.wsl_extensions =  $( Invoke-Command -ScriptBlock $scriptBlock_wsl) | ConvertTo-Json | ConvertFrom-Json
 }
 
