@@ -44,8 +44,3 @@ winget install -e --id Google.Chrome
 
 write-host "Slack installing"
 winget install -e --id SlackTechnologies.Slack
-
-# IF this is for a work computer, you might not be able to install this
-# write-host "Docker installing"
-# winget install -e --id Docker.DockerDesktop
-

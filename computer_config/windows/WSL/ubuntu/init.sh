@@ -41,22 +41,20 @@ sudo apt update
 sudo apt upgrade -y
 
 
-# WSL COnfiguration update
-if [ ! -f "$wsl_config_path" ]; then
-  touch $wsl_config_path
-fi
+# Distrod - WSL2 Distros with Systemd!
+# https://github.com/nullpo-head/wsl-distrod
+curl -L -O "https://raw.githubusercontent.com/nullpo-head/wsl-distrod/main/install.sh"
+chmod +x install.sh
+sudo ./install.sh install
 
-if [ $(grep -ic "\[automount\]" $wsl_config_path) -lt 1  ]; then
-  echo "[automount]" >> $wsl_config_path
-  echo "enabled = true" >> $wsl_config_path
-  echo 'options = "metadata,umask=22,fmask=11"' >> $wsl_config_path
-fi
+/opt/distrod/bin/distrod enable --start-on-windows-boot
+
 
 # Goal run as much as I can via Docker
 # https://blog.jessfraz.com/post/docker-containers-on-the-desktop/
 
 # general prerequest
-apt install software-properties-common
+# apt install software-properties-common
 
 # not installing 3.9 as that is what I want to use poetry for
 # general prerequest - Python
@@ -67,28 +65,29 @@ apt install software-properties-common
 # Python 3.9
 # apt install -y python3.9
 
-# Docker
-# https://dev.to/_nicolas_louis_/how-to-run-docker-on-windows-without-docker-desktop-hik
-# https://dev.to/bowmanjd/install-docker-on-windows-wsl-without-docker-desktop-34m9
+# # Docker
+# # https://dev.to/_nicolas_louis_/how-to-run-docker-on-windows-without-docker-desktop-hik
+# # https://dev.to/bowmanjd/install-docker-on-windows-wsl-without-docker-desktop-34m9
+# # https://lippertmarkus.com/2021/09/04/containers-without-docker-desktop/
 
-# remove residue
-sudo apt remove docker docker-engine docker.io containerd runc
+# # remove residue
+# sudo apt remove docker docker-engine docker.io containerd runc
 
-# install dependencies
-sudo apt install -y --no-install-recommends apt-transport-https ca-certificates curl gnupg2
+# # install dependencies
+# sudo apt install -y --no-install-recommends apt-transport-https ca-certificates curl gnupg2
 
-os_ID=$(cat /etc/os-release | grep "^ID=" | awk -F'=' '{print $2}')
-os_VERSION_CODENAME=$(cat /etc/os-release | grep "^VERSION_CODENAME=" | awk -F'=' '{print $2}')
-curl -fsSL https://download.docker.com/linux/${os_ID}/gpg | sudo apt-key add -
-echo "deb [arch=amd64] https://download.docker.com/linux/${os_ID} ${os_VERSION_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/docker.list
-sudo apt update -y
+# os_ID=$(cat /etc/os-release | grep "^ID=" | awk -F'=' '{print $2}')
+# os_VERSION_CODENAME=$(cat /etc/os-release | grep "^VERSION_CODENAME=" | awk -F'=' '{print $2}')
+# curl -fsSL https://download.docker.com/linux/${os_ID}/gpg | sudo apt-key add -
+# echo "deb [arch=amd64] https://download.docker.com/linux/${os_ID} ${os_VERSION_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/docker.list
+# sudo apt update -y
 
-sudo apt install -y docker-ce docker-ce-cli containerd.io
-sudo usermod -aG docker "$(echo $(whoami))"
-echo `ifconfig eth0 | grep -E "([0-9]{1,3}.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | awk '{ print $2 }' | cut -f2 -d:
-sudo dockerd -H `ifconfig eth0 | grep -E "([0-9]{1,3}.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | awk '{ print $2 }' | cut -f2 -d:
+# sudo apt install -y docker-ce docker-ce-cli containerd.io
+# sudo usermod -aG docker "$(echo $(whoami))"
+# echo `ifconfig eth0 | grep -E "([0-9]{1,3}.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | awk '{ print $2 }' | cut -f2 -d:
+# sudo dockerd -H `ifconfig eth0 | grep -E "([0-9]{1,3}.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | awk '{ print $2 }' | cut -f2 -d:
 
-sudo sed -i -e 's/^\(docker:x\):[^:]\+/\1:36257/' /etc/group
+# sudo sed -i -e 's/^\(docker:x\):[^:]\+/\1:36257/' /etc/group
 
 # # JQ
 # # https://hub.docker.com/r/stedolan/jq
