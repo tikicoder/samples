@@ -1,4 +1,5 @@
 $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
+. "$(Join-Path -Path $scriptPath_init -ChildPath "..\general\defaults.ps1")"
 
 write-host "7zip installing"
 winget install -e --id 7zip.7zip
@@ -8,7 +9,7 @@ write-host "Wireshark installing"
 winget install -e --id WiresharkFoundation.Wireshark
 
 write-host "PuTTY installing"
-winget install -e --id winget install -e --id PuTTY.PuTTY
+winget install -e --id PuTTY.PuTTY
 
 write-host "VisualStudioCode installing"
 winget install -e --id Microsoft.VisualStudioCode
