@@ -2,6 +2,14 @@ $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 
 . "$(Join-Path -Path $scriptPath_init -ChildPath "general\defaults.ps1")"
 
+if ($(wsl -l | Where-Object {$_ -ieq 'Ubuntu'} | Measure-Object).Count -lt 1){
+  write-host "Ubuntu installing"
+  winget install -e --id Canonical.Ubuntu
+  wsl -d Ubuntu
+  wsl --setdefault Ubuntu
+  wsl -d Ubuntu sudo apt update 
+  wsl -d Ubuntu sudo apt upgrade -y
+}
 
 
 wsl -d Ubuntu mkdir -p $tmp_setup_path
@@ -15,15 +23,11 @@ Copy-item -Path $(Join-Path -Path $scriptPath_init -ChildPath "..\general\disabl
 
 wsl -d Ubuntu bash $tmp_setup_path/disable_sudo_pass.sh
 
-wsl -d Ubuntu sudo apt update 
-wsl -d Ubuntu sudo apt upgrade -y
 
-$files_copy = Get-ChildItem "$($scriptPath_init)/run_files/*.ps1" -File | Sort-Object -Property Name
+$files_copy = $(Get-ChildItem "$($scriptPath_init)/run_files/*.ps1" -File | Sort-Object -Property Name)
 foreach ( $file in $missing_root_certs){
   & $file.FullName 
 }
-
-
 
 & "$(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\..\general_programming_scripting\powershell\vsCode\vsCodeManuallBackup.ps1" | Resolve-Path)" -isRestore $true -wsl_command Ubuntu
 

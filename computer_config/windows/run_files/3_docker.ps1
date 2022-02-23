@@ -44,3 +44,23 @@ wsl -d tiki_docker_desktop echo -e "options = `"metadata,uid=1003,gid=1003,umask
 
 
 wsl -d tiki_docker_desktop passwd $newUsername
+
+wsl --shutdown
+wsl -d tiki_docker_desktop echo "connected"
+
+wsl -d tiki_docker_desktop sudo dnf check-update
+sudo dnf update -y
+
+wsl -d tiki_docker_desktop mkdir -p $tmp_setup_path
+
+if (Test-Path "\\wsl$\tiki_docker_desktop\$tmp_setup_path\distrod_install.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop\$tmp_setup_path\distrod_install.sh"}
+Copy-item -Path $(Join-Path -Path $scriptPath_init -ChildPath "3_docker_Distrod.sh") -Destination "\\wsl$\tiki_docker_desktop\$tmp_setup_path\distrod_install.sh"
+
+if (Test-Path "\\wsl$\tiki_docker_desktop\$tmp_setup_path\distrod_install.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop\$tmp_setup_path\distrod_update.sh"}
+Copy-item -Path $(Join-Path -Path $scriptPath_init -ChildPath "3_docker_Distrod_update.sh") -Destination "\\wsl$\tiki_docker_desktop\$tmp_setup_path\distrod_update.sh"
+
+wsl -d tiki_docker_desktop $tmp_setup_path\distrod_install.sh
+wsl -d tiki_docker_desktop rm -Rf $tmp_setup_path
+
+wsl --terminate tiki_docker_desktop
+wsl -d tiki_docker_desktop echo "connected"

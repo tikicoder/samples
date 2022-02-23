@@ -37,9 +37,6 @@ winget install -e --id GIMP.GIMP
 write-host "OBSStudio installing"
 winget install -e --id OBSProject.OBSStudio
 
-write-host "Ubuntu installing"
-winget install -e --id Canonical.Ubuntu
-
 write-host "Chrome installing"
 winget install -e --id Google.Chrome
 
