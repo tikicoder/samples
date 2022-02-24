@@ -12,7 +12,7 @@ if (-not (Test-Path -Path $tmp_dir)) {New-Item -ItemType Directory -Path $tmp_di
 $tmp_docker_save = $(Join-Path -Path $tmp_dir -ChildPath $docker_Version )
 Write-Host  "Downloading $docker_Version and saving to $tmp_docker_save"
 $webClient = [System.Net.WebClient]::new()
-$webClient.DownloadFile("https://download.docker.com/win/static/stable/x86_64/$docker_Version ", $tmp_docker_save)
+$webClient.DownloadFile("https://download.docker.com/win/static/stable/x86_64/$docker_Version", $tmp_docker_save)
 
 
 if ( $(Get-Service | Where-Object {$_.Name -ieq "docker"} | Measure-Object).Count -gt 0 ){
@@ -83,9 +83,9 @@ wsl -d tiki_docker_desktop echo "connected"
 wsl -d tiki_docker_desktop mkdir -p $general_defaults.tmp_directory
 
 if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"}
-Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\disable_sudo_pass.sh") -Destination "\\wsl$\Ubuntu$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
+Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\disable_sudo_pass.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
 
-wsl -d tiki_docker_desktop bash $($general_defaults.tmp_directory)/disable_sudo_pass.sh
+wsl -d tiki_docker_desktop bash "$($general_defaults.tmp_directory)/disable_sudo_pass.sh"
 
 wsl -d tiki_docker_desktop sudo dnf check-update
 wsl -d tiki_docker_desktop sudo dnf update -y
@@ -98,8 +98,11 @@ Copy-item -Path $(Join-Path -Path $scriptPath_init -ChildPath "3_docker_Distrod.
 if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\distrod_update.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\distrod_update.sh"}
 Copy-item -Path $(Join-Path -Path $scriptPath_init -ChildPath "3_docker_Distrod_update.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\distrod_update.sh"
 
-wsl -d tiki_docker_desktop $($general_defaults.tmp_directory)\distrod_install.sh
-wsl -d tiki_docker_desktop rm -Rf $($general_defaults.tmp_directory)
+wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/distrod_install.sh" "$($general_defaults.tmp_directory)"
+
+# If you want to have this as part of auto win startup
+# wsl -d tiki_docker_desktop sudo /opt/distrod/bin/distrod enable --start-on-windows-boot
+wsl -d tiki_docker_desktop sudo /opt/distrod/bin/distrod enable 
 
 wsl --terminate tiki_docker_desktop
 wsl -d tiki_docker_desktop echo "connected"
@@ -108,4 +111,14 @@ wsl -d tiki_docker_desktop echo "connected"
 wsl -d tiki_docker_desktop sudo dnf check-update
 wsl -d tiki_docker_desktop sudo dnf update -y
 
-wsl -d tiki_docker_desktop sudo dnf install -y fontconfig daemonize
+
+if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\install_docker.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\install_docker.sh"}
+Copy-item -Path $(Join-Path -Path $scriptPath_init -ChildPath "3_docker_Install.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\install_docker.sh"
+
+wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/install_docker.sh" "$newUsername"
+
+sudo cp /lib/systemd/system/docker.service /etc/systemd/system/
+
+wsl -d tiki_docker_desktop rm -Rf $($general_defaults.tmp_directory)
+
+

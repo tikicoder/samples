@@ -10,3 +10,4 @@ chmod +x install.sh
 sudo ./install.sh update
 
 popd
+rm -Rf /tmp/distrod

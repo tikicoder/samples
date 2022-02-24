@@ -21,7 +21,7 @@ Copy-item -Path $(Join-Path -Path $scriptPath_init -ChildPath "..\..\general\wsl
 if (Test-Path "\\wsl$\Ubuntu$($general_defaults.tmp_directory)\disable_sudo_pass.sh"){Remove-Item -Path "\\wsl$\Ubuntu$($general_defaults.tmp_directory)\disable_sudo_pass.sh"}
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\disable_sudo_pass.sh") -Destination "\\wsl$\Ubuntu$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
 
-wsl -d Ubuntu bash $($general_defaults.tmp_directory)/disable_sudo_pass.sh
+wsl -d Ubuntu bash "$($general_defaults.tmp_directory)/disable_sudo_pass.sh"
 
 
 $files_copy = $(Get-ChildItem "$($scriptPath_init)/run_files/*.ps1" -File | Sort-Object -Property Name)
