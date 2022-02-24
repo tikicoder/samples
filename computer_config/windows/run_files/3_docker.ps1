@@ -92,9 +92,9 @@ wsl -d tiki_docker_desktop sudo dnf update -y
 
 # Enable PowerTools Repository on Rocky Linux 8
 # https://linuxways.net/red-hat/how-to-enable-powertools-repository-on-rocky-linux-8/
-wsl -d tiki_docker_desktopsudo dnf install dnf-plugins-core
-wsl -d tiki_docker_desktopsudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-wsl -d tiki_docker_desktopsudo dnf config-manager --set-enabled powertools
+wsl -d tiki_docker_desktop sudo dnf install dnf-plugins-core
+wsl -d tiki_docker_desktop sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+wsl -d tiki_docker_desktop sudo dnf config-manager --set-enabled powertools
 
 
 
