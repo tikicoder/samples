@@ -77,7 +77,7 @@ wsl -d tiki_docker_desktop echo -e "options = `"metadata,uid=1003,gid=1003,umask
 
 wsl -d tiki_docker_desktop passwd $newUsername
 
-wsl --shutdown
+wsl --terminate tiki_docker_desktop
 wsl -d tiki_docker_desktop echo "connected"
 
 wsl -d tiki_docker_desktop mkdir -p $general_defaults.tmp_directory
@@ -92,8 +92,8 @@ wsl -d tiki_docker_desktop sudo dnf update -y
 
 # Enable PowerTools Repository on Rocky Linux 8
 # https://linuxways.net/red-hat/how-to-enable-powertools-repository-on-rocky-linux-8/
-wsl -d tiki_docker_desktop sudo dnf install dnf-plugins-core
-wsl -d tiki_docker_desktop sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+wsl -d tiki_docker_desktop sudo dnf install -y dnf-plugins-core
+wsl -d tiki_docker_desktop sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 wsl -d tiki_docker_desktop sudo dnf config-manager --set-enabled powertools
 
 
