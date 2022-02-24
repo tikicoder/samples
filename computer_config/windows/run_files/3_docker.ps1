@@ -17,6 +17,9 @@ $webClient.DownloadFile("https://download.docker.com/win/static/stable/x86_64/$d
 
 if ( $(Get-Service | Where-Object {$_.Name -ieq "docker"} | Measure-Object).Count -gt 0 ){
   Stop-Service docker  
+  if ((Test-Path -Path "C:\docker")) {
+    & C:\docker\dockerd --unregister-service
+  }
 }
 if ((Test-Path -Path "C:\docker")) {Remove-Folder -path_to_delete "C:\docker" -Recurse $true}
 Expand-Archive $tmp_docker_save -DestinationPath C:\ -Force

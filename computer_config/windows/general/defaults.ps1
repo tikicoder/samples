@@ -12,7 +12,7 @@ function Remove-Folder()
       Remove-Item -Force -Confirm:$False -Recurse $path_to_delete
     }
 
-    if ((Test-Path $path_to_delete )) { Remove-Item -Path $path_to_delete  }
+    if ((Test-Path $path_to_delete )) { Remove-Item -Path $path_to_delete -Recurse -Force -Confirm:$False  }
 }
 
 function Convert-GeneralPsObjectHashTable(){
