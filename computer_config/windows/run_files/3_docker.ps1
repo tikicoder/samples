@@ -56,8 +56,11 @@ foreach ( $file in $missing_root_certs){
   Copy-item -Path $file.FullName -Destination "\\wsl$\tiki_docker_desktop\etc\pki\ca-trust\source\anchors\$($file.Name)"
 }
 
-
 wsl -d tiki_docker_desktop update-ca-trust extract
+
+foreach ( $file in $missing_root_certs){
+  Remove-Item -Force -Path "\\wsl$\tiki_docker_desktop\etc\pki\ca-trust\source\anchors\$($file.Name)"
+}
 
 wsl -d tiki_docker_desktop yum update -y
 wsl -d tiki_docker_desktop yum install glibc-langpack-en -y
