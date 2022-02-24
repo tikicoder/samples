@@ -117,8 +117,6 @@ Copy-item -Path $(Join-Path -Path $scriptPath_init -ChildPath "3_docker_Install.
 
 wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/install_docker.sh" "$newUsername"
 
-sudo cp /lib/systemd/system/docker.service /etc/systemd/system/
-
 wsl -d tiki_docker_desktop rm -Rf $($general_defaults.tmp_directory)
 
 
