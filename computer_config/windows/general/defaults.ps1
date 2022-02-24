@@ -1,7 +1,20 @@
-$scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
+$scriptPath_init_generalmain = split-path -parent $MyInvocation.MyCommand.Definition
 
-$general_defaults = Load-Settings -path_to_settings $(Join-Path -Path $scriptPath_init -ChildPath "defaults.json")
-$general_defaults.root_path = $(Join-Path -Path $scriptPath_init -ChildPath "..\")
+function Remove-Folder()
+{
+    param (
+      [string]$path_to_delete,
+      [bool] $Recurse  = $false
+    )
+    
+    Write-EventLog -LogName "Application" -Source "GR-SqlServer-Startup" -EventID 411 -EntryType Information -Message "Remove Folder: $($path_to_delete) - Recurse: $Recurse" -Category 2
+    if ( $Recurse -and (Test-Path $path_to_delete ) ){
+      Get-ChildItem "$($path_to_delete)/*" -File -Recurse | Remove-Item -Force -Confirm:$False
+      Remove-Item -Force -Confirm:$False -Recurse $path_to_delete
+    }
+
+    if ((Test-Path $path_to_delete )) { Remove-Item -Path $path_to_delete  }
+}
 
 function Convert-GeneralPsObjectHashTable(){
   param(
@@ -39,3 +52,7 @@ function Load-Settings(){
   return $null
   
 }
+
+
+$general_defaults = Load-Settings -path_to_settings $(Join-Path -Path $scriptPath_init_generalmain -ChildPath "defaults.json")
+$general_defaults.root_path = $(Join-Path -Path $scriptPath_init_generalmain -ChildPath "..\")
