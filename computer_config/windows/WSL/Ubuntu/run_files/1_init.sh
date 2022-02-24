@@ -51,6 +51,8 @@ sudo apt upgrade -y
 # Python 3.9
 # apt install -y python3.9
 
+# Install genisoimage helpful for converting AWS Linux 2 to Azure
+sudo apt install genisoimage
 
 # JQ
 # https://hub.docker.com/r/stedolan/jq

@@ -16,6 +16,7 @@ sudo systemctl enable docker
 sudo systemctl start docker
 sudo systemctl status docker
 
+echo "Adding user to add to docker group: $1"
 sudo usermod -aG docker $1
 
 sudo cp /lib/systemd/system/docker.service /etc/systemd/system/
