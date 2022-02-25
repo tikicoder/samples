@@ -85,6 +85,14 @@ wsl -d tiki_docker_desktop echo "connected"
 
 wsl -d tiki_docker_desktop mkdir -p $general_defaults.tmp_directory
 
+$docker_init_files = $(Get-ChildItem "$($scriptPath_init)/3_docker_*.sh" -File )
+foreach ( $file in $docker_init_files){
+  Write-Host "Coping File: $($file.Name) - \\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"
+
+  if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"}
+  Copy-item -Path $file.FullName -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"
+}
+
 if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"}
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\disable_sudo_pass.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
 
@@ -107,7 +115,7 @@ Copy-item -Path $(Join-Path -Path $scriptPath_init -ChildPath "3_docker_Distrod.
 if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\distrod_update.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\distrod_update.sh"}
 Copy-item -Path $(Join-Path -Path $scriptPath_init -ChildPath "3_docker_Distrod_update.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\distrod_update.sh"
 
-wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/distrod_install.sh" "$($general_defaults.tmp_directory)"
+wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docker_Distrod.sh" "$($general_defaults.tmp_directory)"
 
 # If you want to have this as part of auto win startup
 # wsl -d tiki_docker_desktop sudo /opt/distrod/bin/distrod enable --start-on-windows-boot
@@ -121,11 +129,18 @@ wsl -d tiki_docker_desktop sudo dnf check-update
 wsl -d tiki_docker_desktop sudo dnf update -y
 
 
-if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\install_docker.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\install_docker.sh"}
-Copy-item -Path $(Join-Path -Path $scriptPath_init -ChildPath "3_docker_Install.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\install_docker.sh"
+wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docker_Install.sh" "$newUsername"
+wsl --terminate tiki_docker_desktop
 
-wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/install_docker.sh" "$newUsername"
+wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docker_updategroup.sh"
+wsl --terminate tiki_docker_desktop
 
-wsl -d tiki_docker_desktop rm -Rf $($general_defaults.tmp_directory)
+wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docker_finalize.sh"
+wsl --terminate tiki_docker_desktop
+
+wsl -d tiki_docker_desktop sudo systemctl start docker
+
+
+# wsl -d tiki_docker_desktop rm -Rf $($general_defaults.tmp_directory)
 
 
