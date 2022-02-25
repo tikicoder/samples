@@ -75,6 +75,9 @@ echo \
 sudo apt-get update
 sudo apt-get install docker-ce-cli
 
+# This updates the Docker ID to match the global id
+sudo groupmod -g 36257 docker
+
 # JQ
 # https://hub.docker.com/r/stedolan/jq
 sudo apt install -y jq
