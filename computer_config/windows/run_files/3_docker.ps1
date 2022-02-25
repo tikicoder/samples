@@ -23,7 +23,14 @@ if ( $(Get-Service | Where-Object {$_.Name -ieq "docker"} | Measure-Object).Coun
   }
 }
 if ((Test-Path -Path "C:\docker")) {Remove-Folder -path_to_delete "C:\docker" -Recurse $true}
-if ((Test-Path -Path "C:\ProgramData\docker")) {Remove-Folder -path_to_delete "C:\ProgramData\docker" -Recurse $true}
+try {
+  if ((Test-Path -Path "C:\ProgramData\docker")) {Remove-Folder -path_to_delete "C:\ProgramData\docker" -Recurse $true}
+}
+catch {
+  if (Test-Path -Path "C:\ProgramData\docker") { takeown.exe /F "C:\ProgramData\docker" /R /A /D Y }
+  if (Test-Path -Path "C:\ProgramData\docker") { icacls "C:\ProgramData\docker\" /T /C /grant Administrators:F }
+  if ((Test-Path -Path "C:\ProgramData\docker")) {Remove-Folder -path_to_delete "C:\ProgramData\docker" -Recurse $true}
+}
 
 Expand-Archive $tmp_docker_save -DestinationPath C:\ -Force
 [Environment]::SetEnvironmentVariable("Path", "$($env:path);C:\docker", [System.EnvironmentVariableTarget]::Machine)
@@ -55,15 +62,10 @@ wsl --import tiki_docker_desktop $(Join-Path -Path $tiki_docker_desktop_path -Ch
 
 $newUsername="tiki_docker"
 
-$missing_root_certs_path = $(Join-Path -Path $general_defaults.root_path -ChildPath 'general\missing_root_certs' )
-$missing_root_certs = $(Get-Childitem -Path $missing_root_certs_path -File | Where-Object {$_.Name.ToLower().EndsWith(".crt")})
+Copy-Missing-Certs -DestinationFolder "\\wsl$\tiki_docker_desktop\etc\pki\ca-trust\source\anchors"
 
-foreach ( $file in $missing_root_certs){
-  Copy-item -Path $file.FullName -Destination "\\wsl$\tiki_docker_desktop\etc\pki\ca-trust\source\anchors\$($file.Name)"
-}
-
-wsl -d tiki_docker_desktop update-ca-trust extract
-
+wsl -d tiki_docker_desktop update-ca-trust
+exit
 foreach ( $file in $missing_root_certs){
   Remove-Item -Force -Path "\\wsl$\tiki_docker_desktop\etc\pki\ca-trust\source\anchors\$($file.Name)"
 }
