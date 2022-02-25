@@ -17,11 +17,14 @@ $webClient.DownloadFile("https://download.docker.com/win/static/stable/x86_64/$d
 
 if ( $(Get-Service | Where-Object {$_.Name -ieq "docker"} | Measure-Object).Count -gt 0 ){
   Stop-Service docker  
+  $(Get-Service docker).WaitForStatus('Stopped')
   if ((Test-Path -Path "C:\docker")) {
     & C:\docker\dockerd --unregister-service
   }
 }
 if ((Test-Path -Path "C:\docker")) {Remove-Folder -path_to_delete "C:\docker" -Recurse $true}
+if ((Test-Path -Path "C:\ProgramData\docker")) {Remove-Folder -path_to_delete "C:\ProgramData\docker" -Recurse $true}
+
 Expand-Archive $tmp_docker_save -DestinationPath C:\ -Force
 [Environment]::SetEnvironmentVariable("Path", "$($env:path);C:\docker", [System.EnvironmentVariableTarget]::Machine)
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
@@ -138,9 +141,10 @@ wsl --terminate tiki_docker_desktop
 wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docker_finalize.sh"
 wsl --terminate tiki_docker_desktop
 
+wsl -d tiki_docker_desktop echo "connected"
 wsl -d tiki_docker_desktop sudo systemctl start docker
 
 
-# wsl -d tiki_docker_desktop rm -Rf $($general_defaults.tmp_directory)
+wsl -d tiki_docker_desktop rm -Rf $($general_defaults.tmp_directory)
 
 
