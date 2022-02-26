@@ -63,29 +63,6 @@ wsl --import tiki_docker_desktop $(Join-Path -Path $tiki_docker_desktop_path -Ch
 
 $newUsername="tiki_docker"
 
-wsl -d tiki_docker_desktop mkdir -p $general_defaults.tmp_directory
-
-$docker_init_files = $(Get-ChildItem "$($scriptPath_init)/3_docker_*.sh" -File )
-foreach ( $file in $docker_init_files){
-  Write-Host "Coping File: $($file.Name) - \\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"
-
-  if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"}
-  Copy-item -Path $file.FullName -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"
-}
-
-if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"}
-Write-Host "Coping Script disable_sudo_pass.sh"
-Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\disable_sudo_pass.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
-
-if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"}
-Write-Host "Coping Script auto_cert_update.sh"
-Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\auto_cert_update.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"
-
-
-
-wsl -d tiki_docker_desktop mkdir -p "$($general_defaults.tmp_directory)/missing_certs"
-Copy-Missing-Certs -DestinationFolderInDistro "$($general_defaults.tmp_directory)/missing_certs" -Distro tiki_docker_desktop
-
 $existing_repo_sslverify_check = $($(wsl -d tiki_docker_desktop grep -i "sslverify=" /etc/dnf/dnf.conf ) -Split '=')
 $existing_repo_sslverify = ""
 if ( $existing_repo_sslverify.Length -gt 1 ){
@@ -114,7 +91,33 @@ wsl -d tiki_docker_desktop echo -e "options = `"metadata,uid=1003,gid=1003,umask
 wsl -d tiki_docker_desktop passwd $newUsername
 
 wsl --terminate tiki_docker_desktop
-wsl -d tiki_docker_desktop echo "connected"
+Start-Sleep -s 1
+
+wsl -d tiki_docker_desktop -e echo "connected"
+wsl -d tiki_docker_desktop -e echo "connected"
+
+wsl -d tiki_docker_desktop -e mkdir -p $general_defaults.tmp_directory
+
+$docker_init_files = $(Get-ChildItem "$($scriptPath_init)/3_docker_*.sh" -File )
+foreach ( $file in $docker_init_files){
+  Write-Host "Coping File: $($file.Name) - \\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"
+
+  if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"}
+  Copy-item -Path $file.FullName -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"
+}
+
+if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"}
+Write-Host "Coping Script disable_sudo_pass.sh"
+Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\disable_sudo_pass.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
+
+if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"}
+Write-Host "Coping Script auto_cert_update.sh"
+Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\auto_cert_update.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"
+
+
+
+wsl -d tiki_docker_desktop mkdir -p "$($general_defaults.tmp_directory)/missing_certs"
+Copy-Missing-Certs -DestinationFolderInDistro "$($general_defaults.tmp_directory)/missing_certs" -Distro tiki_docker_desktop
 
 
 wsl -d tiki_docker_desktop -e bash "$($general_defaults.tmp_directory)/disable_sudo_pass.sh"
@@ -137,7 +140,10 @@ wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docke
 wsl -d tiki_docker_desktop sudo /opt/distrod/bin/distrod enable 
 
 wsl --terminate tiki_docker_desktop
-wsl -d tiki_docker_desktop echo "connected"
+Start-Sleep -s 1
+
+wsl -d tiki_docker_desktop -e echo "connected"
+wsl -d tiki_docker_desktop -e echo "connected"
 
 
 wsl -d tiki_docker_desktop sudo dnf check-update
@@ -146,14 +152,26 @@ wsl -d tiki_docker_desktop sudo dnf update -y
 
 wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docker_Install.sh" "$newUsername"
 wsl --terminate tiki_docker_desktop
+Start-Sleep -s 1
+
+wsl -d tiki_docker_desktop -e echo "connected"
+wsl -d tiki_docker_desktop -e echo "connected"
 
 wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docker_updategroup.sh"
 wsl --terminate tiki_docker_desktop
+Start-Sleep -s 1
+
+wsl -d tiki_docker_desktop -e echo "connected"
+wsl -d tiki_docker_desktop -e echo "connected"
 
 wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docker_finalize.sh"
 wsl --terminate tiki_docker_desktop
+Start-Sleep -s 1
 
-wsl -d tiki_docker_desktop echo "connected"
+wsl -d tiki_docker_desktop -e echo "connected"
+wsl -d tiki_docker_desktop -e echo "connected"
+
+
 wsl -d tiki_docker_desktop sudo systemctl start docker
 
 
