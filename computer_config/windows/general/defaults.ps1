@@ -2,14 +2,17 @@ $scriptPath_init_generalmain = split-path -parent $MyInvocation.MyCommand.Defini
 
 function Copy-Missing-Certs(){
   param (
-    [string]$DestinationFolder
+    [string]$DestinationFolderInDistro,
+    [string]$Distro
   )
   
   $missing_root_certs_path = $(Join-Path -Path $general_defaults.root_path -ChildPath 'general\missing_root_certs' )
   $missing_root_certs = $(Get-Childitem -Path $missing_root_certs_path -File | Where-Object {$_.Name.ToLower().EndsWith(".crt")})
 
   foreach ( $file in $missing_root_certs){
-    Copy-item -Path $file.FullName -Destination $(Join-Path -Path $DestinationFolder -ChildPath $file.Name)
+    Copy-item -Path $file.FullName -Destination $(Join-Path -Path "\\wsl$\$($Distro)$($DestinationFolderInDistro)" -ChildPath $file.Name)
+    wsl -d $Distro -e openssl x509 -in "$($DestinationFolderInDistro)/$($file.Name)" -out "$($DestinationFolderInDistro)/$($file.Name).pem" -outform PEM
+    Remove-Item -Force -Path $(Join-Path -Path "\\wsl$\$($Distro)$($DestinationFolderInDistro)" -ChildPath $file.Name)
   }
 }
 function Remove-Folder()

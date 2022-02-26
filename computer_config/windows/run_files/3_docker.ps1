@@ -58,17 +58,25 @@ if ((Test-Path -Path $tiki_docker_desktop_path)) {
 
 New-Item -ItemType Directory -Path $tiki_docker_desktop_path
 New-Item -ItemType Directory -Path $(Join-Path -Path $tiki_docker_desktop_path -ChildPath "LocalState")
+
 wsl --import tiki_docker_desktop $(Join-Path -Path $tiki_docker_desktop_path -ChildPath "LocalState") $(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\docker_images\rocky_linux\rocky-container.8.4.tar.gz")
 
 $newUsername="tiki_docker"
 
-Copy-Missing-Certs -DestinationFolder "\\wsl$\tiki_docker_desktop\etc\pki\ca-trust\source\anchors"
+wsl -d tiki_docker_desktop mkdir -p "$($general_defaults.tmp_directory)/missing_certs"
+Copy-Missing-Certs -DestinationFolderInDistro "$($general_defaults.tmp_directory)/missing_certs" -Distro tiki_docker_desktop
 
-wsl -d tiki_docker_desktop update-ca-trust
-exit
-foreach ( $file in $missing_root_certs){
-  Remove-Item -Force -Path "\\wsl$\tiki_docker_desktop\etc\pki\ca-trust\source\anchors\$($file.Name)"
+$existing_repo_sslverify_check = $($(wsl -d tiki_docker_desktop grep -i "sslverify=" /etc/dnf/dnf.conf ) -Split '=')
+$existing_repo_sslverify = ""
+if ( $existing_repo_sslverify.Length -gt 1 ){
+  if ( (-not ($existing_repo_sslverify[1] -ieq "false")) -and ( -not ($existing_repo_sslverify[1] -ieq "0"))){
+    $existing_repo_sslverify = $existing_repo_sslverify[1]
+  }
 }
+
+wsl -d tiki_docker_desktop -e sed -i '/sslverify/d' /etc/dnf/dnf.conf
+
+wsl -d tiki_docker_desktop -e sed -i '$a sslverify=0' /etc/dnf/dnf.conf
 
 wsl -d tiki_docker_desktop yum update -y
 wsl -d tiki_docker_desktop yum install glibc-langpack-en -y
@@ -88,6 +96,8 @@ wsl -d tiki_docker_desktop passwd $newUsername
 wsl --terminate tiki_docker_desktop
 wsl -d tiki_docker_desktop echo "connected"
 
+
+
 wsl -d tiki_docker_desktop mkdir -p $general_defaults.tmp_directory
 
 $docker_init_files = $(Get-ChildItem "$($scriptPath_init)/3_docker_*.sh" -File )
@@ -101,7 +111,12 @@ foreach ( $file in $docker_init_files){
 if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"}
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\disable_sudo_pass.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
 
+if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"}
+Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\auto_cert_update.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"
+
 wsl -d tiki_docker_desktop bash "$($general_defaults.tmp_directory)/disable_sudo_pass.sh"
+wsl -d tiki_docker_desktop -e sudo mv "$($general_defaults.tmp_directory)/tiki_auto_cert_update.sh" /usr/bin/tiki_auto_cert_update.sh
+wsl -d tiki_docker_desktop -e sudo chmod 755 /usr/bin/tiki_auto_cert_update.sh
 
 wsl -d tiki_docker_desktop sudo dnf check-update
 wsl -d tiki_docker_desktop sudo dnf update -y
@@ -146,6 +161,17 @@ wsl --terminate tiki_docker_desktop
 wsl -d tiki_docker_desktop echo "connected"
 wsl -d tiki_docker_desktop sudo systemctl start docker
 
+
+# enabling ssl verify for dnf
+wsl -d tiki_docker_desktop -e sudo sed -i '/sslverify/d' /etc/dnf/dnf.conf
+
+if ( -not [string]::IsNullorWhitespace($existing_repo_sslverify) ){
+  existing_repo_sslverify="'`$a sslverify=$($existing_repo_sslverify)'"
+  wsl -d tiki_docker_desktop -e sudo sed -i $existing_repo_sslverify /etc/dnf/dnf.conf
+}
+
+wsl -d tiki_docker_desktop -e sudo cp "$($general_defaults.tmp_directory)/missing_certs/*.pem" /etc/pki/ca-trust/source/anchors/
+wsl -d tiki_docker_desktop -e sudo /usr/bin/tiki_auto_cert_update.sh
 
 wsl -d tiki_docker_desktop rm -Rf $($general_defaults.tmp_directory)
 
