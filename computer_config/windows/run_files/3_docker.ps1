@@ -91,7 +91,6 @@ wsl -d tiki_docker_desktop echo -e "options = `"metadata,uid=1003,gid=1003,umask
 wsl -d tiki_docker_desktop passwd $newUsername
 
 wsl --terminate tiki_docker_desktop
-Start-Sleep -s 1
 
 wsl -d tiki_docker_desktop -e echo "connected"
 wsl -d tiki_docker_desktop -e echo "connected"
@@ -140,7 +139,6 @@ wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docke
 wsl -d tiki_docker_desktop sudo /opt/distrod/bin/distrod enable 
 
 wsl --terminate tiki_docker_desktop
-Start-Sleep -s 1
 
 wsl -d tiki_docker_desktop -e echo "connected"
 wsl -d tiki_docker_desktop -e echo "connected"
@@ -152,21 +150,18 @@ wsl -d tiki_docker_desktop sudo dnf update -y
 
 wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docker_Install.sh" "$newUsername"
 wsl --terminate tiki_docker_desktop
-Start-Sleep -s 1
 
 wsl -d tiki_docker_desktop -e echo "connected"
 wsl -d tiki_docker_desktop -e echo "connected"
 
 wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docker_updategroup.sh"
 wsl --terminate tiki_docker_desktop
-Start-Sleep -s 1
 
 wsl -d tiki_docker_desktop -e echo "connected"
 wsl -d tiki_docker_desktop -e echo "connected"
 
 wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docker_finalize.sh"
 wsl --terminate tiki_docker_desktop
-Start-Sleep -s 1
 
 wsl -d tiki_docker_desktop -e echo "connected"
 wsl -d tiki_docker_desktop -e echo "connected"
