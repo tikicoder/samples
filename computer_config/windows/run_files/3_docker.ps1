@@ -43,13 +43,14 @@ Remove-Item -Force -Confirm:$False -Recurse $tmp_dir
 # https://docs.rockylinux.org/guides/interoperability/import_rocky_to_wsl_howto/
 # I am using Rocky as my Docker Desktop App and will install Distrod on that
 $tiki_docker_desktop_path = $(Join-Path -Path $HOME -ChildPath "AppData\Local\Packages\tiki_docker_desktop")
-if ($(wsl -l | Where-Object {$_ -ieq 'tiki_docker_desktop'} | Measure-Object).Count -gt 0){
-  wsl --unregister tiki_docker_desktop
-}
 
 if ((Test-Path -Path $tiki_docker_desktop_path)) {
   Write-Host "There is an existing setup, please backup now if you want to keep - $tiki_docker_desktop_path"
   pause
+  if ($(wsl -l | Where-Object {$_ -ieq 'tiki_docker_desktop'} | Measure-Object).Count -gt 0){
+    wsl --terminate tiki_docker_desktop
+    wsl --unregister tiki_docker_desktop
+  }
   if ((Test-Path -Path $tiki_docker_desktop_path)) {
     Remove-Folder -path_to_delete $tiki_docker_desktop_path -Recurse $true
   }
@@ -62,6 +63,15 @@ New-Item -ItemType Directory -Path $(Join-Path -Path $tiki_docker_desktop_path -
 wsl --import tiki_docker_desktop $(Join-Path -Path $tiki_docker_desktop_path -ChildPath "LocalState") $(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\docker_images\rocky_linux\rocky-container.8.4.tar.gz")
 
 $newUsername="tiki_docker"
+wsl -d tiki_docker_desktop -e echo "connected"
+wsl -d tiki_docker_desktop -e echo "connected"
+
+
+if (Test-Path "\\wsl$\tiki_docker_desktop\usr\bin\tiki_auto_cert_update.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$\usr\bin\\tiki_auto_cert_update.sh"}
+Write-Host "Coping Script auto_cert_update.sh"
+Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\auto_cert_update.sh") -Destination "\\wsl$\tiki_docker_desktop\usr\bin\tiki_auto_cert_update.sh"
+wsl -d tiki_docker_desktop -e sudo chmod 755 /usr/bin/tiki_auto_cert_update.sh
+
 
 $existing_repo_sslverify_check = $($(wsl -d tiki_docker_desktop grep -i "sslverify=" /etc/dnf/dnf.conf ) -Split '=')
 $existing_repo_sslverify = ""
@@ -70,6 +80,7 @@ if ( $existing_repo_sslverify.Length -gt 1 ){
     $existing_repo_sslverify = $existing_repo_sslverify[1]
   }
 }
+
 
 wsl -d tiki_docker_desktop -e sed -i '/sslverify/d' /etc/dnf/dnf.conf
 
@@ -109,19 +120,14 @@ if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disa
 Write-Host "Coping Script disable_sudo_pass.sh"
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\disable_sudo_pass.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
 
-if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"}
-Write-Host "Coping Script auto_cert_update.sh"
-Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\auto_cert_update.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"
-
-
 
 wsl -d tiki_docker_desktop mkdir -p "$($general_defaults.tmp_directory)/missing_certs"
 Copy-Missing-Certs -DestinationFolderInDistro "$($general_defaults.tmp_directory)/missing_certs" -Distro tiki_docker_desktop
 
 
 wsl -d tiki_docker_desktop -e bash "$($general_defaults.tmp_directory)/disable_sudo_pass.sh"
-wsl -d tiki_docker_desktop -e sudo mv "$($general_defaults.tmp_directory)/tiki_auto_cert_update.sh" /usr/bin/tiki_auto_cert_update.sh
-wsl -d tiki_docker_desktop -e sudo chmod 755 /usr/bin/tiki_auto_cert_update.sh
+
+wsl -d tiki_docker_desktop -e sudo /usr/bin/tiki_auto_cert_update.sh
 
 wsl -d tiki_docker_desktop sudo dnf check-update
 wsl -d tiki_docker_desktop sudo dnf update -y
