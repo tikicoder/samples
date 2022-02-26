@@ -8,7 +8,7 @@ wsl -d tiki_docker_desktop -e sudo mv "$($general_defaults.tmp_directory)/tiki_a
 wsl -d tiki_docker_desktop -e sudo chmod 755 /usr/bin/tiki_auto_cert_update.sh
 
 wsl -d tiki_docker_desktop mkdir -p "$($general_defaults.tmp_directory)/missing_certs"
-Copy-Missing-Certs -DestinationFolderInDistro "$($general_defaults.tmp_directory)/missing_certs" -Distro Ubuntu
+Copy-Missing-Certs -DestinationTempFolderInDistro "$($general_defaults.tmp_directory)/missing_certs" -Distro Ubuntu -DestinationSSLFolderInDistro "/usr/local/share/ca-certificates/"
 
-wsl -d tiki_docker_desktop -e sudo cp "$($general_defaults.tmp_directory)/missing_certs/*.pem" /usr/local/share/ca-certificates/
+wsl -d tiki_docker_desktop -e sudo cp "$($general_defaults.tmp_directory)/missing_certs/*.pem" 
 wsl -d tiki_docker_desktop -e sudo /usr/bin/tiki_auto_cert_update.sh

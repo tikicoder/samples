@@ -2,7 +2,8 @@ $scriptPath_init_generalmain = split-path -parent $MyInvocation.MyCommand.Defini
 
 function Copy-Missing-Certs(){
   param (
-    [string]$DestinationFolderInDistro,
+    [string]$DestinationTempFolderInDistro,    
+    [string]$DestinationSSLFolderInDistro,
     [string]$Distro
   )
   
@@ -13,6 +14,10 @@ function Copy-Missing-Certs(){
     Copy-item -Path $file.FullName -Destination $(Join-Path -Path "\\wsl$\$($Distro)$($DestinationFolderInDistro)" -ChildPath $file.Name)
     wsl -d $Distro -e openssl x509 -in "$($DestinationFolderInDistro)/$($file.Name)" -out "$($DestinationFolderInDistro)/$($file.Name).pem" -outform PEM
     Remove-Item -Force -Path $(Join-Path -Path "\\wsl$\$($Distro)$($DestinationFolderInDistro)" -ChildPath $file.Name)
+  }
+
+  if ( $missing_root_certs.Length -gt 0 ){
+    wsl -d $Distro -e sudo cp "$($DestinationFolderInDistro)/*.pem" $DestinationSSLFolderInDistro
   }
 }
 function Remove-Folder()

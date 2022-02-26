@@ -70,7 +70,6 @@ wsl -d tiki_docker_desktop -e echo "connected"
 if (Test-Path "\\wsl$\tiki_docker_desktop\usr\bin\tiki_auto_cert_update.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$\usr\bin\\tiki_auto_cert_update.sh"}
 Write-Host "Coping Script auto_cert_update.sh"
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\auto_cert_update.sh") -Destination "\\wsl$\tiki_docker_desktop\usr\bin\tiki_auto_cert_update.sh"
-wsl -d tiki_docker_desktop -e sudo chmod 755 /usr/bin/tiki_auto_cert_update.sh
 
 
 $existing_repo_sslverify_check = $($(wsl -d tiki_docker_desktop grep -i "sslverify=" /etc/dnf/dnf.conf ) -Split '=')
@@ -121,12 +120,12 @@ Write-Host "Coping Script disable_sudo_pass.sh"
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\disable_sudo_pass.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
 
 
-wsl -d tiki_docker_desktop mkdir -p "$($general_defaults.tmp_directory)/missing_certs"
-Copy-Missing-Certs -DestinationFolderInDistro "$($general_defaults.tmp_directory)/missing_certs" -Distro tiki_docker_desktop
-
-
 wsl -d tiki_docker_desktop -e bash "$($general_defaults.tmp_directory)/disable_sudo_pass.sh"
 
+wsl -d tiki_docker_desktop mkdir -p "$($general_defaults.tmp_directory)/missing_certs"
+Copy-Missing-Certs -DestinationTempFolderInDistro "$($general_defaults.tmp_directory)/missing_certs" -Distro tiki_docker_desktop -DestinationSSLFolderInDistro "/etc/pki/ca-trust/source/anchors/"
+
+wsl -d tiki_docker_desktop -e sudo chmod 755 /usr/bin/tiki_auto_cert_update.sh
 wsl -d tiki_docker_desktop -e sudo /usr/bin/tiki_auto_cert_update.sh
 
 wsl -d tiki_docker_desktop sudo dnf check-update
@@ -173,20 +172,20 @@ wsl -d tiki_docker_desktop -e echo "connected"
 wsl -d tiki_docker_desktop -e echo "connected"
 
 
-wsl -d tiki_docker_desktop sudo systemctl start docker
-
-
-# enabling ssl verify for dnf
+Write-Host "Removing DNF SSl Verification skip"
 wsl -d tiki_docker_desktop -e sudo sed -i '/sslverify/d' /etc/dnf/dnf.conf
 
 if ( -not [string]::IsNullorWhitespace($existing_repo_sslverify) ){
+  Write-Host "Adding back previous sslverify setting: $($existing_repo_sslverify)"
   existing_repo_sslverify="'`$a sslverify=$($existing_repo_sslverify)'"
   wsl -d tiki_docker_desktop -e sudo sed -i $existing_repo_sslverify /etc/dnf/dnf.conf
 }
 
-wsl -d tiki_docker_desktop -e sudo cp "$($general_defaults.tmp_directory)/missing_certs/*.pem" /etc/pki/ca-trust/source/anchors/
-wsl -d tiki_docker_desktop -e sudo /usr/bin/tiki_auto_cert_update.sh
+Start-Sleep -2
+Write-Host "Start Docker"
+wsl -d tiki_docker_desktop sudo systemctl start docker
 
+Write-Host "Temp Directory Cleanup"
 wsl -d tiki_docker_desktop -e sudo rm -Rf $($general_defaults.tmp_directory)
 
 
