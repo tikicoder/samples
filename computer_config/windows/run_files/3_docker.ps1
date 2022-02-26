@@ -63,6 +63,26 @@ wsl --import tiki_docker_desktop $(Join-Path -Path $tiki_docker_desktop_path -Ch
 
 $newUsername="tiki_docker"
 
+wsl -d tiki_docker_desktop mkdir -p $general_defaults.tmp_directory
+
+$docker_init_files = $(Get-ChildItem "$($scriptPath_init)/3_docker_*.sh" -File )
+foreach ( $file in $docker_init_files){
+  Write-Host "Coping File: $($file.Name) - \\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"
+
+  if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"}
+  Copy-item -Path $file.FullName -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"
+}
+
+if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"}
+Write-Host "Coping Script disable_sudo_pass.sh"
+Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\disable_sudo_pass.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
+
+if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"}
+Write-Host "Coping Script auto_cert_update.sh"
+Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\auto_cert_update.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"
+
+
+
 wsl -d tiki_docker_desktop mkdir -p "$($general_defaults.tmp_directory)/missing_certs"
 Copy-Missing-Certs -DestinationFolderInDistro "$($general_defaults.tmp_directory)/missing_certs" -Distro tiki_docker_desktop
 
@@ -97,24 +117,7 @@ wsl --terminate tiki_docker_desktop
 wsl -d tiki_docker_desktop echo "connected"
 
 
-
-wsl -d tiki_docker_desktop mkdir -p $general_defaults.tmp_directory
-
-$docker_init_files = $(Get-ChildItem "$($scriptPath_init)/3_docker_*.sh" -File )
-foreach ( $file in $docker_init_files){
-  Write-Host "Coping File: $($file.Name) - \\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"
-
-  if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"}
-  Copy-item -Path $file.FullName -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\$($file.Name)"
-}
-
-if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"}
-Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\disable_sudo_pass.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
-
-if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"}
-Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\auto_cert_update.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"
-
-wsl -d tiki_docker_desktop bash "$($general_defaults.tmp_directory)/disable_sudo_pass.sh"
+wsl -d tiki_docker_desktop -e bash "$($general_defaults.tmp_directory)/disable_sudo_pass.sh"
 wsl -d tiki_docker_desktop -e sudo mv "$($general_defaults.tmp_directory)/tiki_auto_cert_update.sh" /usr/bin/tiki_auto_cert_update.sh
 wsl -d tiki_docker_desktop -e sudo chmod 755 /usr/bin/tiki_auto_cert_update.sh
 
@@ -126,14 +129,6 @@ wsl -d tiki_docker_desktop sudo dnf update -y
 wsl -d tiki_docker_desktop sudo dnf install -y dnf-plugins-core
 wsl -d tiki_docker_desktop sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 wsl -d tiki_docker_desktop sudo dnf config-manager --set-enabled powertools
-
-
-
-if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\distrod_install.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\distrod_install.sh"}
-Copy-item -Path $(Join-Path -Path $scriptPath_init -ChildPath "3_docker_Distrod.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\distrod_install.sh"
-
-if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\distrod_update.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\distrod_update.sh"}
-Copy-item -Path $(Join-Path -Path $scriptPath_init -ChildPath "3_docker_Distrod_update.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\distrod_update.sh"
 
 wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docker_Distrod.sh" "$($general_defaults.tmp_directory)"
 
@@ -173,6 +168,6 @@ if ( -not [string]::IsNullorWhitespace($existing_repo_sslverify) ){
 wsl -d tiki_docker_desktop -e sudo cp "$($general_defaults.tmp_directory)/missing_certs/*.pem" /etc/pki/ca-trust/source/anchors/
 wsl -d tiki_docker_desktop -e sudo /usr/bin/tiki_auto_cert_update.sh
 
-wsl -d tiki_docker_desktop rm -Rf $($general_defaults.tmp_directory)
+wsl -d tiki_docker_desktop -e sudo rm -Rf $($general_defaults.tmp_directory)
 
 

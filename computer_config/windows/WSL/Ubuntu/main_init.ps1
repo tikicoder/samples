@@ -33,4 +33,4 @@ foreach ( $file in $missing_root_certs){
 & "$(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\..\general_programming_scripting\powershell\vsCode\vsCodeManuallBackup.ps1" | Resolve-Path)" -isRestore $true -wsl_command Ubuntu
 
 wsl -d Ubuntu rm -Rf $($general_defaults.tmp_directory)
-wsl -d Ubuntu rm /etc/sudoers.d/``whoami``
+wsl -d Ubuntu sudo rm /etc/sudoers.d/``whoami``
