@@ -181,8 +181,9 @@ if ( -not [string]::IsNullorWhitespace($existing_repo_sslverify) ){
   wsl -d tiki_docker_desktop -e sudo sed -i $existing_repo_sslverify /etc/dnf/dnf.conf
 }
 
-Start-Sleep -2
+Start-Sleep -s 2
 Write-Host "Start Docker"
+wsl -d tiki_docker_desktop sudo systemctl status dbus
 wsl -d tiki_docker_desktop sudo systemctl start docker
 
 Write-Host "Temp Directory Cleanup"
