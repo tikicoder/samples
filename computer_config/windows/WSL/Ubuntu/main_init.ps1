@@ -19,7 +19,7 @@ Copy-item -Path $(Join-Path -Path $scriptPath_init -ChildPath "..\..\general\wsl
 
 # disable sudo password for default user
 if (Test-Path "\\wsl$\Ubuntu$($general_defaults.tmp_directory)\disable_sudo_pass.sh"){Remove-Item -Path "\\wsl$\Ubuntu$($general_defaults.tmp_directory)\disable_sudo_pass.sh"}
-Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\disable_sudo_pass.sh") -Destination "\\wsl$\Ubuntu$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
+Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\disable_sudo_pass.sh") -Destination "\\wsl$\Ubuntu$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
 
 wsl -d Ubuntu bash "$($general_defaults.tmp_directory)/disable_sudo_pass.sh"
 

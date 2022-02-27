@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DOCKER_DIR=/mnt/wsl/shared-docker
+DOCKER_DIR=$1
 mkdir -pm o=,ug=rwx "$DOCKER_DIR"
 chgrp docker "$DOCKER_DIR"
 
@@ -11,7 +11,7 @@ fi
 echo "create/modify /etc/docker/daemon.json"
 cat > ./daemon.json << EOF
 {
-  "hosts": ["unix:///mnt/wsl/shared-docker/docker.sock"],
+  "hosts": ["${DOCKER_HOST}", "$2"],
   "iptables": false
 }
 EOF
@@ -21,6 +21,8 @@ echo "updating docker.service"
 # This updates it to not use the normal launcher
 sudo sed -i 's/ExecStart\=\/usr\/bin\/dockerd /# ExecStart\=\/usr\/bin\/dockerd/' /usr/lib/systemd/system/docker.service
 sudo sed -i '/# ExecStart=\/usr\/bin\/dockerd/a ExecStart=\/usr\/bin\/dockerd' /usr/lib/systemd/system/docker.service
+
+
 
 echo "reloading services"
 sudo systemctl daemon-reload

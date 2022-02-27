@@ -67,9 +67,9 @@ wsl -d tiki_docker_desktop -e echo "connected"
 wsl -d tiki_docker_desktop -e echo "connected"
 
 
-if (Test-Path "\\wsl$\tiki_docker_desktop\usr\bin\tiki_auto_cert_update.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$\usr\bin\\tiki_auto_cert_update.sh"}
+if (Test-Path "\\wsl$\tiki_docker_desktop\usr\bin\tiki_auto_cert_update.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$\usr\bin\tiki_auto_cert_update.sh"}
 Write-Host "Coping Script auto_cert_update.sh"
-Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\auto_cert_update.sh") -Destination "\\wsl$\tiki_docker_desktop\usr\bin\tiki_auto_cert_update.sh"
+Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\auto_cert_update.sh") -Destination "\\wsl$\tiki_docker_desktop\usr\bin\tiki_auto_cert_update.sh"
 
 
 $existing_repo_sslverify_check = $($(wsl -d tiki_docker_desktop grep -i "sslverify=" /etc/dnf/dnf.conf ) -Split '=')
@@ -117,7 +117,7 @@ foreach ( $file in $docker_init_files){
 
 if (Test-Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"){Remove-Item -Path "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"}
 Write-Host "Coping Script disable_sudo_pass.sh"
-Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\disable_sudo_pass.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
+Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\disable_sudo_pass.sh") -Destination "\\wsl$\tiki_docker_desktop$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
 
 
 wsl -d tiki_docker_desktop -e bash "$($general_defaults.tmp_directory)/disable_sudo_pass.sh"
@@ -153,7 +153,7 @@ wsl -d tiki_docker_desktop sudo dnf check-update
 wsl -d tiki_docker_desktop sudo dnf update -y
 
 
-wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docker_Install.sh" "$newUsername"
+wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docker_Install.sh" "$newUsername" "$($general_defaults.docker_sock)" "$($general_defaults.docker_host_sock)"
 wsl --terminate tiki_docker_desktop
 
 wsl -d tiki_docker_desktop -e echo "connected"
@@ -165,7 +165,7 @@ wsl --terminate tiki_docker_desktop
 wsl -d tiki_docker_desktop -e echo "connected"
 wsl -d tiki_docker_desktop -e echo "connected"
 
-wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docker_finalize.sh"
+wsl -d tiki_docker_desktop sudo bash "$($general_defaults.tmp_directory)/3_docker_finalize.sh" "$($general_defaults.docker_dir)" "$($general_defaults.docker_host_tcp)"
 wsl --terminate tiki_docker_desktop
 
 wsl -d tiki_docker_desktop -e echo "connected"
@@ -189,4 +189,4 @@ wsl -d tiki_docker_desktop sudo systemctl start docker
 Write-Host "Temp Directory Cleanup"
 wsl -d tiki_docker_desktop -e sudo rm -Rf $($general_defaults.tmp_directory)
 
-
+docker context create lin --docker host=$($general_defaults.docker_host_tcp)

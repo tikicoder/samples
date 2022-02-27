@@ -18,3 +18,12 @@ docker --version
 echo "Adding user to add to docker group: $1"
 sudo usermod -aG docker $1
 
+echo "" >> "$HOME/.bashrc"
+
+echo "# Docker Settings" >> "$HOME/.bashrc"
+echo "export DOCKER_SOCK=\"$2\"" >> "$HOME/.bashrc"
+echo "export DOCKER_HOST=\"$3\"" >> "$HOME/.bashrc"
+
+. "$HOME/.bashrc"
+
+
