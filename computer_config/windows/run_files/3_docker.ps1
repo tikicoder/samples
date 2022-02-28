@@ -71,6 +71,10 @@ if (Test-Path "\\wsl$\$($general_defaults.docker_distro)\usr\bin\tiki_auto_cert_
 Write-Host "Coping Script auto_cert_update.sh"
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\auto_cert_update.sh") -Destination "\\wsl$\$($general_defaults.docker_distro)\usr\bin\tiki_auto_cert_update.sh"
 
+if (Test-Path "\\wsl$\$($general_defaults.docker_distro)\etc\wsl.conf"){Remove-Item -Path "\\wsl$\$($general_defaults.docker_distro)\etc\wsl.conf"}
+Write-Host "Coping Script auto_cert_update.sh"
+Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\config\wsl.conf.docker") -Destination "\\wsl$\$($general_defaults.docker_distro)\etc\wsl.conf"
+
 
 $existing_repo_sslverify_check = $($(wsl -d $($general_defaults.docker_distro) grep -i "sslverify=" /etc/dnf/dnf.conf ) -Split '=')
 $existing_repo_sslverify = ""
@@ -85,19 +89,13 @@ wsl -d $($general_defaults.docker_distro) -e sed -i '/sslverify/d' /etc/dnf/dnf.
 
 wsl -d $($general_defaults.docker_distro) -e sed -i '$a sslverify=0' /etc/dnf/dnf.conf
 
+wsl -d $($general_defaults.docker_distro) -e sed -i "/^\[automount\]$/a default=$newUsername" /etc/wsl.conf
+
 wsl -d $($general_defaults.docker_distro) yum update -y
 wsl -d $($general_defaults.docker_distro) yum install glibc-langpack-en -y
 wsl -d $($general_defaults.docker_distro) yum install passwd sudo cracklib-dicts -y
 wsl -d $($general_defaults.docker_distro) yum reinstall passwd sudo cracklib-dicts -y
 wsl -d $($general_defaults.docker_distro) adduser -G wheel $newUsername
-wsl -d $($general_defaults.docker_distro) echo -e "[user]" `>`> /etc/wsl.conf
-wsl -d $($general_defaults.docker_distro) echo -e "default=$newUsername" `>`> /etc/wsl.conf
-wsl -d $($general_defaults.docker_distro) echo -e "" `>`> /etc/wsl.conf
-wsl -d $($general_defaults.docker_distro) echo -e "[automount]" `>`> /etc/wsl.conf
-wsl -d $($general_defaults.docker_distro) echo -e "enabled = true" `>`> /etc/wsl.conf
-wsl -d $($general_defaults.docker_distro) echo -e "options = `"metadata,uid=1003,gid=1003,umask=022,fmask=11,case=off`"" `>`> /etc/wsl.conf
-
-
 wsl -d $($general_defaults.docker_distro) passwd $newUsername
 
 wsl --terminate $($general_defaults.docker_distro)
