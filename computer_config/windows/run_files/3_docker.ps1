@@ -72,7 +72,7 @@ Write-Host "Coping Script auto_cert_update.sh"
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\auto_cert_update.sh") -Destination "\\wsl$\$($general_defaults.docker_distro)\usr\bin\tiki_auto_cert_update.sh"
 
 if (Test-Path "\\wsl$\$($general_defaults.docker_distro)\etc\wsl.conf"){Remove-Item -Path "\\wsl$\$($general_defaults.docker_distro)\etc\wsl.conf"}
-Write-Host "Coping Script auto_cert_update.sh"
+Write-Host "Coping Conf WSL.conf.docker"
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\config\wsl.conf.docker") -Destination "\\wsl$\$($general_defaults.docker_distro)\etc\wsl.conf"
 
 
