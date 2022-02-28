@@ -24,15 +24,16 @@ wsl -d Ubuntu bash "$($general_defaults.tmp_directory)/disable_sudo_pass.sh"
 wsl -d Ubuntu sudo apt list --upgradable
 
 $files_copy = $(Get-ChildItem "$($scriptPath_init)/run_files/*.ps1" -File | Sort-Object -Property Name)
-foreach ( $file in $missing_root_certs){
+foreach ( $file in $files_copy){
   Write-Host "Running $($file.Name)"
   & $file.FullName 
 }
 
+Write-Host "Running VS Code restore"
 & "$(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\..\general_programming_scripting\powershell\vsCode\vsCodeManuallBackup.ps1" | Resolve-Path)" -isRestore $true -wsl_command Ubuntu
 
 if (Test-Path "\\wsl$\Ubuntu$($general_defaults.tmp_directory)\user_docker_init.sh"){Remove-Item -Path "\\wsl$\Ubuntu$($general_defaults.tmp_directory)\user_docker_init.sh"}
-Write-Host "Coping Script disable_sudo_pass.sh"
+Write-Host "Coping Script user_docker_init.sh"
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\user_docker_init.sh") -Destination "\\wsl$\Ubuntu$($general_defaults.tmp_directory)\user_docker_init.sh"
 wsl -d Ubuntu bash "$($general_defaults.tmp_directory)/user_docker_init.sh" "$($general_defaults.docker_sock)" "$($general_defaults.docker_host_sock)" "$($general_defaults.tiki_docker_desktop)" "$($general_defaults.docker_dir)"
 
