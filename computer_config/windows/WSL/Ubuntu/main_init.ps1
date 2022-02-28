@@ -1,6 +1,6 @@
-$scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
+$scriptPath_init_mainset = split-path -parent $MyInvocation.MyCommand.Definition
 
-. "$(Join-Path -Path $scriptPath_init -ChildPath "general\defaults.ps1")"
+. "$(Join-Path -Path $scriptPath_init_mainset -ChildPath "general\defaults.ps1")"
 
 if ($(wsl -l | Where-Object {$_ -ieq $($general_defaults.main_distro) -or $_ -ieq "$($general_defaults.main_distro) (Default)"} | Measure-Object).Count -lt 1){
   write-host "$($general_defaults.main_distro) installing via winget"
@@ -23,19 +23,19 @@ wsl -d $($general_defaults.main_distro) bash "$($general_defaults.tmp_directory)
 
 wsl -d $($general_defaults.main_distro) sudo apt list --upgradable
 
-$files_copy = $(Get-ChildItem "$($scriptPath_init)/run_files/*.ps1" -File | Sort-Object -Property Name)
+$files_copy = $(Get-ChildItem "$($scriptPath_init_mainset)/run_files/*.ps1" -File | Sort-Object -Property Name)
 foreach ( $file in $files_copy){
   Write-Host "Running $($file.Name)"
   & $file.FullName 
 }
 
 Write-Host "Running VS Code restore"
-& "$(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\..\general_programming_scripting\powershell\vsCode\vsCodeManuallBackup.ps1" | Resolve-Path)" -isRestore $true -wsl_command $($general_defaults.main_distro)
+& "$(Join-Path -Path $scriptPath_init_mainset -ChildPath "..\..\..\..\general_programming_scripting\powershell\vsCode\vsCodeManuallBackup.ps1" | Resolve-Path)" -isRestore $true -wsl_command $($general_defaults.main_distro)
 
 if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"}
 Write-Host "Coping Script user_docker_init.sh"
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\user_docker_init.sh") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"
-wsl -d $($general_defaults.main_distro) bash "$($general_defaults.tmp_directory)/user_docker_init.sh" "$($general_defaults.docker_sock)" "$($general_defaults.docker_host_sock)" "$($general_defaults.docker_distro)" "$($general_defaults.docker_dir)"
+wsl -d $($general_defaults.main_distro) bash "$($general_defaults.tmp_directory)/user_docker_init.sh" "'$($general_defaults.docker_sock)'" "'$($general_defaults.docker_host_sock)'" "'$($general_defaults.docker_distro)'" "'$($general_defaults.docker_dir)'"
 
 
 
