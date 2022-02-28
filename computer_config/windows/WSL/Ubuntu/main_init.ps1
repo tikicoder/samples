@@ -2,7 +2,7 @@ $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 
 . "$(Join-Path -Path $scriptPath_init -ChildPath "general\defaults.ps1")"
 
-if ($(wsl -l | Where-Object {$_ -ieq '$($general_defaults.main_distro)' -or $_ -ieq '$($general_defaults.main_distro) (Default)'} | Measure-Object).Count -lt 1){
+if ($(wsl -l | Where-Object {$_ -ieq $($general_defaults.main_distro) -or $_ -ieq "$($general_defaults.main_distro) (Default)"} | Measure-Object).Count -lt 1){
   write-host "$($general_defaults.main_distro) installing via winget"
   winget install -e --id Canonical.$($general_defaults.main_distro)
   write-host "Opening $($general_defaults.main_distro) to Configure Once configured please type exit to go back to PowerShell"

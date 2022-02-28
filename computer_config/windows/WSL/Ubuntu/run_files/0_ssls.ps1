@@ -12,5 +12,10 @@ Copy-Missing-Certs -DestinationTempFolderInDistro "$($general_defaults.tmp_direc
 
 wsl -d $($general_defaults.main_distro) -e sudo /usr/bin/tiki_auto_cert_update.sh
 
+wsl --terminate $($general_defaults.main_distro)
+
+wsl -d $general_defaults.main_distro echo "connected"
+wsl -d $general_defaults.main_distro echo "connected"
+
 wsl -d $general_defaults.main_distro sudo apt update 
 wsl -d $general_defaults.main_distro sudo apt upgrade -y
