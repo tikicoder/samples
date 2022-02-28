@@ -26,7 +26,7 @@ fi
 if [ $(grep -ic "export DOCKER_DIR=" $HOME/.bashrc) -lt 1 ]; then
   echo "" >> $HOME/.bashrc
   echo "# Docker WSL Share Folder" >> $HOME/.bashrc
-  echo "export DOCKER_DISTRO=\"${DOCKER_DIR}\"" >> $HOME/.bashrc
+  echo "export DOCKER_DIR=\"${DOCKER_DIR}\"" >> $HOME/.bashrc
 fi
 
 if [ $(grep -ic "sudo systemctl start docker" $HOME/.bashrc) -lt 1 ]; then

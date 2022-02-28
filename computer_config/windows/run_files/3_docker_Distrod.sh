@@ -14,6 +14,6 @@ popd
 
 sudo mv "$1/3_docker_Distrod_update.sh" /usr/bin/distrod_update.sh
 sudo chmod 755 /usr/bin/distrod_update.sh
-sudo chmod root:root /usr/bin/distrod_update.sh
+sudo chown root:root /usr/bin/distrod_update.sh
 
 rm -Rf /tmp/distrod
