@@ -33,8 +33,8 @@ if [ $(grep -ic "sudo systemctl start docker" $HOME/.bashrc) -lt 1 ]; then
   echo "" >> $HOME/.bashrc
   echo "# Auto Start Docker on distro start" >> $HOME/.bashrc
   cat >> $HOME/.bashrc << EOF
-if [ ! -S "$DOCKER_SOCK" ]; then
-  /mnt/c/Windows/System32/wsl.exe -d $DOCKER_DISTRO sudo systemctl start docker
+if [ ! -S "\$DOCKER_SOCK" ]; then
+  /mnt/c/Windows/System32/wsl.exe -d "\$DOCKER_DISTRO" sudo systemctl start docker
 fi
 EOF
 fi
