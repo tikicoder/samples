@@ -1,0 +1,367 @@
+---
+description: Help manage services on EC2 Instance
+schemaVersion: '0.3'
+parameters:
+  instanceids:
+    type: StringList
+    default: []
+    description: >-
+      The instanceids to run the script against (max 45)
+  oslimit:
+    type: StringList
+    default: []
+  servicename:
+    type: String
+    default: ''
+    description: >-
+      The name of the service
+  serviceaction:
+    type: String
+    default: 'stop'
+    description: >-
+      The action to take on the service stop/start
+  setstartup:
+    type: String
+    default: ""
+    description: >-
+      Set 
+mainSteps:
+  - name: GetInstance
+    action: aws:executeAwsApi
+    inputs:
+      Service: ssm
+      Api: DescribeInstanceInformation
+      Filters:
+      - Key: InstanceIds
+        Values:
+          - '{{ instanceids }}'
+    outputs:
+      - Name: instanceInformationList
+        Selector: $.InstanceInformationList
+        Type: MapList
+  - name: setupData
+    action: 'aws:executeScript'
+    onFailure: Abort
+    inputs:
+      Runtime: PowerShell Core 6.0
+      InputPayload:
+        instances_data: '{{ GetInstance.instanceInformationList }}'
+        instanceids: '{{ instanceids }}'
+        oslimit: '{{ oslimit }}'
+        servicename: '{{ servicename }}'
+        serviceaction: '{{ serviceaction }}'
+        setstartup: '{{ setstartup }}'
+      Script: |
+        function main {
+          $inputPayload = $($env:InputPayload | ConvertFrom-Json)
+          $all_instanceids = $inputPayload.instanceids
+          $oslimit = $inputPayload.oslimit
+          
+          $baseapiurl = $inputPayload.baseapiurl
+          $servicename = $inputPayload.servicename
+
+          $serviceaction = validate_serviceaction -serviceaction $inputPayload.serviceaction
+          $setstartup = validate_setstartup -setstartup $inputPayload.setstartup
+
+          $processed_instances_data =  $(get_instances -instances_data $inputPayload.instances_data -oslimit $oslimit -all_instanceids $all_instanceids) 
+          return @{
+            processed_instances_data =  $processed_instances_data   
+            servicename = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($inputPayload.servicename.Trim()))
+            serviceaction = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($serviceaction))
+            setstartup = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($setstartup.Trim()))
+          }
+            
+        }
+
+        function validate_setstartup($setstartup) {
+          $setstartupactions = @("disabled", "disable")
+
+          if ([string]::isNullorWhitespace($setstartup)){
+            return ""
+          }
+
+          if ( ($setstartupactions | Where-Object {$_ -ieq $setstartup.Trim()}).Count -gt 0){
+            if ( $setstartup -ieq "disable" ) {
+              $setstartup = "disabled"
+            }
+            return $setstartup.Trim().ToLower()
+          }
+
+          throw "The Service Action is not valid"
+        }
+
+        function validate_serviceaction($serviceaction) {
+          $serviceactions = @("stop", "start", "restart", "none")
+
+          if ([string]::isNullorWhitespace($setstartup)){
+            return ""
+          }
+
+          if ( ($serviceactions | Where-Object {$_ -eq $serviceaction.Trim()}).Count -gt 0){
+            return $serviceaction.Trim().ToLower()
+          }
+
+          throw "The Service Action is not valid"
+        }
+
+        function is_windows($str){
+          if([string]::isNullorWhitespace($str)){
+            return $false
+          }
+          
+          $str = $str.trim()
+          return ($str -ieq "Windows" -or $str -ieq "Window" -or $str -ieq "Win")
+          
+        }
+
+        function is_inx($str){
+          if([string]::isNullorWhitespace($str)){
+            return $false
+          }
+          
+          $str = $str.trim()
+          return ($str -ieq "Linux" -or $str -ieq "Unix" -or $str -ieq "inx")
+          
+        }
+
+        function get_instances($instances_data, $oslimit, $all_instanceids) {
+
+          $windows_instances = New-Object 'System.Collections.Generic.List[String]'
+          $linux_instances = New-Object 'System.Collections.Generic.List[String]'          
+
+          $processed_instances_data = New-Object 'System.Collections.Generic.Dictionary[[string],[string]]'
+          foreach ($instance in $instances_data){
+            $processed_instances_data.Add($instance.InstanceId, $instance.PlatformType )          
+          }
+
+          $get_windows_instances = ($oslimit.Count -lt 1 -or ($oslimit | `
+            Where-Object {(is_windows -str $_) } `
+          ).Count -gt 0)
+
+          $get_linux_instances = ($oslimit.Count -lt 1 -or ($oslimit | `
+            Where-Object {(is_inx -str $_) } `
+          ).Count -gt 0)
+          
+          foreach ($instance_id in $processed_instances_data.keys)
+          {
+            if ($processed_instances_data[$instance_id] -eq "Windows"){
+              if($get_windows_instances){
+                $windows_instances.Add($instance_id)
+              }
+              
+              continue
+            }
+
+            if ($processed_instances_data[$instance_id] -eq "Linux"){
+              if($get_linux_instances){
+                $linux_instances.Add($instance_id)
+              }
+              continue
+            }
+            
+          }
+
+          $unknown_instances = ($all_instanceids | Where-Object { -not ($processed_instances_data.keys -icontains $_) })   
+          if ($unknown_instances -eq $null){
+            $unknown_instances = New-Object 'System.Collections.Generic.List[String]' 
+          }
+          else {
+             $unknown_instances = [System.Collections.Generic.List[String]]$unknown_instances
+          }
+          
+          return @{ 
+            windows_instances = $windows_instances
+            windows_instances_count = $windows_instances.Count
+            linux_instances =  $linux_instances
+            linux_instances_count = $linux_instances.Count
+            unknown_instances =  $unknown_instances
+            unknown_instances_count = $unknown_instances.Count
+          }
+        }
+        
+        main
+    outputs:
+      - Name: windows_instances
+        Selector: $.Payload.processed_instances_data.windows_instances
+        Type: StringList
+      - Name: windows_instances_count
+        Selector: $.Payload.processed_instances_data.windows_instances_count
+        Type: Integer
+      - Name: linux_instances
+        Selector: $.Payload.processed_instances_data.linux_instances
+        Type: StringList
+      - Name: linux_instances_count
+        Selector: $.Payload.processed_instances_data.linux_instances_count
+        Type: Integer
+      - Name: unknown_instances
+        Selector: $.Payload.processed_instances_data.unknown_instances
+        Type: StringList
+      - Name: unknown_instances_count
+        Selector: $.Payload.processed_instances_data.unknown_instances_count
+        Type: Integer
+      - Name: servicename
+        Selector: $.Payload.servicename
+        Type: String
+      - Name: serviceaction
+        Selector: $.Payload.serviceaction
+        Type: String
+      - Name: setstartup
+        Selector: $.Payload.setstartup
+        Type: String
+  - name: serviceLinuxCheck
+    action: aws:branch
+    inputs:
+      Choices:
+      - NextStep: serviceLinux
+        Variable: "{{ setupData.linux_instances_count }}"
+        NumericGreater: 0    
+      Default: serviceWindowsCheck 
+  - name: serviceLinux
+    action: "aws:runCommand"
+    onFailure: Continue 
+    isCritical: true
+    nextStep: serviceWindowsCheck
+    inputs: 
+      DocumentName: AWS-RunShellScript
+      InstanceIds:
+        - '{{ setupData.linux_instances }}'
+      Parameters: 
+        commands: |-
+          #!/bin/bash
+
+          echo "Pending"
+
+          exit 0
+
+          service_name=$(echo "{{ setupData.servicename }}" | base64 --decode)
+          service_action=$(echo "{{ setupData.serviceaction }}" | base64 --decode)
+          set_startup=$(echo "{{ setupData.setstartup }}" | base64 --decode)
+
+          service_command="systemctl"
+          if [ ! -n "$(command -v systemctl)" ]; then
+            service_command="service"
+          fi
+
+          if [ ! "${service_action}" -eq "none" ]; then
+            echo "runnng the following command ${service_action} on service ${service_name}"
+
+            if [ "${service_action}" -eq "restart" ]; then
+
+              sudo $service_command stop "${service_name}"
+              sudo $service_command start "${service_name}"
+
+            else
+              sudo $service_command $service_action "${service_name}"
+
+            fi
+          fi
+
+          if [ ! -z "${set_startup}" ]; then
+            if [ ! -n "$(command -v systemctl)" ]; then
+              echo "Unable to set start up type ${set_startup}"
+              exit 1
+            fi
+
+            echo "Setting the service ${service_name} startup to ${set_startup}"
+
+            if [ "${set_startup}" -eq "disabled" ]; then
+
+              sudo $service_command disable "${service_name}"
+
+            else
+              echo "Start up type (${set_startup}) not supported yet"
+              exit 1
+
+            fi
+          fi
+
+          
+
+  - name: serviceWindowsCheck
+    action: aws:branch
+    inputs:
+      Choices:
+      - NextStep: serviceWindows
+        Variable: "{{ setupData.windows_instances_count }}"
+        NumericGreater: 0  
+      Default:  instanceCheck
+  - name: serviceWindows
+    action: "aws:runCommand"
+    onFailure: Continue 
+    isCritical: true
+    inputs: 
+      DocumentName: AWS-RunPowerShellScript
+      InstanceIds:
+        - '{{ setupData.windows_instances }}'
+      Parameters: 
+        commands: |-
+          $serviceName = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{{ setupData.servicename }}"))
+          $serviceaction = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{{ setupData.serviceaction }}"))
+          $setstartup = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{{ setupData.setstartup }}"))
+
+          if ( $(Get-Service | Where-Object {$_.Name -eq "$serviceName"}).Length -lt 1 ){
+            Write-Host "No $serviceName Found"
+            throw "No $serviceName Found"
+            exit 1
+          }
+
+          Get-Service | Where-Object {$_.Name -eq "$serviceName"}
+          if ($serviceaction -eq "stop"){
+            Write-Host "Stoping Service"
+            Stop-Service -Name "$serviceName"
+          }
+          ElseIf ($serviceaction -eq "start"){
+            Write-Host "Starting Service"
+            Start-Service -Name "$serviceName"
+          }
+          ElseIf ($serviceaction -eq "restart"){
+            Write-Host "Stoping Service"
+            Stop-Service -Name "$serviceName"
+
+            Start-Sleep -s 3
+
+            Write-Host "Starting Service"
+            Start-Service -Name "$serviceName"
+          }
+
+          Get-Service | Where-Object {$_.Name -eq "$serviceName"}
+          
+          if ( -not [string]::IsNullOrWhiteSpace($setstartup) ){
+
+            if ( $setstartup -eq "disabled" ){
+              Write-Host "Disabling Service"
+              Set-Service -Name "$serviceName" -StartupType Disabled
+
+              Get-Service -Name "$serviceName" | select -property name,status,starttype
+              exit
+            }
+
+          }
+  - name: instanceCheck
+    action: 'aws:executeScript'
+    onFailure: Abort
+    inputs:
+      Runtime: PowerShell Core 6.0
+      InputPayload:
+        unknown_instances: '{{ setupData.unknown_instances }}'
+      Script: |
+        $inputPayload = $($env:InputPayload | ConvertFrom-Json)
+        $unknown_instances = $inputPayload.unknown_instances
+
+        if ($unknown_instances.Count -lt 1){
+          Write-Host "All instances processed"
+          exit
+        }
+
+        $unknown_instances
+        throw "Not all instances processed `r`nNot Processed Count: $($unknown_instances.Count) `r`n `r`n$($unknown_instances | Select-Object @{label="Instance ID";expression={"$_"}} | Out-String)"
+        
+        return @{
+          unknown_instances = $unknown_instances
+        }
+    outputs:
+      - Name: unknown_instances
+        Selector: $.setupData.unknown_instances
+        Type: StringList
+  
+

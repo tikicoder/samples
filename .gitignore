@@ -1,0 +1,6 @@
+# Byte-compiled / optimized / DLL files
+
+*:Zone.Identifier
+**/python/**/__pycache__/*
+**/config_override/*
+.cache

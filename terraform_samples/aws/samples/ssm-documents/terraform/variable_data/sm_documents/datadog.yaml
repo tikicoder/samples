@@ -1,0 +1,583 @@
+description: Install DataDog on EC2 Instance
+schemaVersion: '0.3'
+parameters:
+  instanceids:
+    type: StringList
+    default: []
+    description: The instanceids to run the script against (max 45)
+  oslimit:
+    type: StringList
+    default: []
+    description: limit the install to specific OSes
+  delaystart:
+    type: Boolean
+    default: false
+    description: If true will delay the service from starting (used for making an image)
+  apikey:
+    type: String
+    default: ''
+    description: The APIKEY for DATADOG
+mainSteps:
+  - name: GetInstance
+    action: 'aws:executeAwsApi'
+    onFailure: Abort
+    inputs:
+      Service: ssm
+      Api: DescribeInstanceInformation
+      Filters:
+        - Key: InstanceIds
+          Values:
+            - '{{ instanceids }}'
+    outputs:
+      - Name: instanceInformationList
+        Selector: $.InstanceInformationList
+        Type: MapList
+  - name: setupData
+    action: 'aws:executeScript'
+    onFailure: Abort
+    inputs:
+      Runtime: PowerShell Core 6.0
+      InputPayload:
+        instances_data: '{{ GetInstance.instanceInformationList }}'
+        instanceids: '{{ instanceids }}'
+        oslimit: '{{ oslimit }}'
+        delaystart: '{{ delaystart }}'
+        apikey: '{{ apikey }}'
+      Script: |
+        function main {
+          $inputPayload = $($env:InputPayload | ConvertFrom-Json)
+          $all_instanceids = $inputPayload.instanceids
+          $oslimit = $inputPayload.oslimit
+          $delaystart = $inputPayload.delaystart
+          
+          $apikey = $inputPayload.apikey
+
+          $processed_instances_data =  $(get_instances -instances_data $inputPayload.instances_data -oslimit $oslimit -all_instanceids $all_instanceids ) 
+
+
+          return @{
+            delaystart = ($delaystart -eq $True).ToString().ToLower()
+            processed_instances_data =  $processed_instances_data
+            apikey = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($apikey.Trim()))
+          }
+            
+        }
+
+        function is_windows($str){
+          if([string]::isNullorWhitespace($str)){
+            return $false
+          }
+          
+          $str = $str.trim()
+          return ($str -ieq "Windows" -or $str -ieq "Window" -or $str -ieq "Win")
+          
+        }
+
+        function is_inx($str){
+          if([string]::isNullorWhitespace($str)){
+            return $false
+          }
+          
+          $str = $str.trim()
+          return ($str -ieq "Linux" -or $str -ieq "Unix" -or $str -ieq "inx")
+          
+        }
+
+        function get_instances($instances_data, $oslimit, $all_instanceids) {
+
+          $windows_instances = New-Object 'System.Collections.Generic.List[String]'
+          $linux_instances = New-Object 'System.Collections.Generic.List[String]'          
+
+          $processed_instances_data = New-Object 'System.Collections.Generic.Dictionary[[string],[string]]'
+          foreach ($instance in $instances_data){
+            $processed_instances_data.Add($instance.InstanceId, $instance.PlatformType )          
+          }
+
+          $get_windows_instances = ($oslimit.Count -lt 1 -or ($oslimit | `
+            Where-Object {(is_windows -str $_) } `
+          ).Count -gt 0)
+
+          $get_linux_instances = ($oslimit.Count -lt 1 -or ($oslimit | `
+            Where-Object {(is_inx -str $_) } `
+          ).Count -gt 0)
+          
+          foreach ($instance_id in $processed_instances_data.keys)
+          {
+            if ($processed_instances_data[$instance_id] -eq "Windows"){
+              $windows_instances.Add($instance_id)
+              continue
+            }
+
+            if ($processed_instances_data[$instance_id] -eq "Linux"){
+              $linux_instances.Add($instance_id)
+              continue
+            }
+            
+          }
+
+          $unknown_instances = ($all_instanceids | Where-Object { -not ($processed_instances_data.keys -icontains $_) })   
+          if ($unknown_instances -eq $null){
+            $unknown_instances = New-Object 'System.Collections.Generic.List[String]' 
+          }
+          else {
+             $unknown_instances = [System.Collections.Generic.List[String]]$unknown_instances
+          }
+          
+          $return_data = @{ 
+            windows_instances = $windows_instances
+            windows_instances_count = 0
+            linux_instances =  $linux_instances
+            linux_instances_count = 0
+            unknown_instances =  $unknown_instances
+            unknown_instances_count = $unknown_instances.Count
+          }
+
+          if ($get_windows_instances){
+            $return_data["windows_instances_count"] = $windows_instances.Count
+          }
+
+          if ($get_linux_instances){
+            $return_data["linux_instances_count"] = $linux_instances.Count
+          }
+
+          return $return_data
+        }
+        
+        main
+    outputs:
+      - Name: delaystart
+        Selector: $.Payload.delaystart
+      - Name: windows_instances
+        Selector: $.Payload.processed_instances_data.windows_instances
+        Type: StringList
+      - Name: windows_instances_count
+        Selector: $.Payload.processed_instances_data.windows_instances_count
+        Type: Integer
+      - Name: linux_instances
+        Selector: $.Payload.processed_instances_data.linux_instances
+        Type: StringList
+      - Name: linux_instances_count
+        Selector: $.Payload.processed_instances_data.linux_instances_count
+        Type: Integer
+      - Name: unknown_instances
+        Selector: $.Payload.processed_instances_data.unknown_instances
+        Type: StringList
+      - Name: unknown_instances_count
+        Selector: $.Payload.processed_instances_data.unknown_instances_count
+        Type: Integer
+      - Name: apikey
+        Selector: $.Payload.apikey
+        Type: String
+     
+  - name: installLinuxCheck
+    action: aws:branch
+    inputs:
+      Choices:
+      - NextStep: installLinux
+        Variable: "{{ setupData.linux_instances_count }}"
+        NumericGreater: 0    
+      Default: installWindowsCheck         
+  - name: installLinux
+    action: 'aws:runCommand' 
+    onFailure: Continue 
+    isCritical: true
+    nextStep: installLinuxDelayedCheck
+    inputs:
+      DocumentName: AWS-RunShellScript
+      InstanceIds:
+        - '{{ setupData.linux_instances }}'
+      Parameters:
+        commands: |-
+          #!/bin/bash
+
+          delaystart="{{ setupData.delaystart }}"
+          instanceid=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+          platform=""
+          full_version=""
+          version_id=""
+          processor_arch=""
+          installer="yum"
+          service_name="datadog-agent"
+          process_name="/opt/datadog-agent/bin/agent/agent"
+
+          error_installing () {
+            echo "${platform} ${version_id} Not Supported - $1"
+            exit 1
+          }
+
+          delay_start_notsupported () {   
+            error_installing "Delay Start is not supported on ${platform} ${full_version} - ${instanceid}"
+            exit 1
+          }
+
+          set_platform_info () {      
+            platform=$(cat /etc/os-release | grep "^NAME=" | head -n1 | awk -F= '{print $2}' | sed -e 's/^"//' -e 's/"$//')
+            full_version=$(cat /etc/os-release | grep "^VERSION_ID=" | head -n1 | awk -F= '{print $2}' | sed -e 's/^"//' -e 's/"$//')
+            version_id=$full_version
+            
+            if [ -f "/etc/system-release" ]; then
+              systemRelease=$(cat /etc/system-release | awk '{print tolower($0)}')
+              if [[ "${systemRelease}" == amazon\ linux\ ami\ release\ * ]]; then
+                platform="Amazon Linux"  
+                version_id="1"
+
+                if [ "${delaystart}" == "true" ]; then
+                  delay_start_notsupported
+                  exit 1
+                fi
+              fi
+            fi
+
+            processor_arch="64"
+            if [[ "$(uname -m)" != x86_* ]]; then
+              processor_arch="arm"
+            fi
+
+            if [ "${platform}" == "Amazon Linux"  ]; then
+              if [ "${version_id}" == "2" ]; then
+                if [ "${processor_arch}" == "arm" ]; then
+                  version_id="${version_id} - arm64"
+                fi
+              else
+                version_id="1"
+              fi
+            
+            elif [ "${platform}" == "Ubuntu" ]; then
+              version_id=$(echo $version_id | awk -F. '{print $1}')
+              if [ $version_id -lt 14 ]; then
+                error_installing "Not Supported - error"
+                exit 1
+              elif [  $version_id -lt 16  ]; then
+                # there is a bug in dpkg and ensuring it is the latest helps to fix that
+                sudo apt-get clean
+                sudo apt-get update
+                sudo apt-get install dpkg
+              fi
+
+              if [ "${delaystart}" == "true" ] && [ $version_id -lt 16 ]; then                
+                  delay_start_notsupported
+                  exit 1
+              fi
+
+              installer="apt"
+
+            fi
+
+            echo "platform: ${platform}"
+            echo "version_id: ${version_id}"
+            echo "processor_arch: ${processor_arch}"
+            echo "installer: ${installer}"
+          }
+
+          if [ -f "/opt/datadog-agent/bin/agent/agent" ]; then
+            if [ $(sudo ps -ef | grep -c "$process_name") -gt 0 ]; then
+             echo "DataDog already installed"
+             exit
+            fi
+            
+            if [ -n "$(command -v systemctl)" ]; then
+              sudo systemctl start "${service_name}"
+            else
+              sudo service "${service_name}" start 
+            fi
+            
+            if [ $(sudo ps -e | grep -c "$process_name") -gt 0 ]; then
+             echo "DataDog already installed"
+             exit
+            fi
+            
+            error_installing "DataDog installed but not running"
+            exit 1
+
+          fi
+
+          set_platform_info
+
+          echo "pending install"
+          datadog_apikey=$(echo "{{ setupData.apikey }}" | base64 --decode)
+
+          agent_download_url="https://s3.amazonaws.com/dd-agent/scripts/install_script.sh"
+          DD_SITE="datadoghq.com"
+          DD_AGENT_MAJOR_VERSION="7"
+
+          if [ "${delaystart}" == "true" ]; then                
+              DD_AGENT_MAJOR_VERSION="${DD_AGENT_MAJOR_VERSION}" DD_API_KEY="${datadog_apikey}" DD_SITE="${DD_SITE}" DD_INSTALL_ONLY=true bash -c "$(curl -L ${agent_download_url})"
+              sudo systemctl disable "${service_name}"
+              echo "Datadog installed but delayed start"
+              exit
+          else
+            DD_AGENT_MAJOR_VERSION="${DD_AGENT_MAJOR_VERSION}" DD_API_KEY="${datadog_apikey}" DD_SITE="${DD_SITE}" bash -c "$(curl -L ${agent_download_url})"
+          fi
+
+          
+
+          if [ $(sudo ps -e | grep -c "$process_name") -lt 1 ]; then
+            if [ -n "$(command -v systemctl)" ]; then
+              sudo systemctl start "${service_name}"
+            else
+              sudo service $service_name start
+            fi
+            if [ $? -gt 0 ]; then
+              error_installing "Not Supported - could not start DataDog"
+              exit 1
+            fi
+          fi
+
+          if [ $(sudo ps -ef | grep -c "$process_name") -lt 1 ]; then
+            error_installing "DataDog service not started"
+            exit 1
+          fi
+
+          rm -Rf $tmp_download_dir
+          echo "DataDog installed"
+          exit 0
+  - name: installLinuxDelayedCheck
+    action: aws:branch
+    inputs:
+      Choices:
+      - NextStep: installLinuxDelayed
+        Variable: "{{ setupData.delaystart }}"
+        StringEquals: "true"
+      Default: installWindowsCheck         
+  - name: installLinuxDelayed
+    action: 'aws:runCommand' 
+    onFailure: Continue 
+    isCritical: true
+    inputs:
+      DocumentName: AWS-RunShellScript
+      InstanceIds:
+        - '{{ setupData.linux_instances }}'
+      Parameters:
+        commands: |-
+          #!/bin/bash
+          
+          componentname="ThreatStack"
+          scriptname="Custom${componentname}Init"
+          
+          service_name="datadog-agent"
+          
+          deploykey=$(echo "{{ setupData.deploykey }}" | base64 --decode)
+          ruleset=$(echo "{{ setupData.ruleset_linux_encode }}" | base64 --decode)
+
+          cat > "/usr/bin/${scriptname}.service" << EOF
+          [Unit]
+          Description=Init $componentname on new system
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/bin/${scriptname}
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          cat > "/usr/bin/${scriptname}" << EOF
+          #!/bin/bash
+          
+          sudo systemctl enable $service_name
+          sudo systemctl start $service_name
+
+          sudo systemctl disable $scriptname
+          sudo rm -f /etc/systemd/system/${scriptname}.service
+          sudo rm -- "$0"
+
+          EOF
+
+          sudo chmod 755 "/usr/bin/${scriptname}"
+          sudo chown root:root "/usr/bin/${scriptname}"
+          sudo chown root:root "/etc/systemd/system/${scriptname}.service"
+
+          sudo systemctl enable $scriptname
+
+  - name: installWindowsCheck
+    action: aws:branch
+    inputs:
+      Choices:
+      - NextStep: installWindows
+        Variable: "{{ setupData.windows_instances_count }}"
+        NumericGreater: 0  
+      Default: instanceCheckPreProcess  
+  - name: installWindows
+    action: 'aws:runCommand'    
+    onFailure: Continue 
+    isCritical: true
+    inputs:
+      DocumentName: AWS-RunPowerShellScript
+      InstanceIds:
+        - '{{ setupData.windows_instances }}'
+      Parameters:
+        commands: |-
+          $ErrorActionPreference = "Stop" # This is to ensure the script stops on first error
+
+          $delaystart=$("{{ setupData.delaystart }}" -ieq "true")
+          if ($delaystart -eq $True){
+            Write-Host "DataDog delay start is not supported - will be ran normal"
+          }
+
+          function set_tls_version {
+            # https://docs.microsoft.com/en-us/dotnet/api/system.net.securityprotocoltype?view=net-5.0
+            $Tls12 = 3072
+            $Tls13 = 12288
+
+            if ($([enum]::getvalues([Net.SecurityProtocolType]) | Select-String -Pattern Tls13).Matches.Count -gt 0){
+              [Net.ServicePointManager]::SecurityProtocol = $($Tls12 -bor $Tls13)
+              return
+            }
+
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            
+          }
+
+          $service_name = "DatadogAgent"
+          $agentMissing = ((Get-Service | Where-Object {$_.Name -eq $service_name}).Count -lt 1)
+
+          if ( -not $agentMissing ) {
+            if( (Get-Service -Name $service_name).Status -ieq "running" ){
+              Write-Host "DataDog already installed"
+              if ($delaystart -eq $True){
+                throw "DataDog does not support delay start in windows: https://docs.datadoghq.com/agent/basic_agent_usage/windows/?tab=gui#command-line"
+                exit 1
+              }
+              exit
+            }
+
+            if ($delaystart -eq $True){
+              Write-Host "DataDog already installed. The service is stopped, once the service is started it will attempt to register."
+              exit
+            }
+
+            Write-Host "Starting Service"
+            Start-Service -Name $service_name
+            if( (Get-Service -Name $service_name).Status -ieq "running" ){
+              Write-Host "DataDog already installed"
+              exit
+            }
+
+            throw "DataDog already installed but not started"
+            exit 1
+
+          }
+
+          Write-Host "pending install"
+
+          $agent_name = "datadog-agent-7-latest.amd64.msi"
+          $agent_download_url = "https://s3.amazonaws.com/ddagent-windows-stable/datadog-agent-7-latest.amd64.msi"
+
+
+          $datadog_apikey = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{{ setupData.apikey }}"))
+          
+
+          $tmp_download_dir = New-Item -ItemType Directory -Path (Join-Path "$([System.IO.Path]::GetTempPath())" "$([System.Guid]::NewGuid())")
+          $tmp_installer_path = $(Join-Path "$($tmp_download_dir.FullName)" $agent_name)
+
+          $tmp_installerlog_path = $(Join-Path "$($tmp_download_dir.FullName)" "insight_agent_install_log.log")
+
+          Write-Host "tmp_download_dir: $($tmp_download_dir)"
+          Write-Host "tmp_installer_path: $($tmp_installer_path)"
+
+          try {
+            Invoke-WebRequest -Uri "$($agent_download_url)" `
+              -UseBasicParsing `
+              -OutFile $tmp_installer_path `
+              -Method Get 
+            }
+            catch {
+              set_tls_version
+              Invoke-WebRequest -Uri "$($agent_download_url)" `
+                -UseBasicParsing `
+                -OutFile $tmp_installer_path `
+                -Method Get 
+            }
+          $start_process_argumentlist = @("/qn", "/I `"$tmp_installer_path`"", `
+            "SITE=`"datadoghq.com`"" ,`
+            "APIKEY=`"$datadog_apikey`"", `
+            "REBOOT=ReallySuppress" `
+          )
+          Start-Process msiexec.exe `
+          -ArgumentList $start_process_argumentlist `
+          -wait
+
+          $agentMissing = ((Get-Service | Where-Object {$_.Name -eq $service_name}).Count -lt 1)
+
+          Start-Sleep -s 10
+
+          if ( $agentMissing ) {
+            Write-Host "Agent not listed in services please check install log"
+
+            Write-Host "tmp_download_dir: $($tmp_download_dir)"
+            Write-Host "tmp_installer_path: $($tmp_installer_path)"
+
+            throw "Agent not listed in services please check install log"
+            exit 1
+
+          }
+          
+
+          Remove-Item $tmp_download_dir.FullName -Recurse
+
+          Write-Host "Installed"
+  - name: instanceCheckPreProcess
+    action: 'aws:executeScript'
+    onFailure: Abort
+    inputs:
+      Runtime: PowerShell Core 6.0
+      InputPayload:
+        unknown_instances: '{{ setupData.unknown_instances }}'        
+        linux_instances: '{{ setupData.linux_instances }}'
+        windows_instances: '{{ setupData.windows_instances }}'
+        all_instance_ids: '{{ instanceids }}'
+
+      Script: |
+        $inputPayload = $($env:InputPayload | ConvertFrom-Json)
+        $unknown_instances = [System.Collections.Generic.List[String]]$inputPayload.unknown_instances
+        $linux_instances = $inputPayload.linux_instances
+        $windows_instances = $inputPayload.windows_instances
+        $all_instance_ids = $inputPayload.all_instance_ids
+
+        foreach ($instance_id in $all_instance_ids){
+          if ( $linux_instances -icontains $instance_id -or $windows_instances -icontains $instance_id ){
+            continue
+          }
+
+          if ( $unknown_instances -icontains $instance_id ){
+            continue
+          }
+
+          $unknown_instances.Add($instance_id)
+
+        }
+        
+        return @{
+          unknown_instances = $unknown_instances
+        }
+    outputs:
+      - Name: unknown_instances
+        Selector: $.Payload.unknown_instances
+        Type: StringList
+  - name: instanceCheck
+    action: 'aws:executeScript'
+    onFailure: Abort
+    inputs:
+      Runtime: PowerShell Core 6.0
+      InputPayload:
+        unknown_instances: '{{ instanceCheckPreProcess.unknown_instances }}'        
+
+      Script: |
+        $inputPayload = $($env:InputPayload | ConvertFrom-Json)
+        $unknown_instances = $inputPayload.unknown_instances
+
+        if ($unknown_instances.Count -lt 1){
+          Write-Host "All instances processed"
+          exit
+        }
+
+        $unknown_instances
+        throw "Not all instances processed `r`nNot Processed Count: $($unknown_instances.Count) `r`n `r`n$($unknown_instances | Select-Object @{label="Instance ID";expression={"$_"}} | Out-String)"
+        
+        return @{
+          unknown_instances = $unknown_instances
+        }
+    outputs:
+      - Name: unknown_instances
+        Selector: $.setupData.unknown_instances
+        Type: StringList

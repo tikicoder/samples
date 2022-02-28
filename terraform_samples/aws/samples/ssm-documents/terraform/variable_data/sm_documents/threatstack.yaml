@@ -1,0 +1,757 @@
+description: Install Threatstack on EC2 Instance
+schemaVersion: '0.3'
+parameters:
+  instanceids:
+    type: StringList
+    default: []
+    description: The instanceids to run the script against (max 45)
+  oslimit:
+    type: StringList
+    default: []
+    description: limit the install to specific OSes
+  delaystart:
+    type: Boolean
+    default: false
+    description: If true will delay the service from starting (used for making an image)
+  deploykey:
+    type: String
+    default: ''
+    description: The deploy key needed for threatstack
+  rulesets:
+    type: StringMap
+    default: {}
+    description: The rule set to default threatstack to 
+mainSteps:
+  - name: GetInstance
+    action: 'aws:executeAwsApi'
+    onFailure: Abort
+    inputs:
+      Service: ssm
+      Api: DescribeInstanceInformation
+      Filters:
+        - Key: InstanceIds
+          Values:
+            - '{{ instanceids }}'
+    outputs:
+      - Name: instanceInformationList
+        Selector: $.InstanceInformationList
+        Type: MapList
+  - name: setupData
+    action: 'aws:executeScript'
+    onFailure: Abort
+    inputs:
+      Runtime: PowerShell Core 6.0
+      InputPayload:
+        instances_data: '{{ GetInstance.instanceInformationList }}'
+        instanceids: '{{ instanceids }}'
+        oslimit: '{{ oslimit }}'
+        delaystart: '{{ delaystart }}'
+        deploykey: '{{ deploykey }}'
+        rulesets: '{{ rulesets }}'
+      Script: |
+        function main {
+          $inputPayload = $($env:InputPayload | ConvertFrom-Json)
+          $all_instanceids = $inputPayload.instanceids
+          $oslimit = $inputPayload.oslimit
+          $delaystart = $inputPayload.delaystart
+          
+          $deploykey = $inputPayload.deploykey
+          $rulesets = $inputPayload.rulesets
+          
+          
+          $processed_instances_data =  $(get_instances -instances_data $inputPayload.instances_data -oslimit $oslimit -all_instanceids $all_instanceids ) 
+          $process_rulesets_data =  $(process_rulesets -rulesets $rulesets -processed_instances_data $processed_instances_data) 
+
+
+          return @{
+            delaystart = ($delaystart -eq $True).ToString().ToLower()
+            processed_instances_data =  $processed_instances_data
+            process_rulesets_data = $process_rulesets_data
+            deploykey = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($deploykey.Trim()))
+          }
+            
+        }
+
+        function process_rulesets($rulesets, $processed_instances_data) {
+          $return_data = @{
+            windows =""
+            linux = ""
+            windows_encode = "Cg=="
+            linux_encode = "Cg=="
+
+            windows_instances = New-Object 'System.Collections.Generic.Dictionary[[string],[string]]'
+            linux_instances = New-Object 'System.Collections.Generic.Dictionary[[string],[string]]'
+
+          }
+
+          $rulesets_keys = ($rulesets.psobject.properties | Sort-Object -Property Name | Select-Object -Property Name)
+
+          foreach ($rulekey in $rulesets_keys){
+            if ( ([string]::isNullorWhitespace($return_data["windows"])) -and (is_windows -str $rulekey.Name)){
+              $return_data["windows"] = $rulesets."$($rulekey.Name)"
+              continue
+            }
+
+            if ( ([string]::isNullorWhitespace($return_data["linux"])) -and (is_inx -str $rulekey.Name)){
+              $return_data["linux"] = $rulesets."$($rulekey.Name)"
+              continue
+            }
+
+            if ( (-not [string]::isNullorWhitespace($return_data["linux"])) -and (-not [string]::isNullorWhitespace($return_data["windows"]))){
+              break
+            }
+          }
+
+          if ( -not [string]::isNullorWhitespace($return_data["windows"])){
+            $return_data["windows_encode"] = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($return_data["windows"]))
+          }
+          if ( -not [string]::isNullorWhitespace($return_data["linux"])){
+            $return_data["linux_encode"] = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($return_data["linux"]))
+          }
+          
+
+
+          foreach ($rulekey in $rulesets_keys){
+            
+            if ( $processed_instances_data.linux_instances -icontains $rulekey.Name ){
+              $return_data["linux_instances"].add($rulekey.Name.ToLower(), $rulesets."$($rulekey.Name)")
+              continue
+            }
+
+            if ( $processed_instances_data.windows_instances -icontains $rulekey.Name ){
+              $return_data["windows_instances"].add($rulekey.Name.ToLower(), $rulesets."$($rulekey.Name)")
+              continue
+            }
+
+          }
+
+          $return_data["linux_instances_encoded"] = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes(($return_data["linux_instances"] | ConvertTo-JSON -compress)))
+          $return_data["windows_instances_encoded"] = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes(($return_data["windows_instances"] | ConvertTo-JSON -compress)))
+
+          return $return_data
+
+        }
+
+        function is_windows($str){
+          if([string]::isNullorWhitespace($str)){
+            return $false
+          }
+          
+          $str = $str.trim()
+          return ($str -ieq "Windows" -or $str -ieq "Window" -or $str -ieq "Win")
+          
+        }
+
+        function is_inx($str){
+          if([string]::isNullorWhitespace($str)){
+            return $false
+          }
+          
+          $str = $str.trim()
+          return ($str -ieq "Linux" -or $str -ieq "Unix" -or $str -ieq "inx")
+          
+        }
+
+        function get_instances($instances_data, $oslimit, $all_instanceids) {
+
+          $windows_instances = New-Object 'System.Collections.Generic.List[String]'
+          $linux_instances = New-Object 'System.Collections.Generic.List[String]'          
+
+          $processed_instances_data = New-Object 'System.Collections.Generic.Dictionary[[string],[string]]'
+          foreach ($instance in $instances_data){
+            $processed_instances_data.Add($instance.InstanceId, $instance.PlatformType )          
+          }
+
+          $get_windows_instances = ($oslimit.Count -lt 1 -or ($oslimit | `
+            Where-Object {(is_windows -str $_) } `
+          ).Count -gt 0)
+
+          $get_linux_instances = ($oslimit.Count -lt 1 -or ($oslimit | `
+            Where-Object {(is_inx -str $_) } `
+          ).Count -gt 0)
+          
+          foreach ($instance_id in $processed_instances_data.keys)
+          {
+            if ($processed_instances_data[$instance_id] -eq "Windows"){
+              $windows_instances.Add($instance_id)
+              continue
+            }
+
+            if ($processed_instances_data[$instance_id] -eq "Linux"){
+              $linux_instances.Add($instance_id)
+              continue
+            }
+            
+          }
+
+          $unknown_instances = ($all_instanceids | Where-Object { -not ($processed_instances_data.keys -icontains $_) })   
+          if ($unknown_instances -eq $null){
+            $unknown_instances = New-Object 'System.Collections.Generic.List[String]' 
+          }
+          else {
+             $unknown_instances = [System.Collections.Generic.List[String]]$unknown_instances
+          }
+          
+          $return_data = @{ 
+            windows_instances = $windows_instances
+            windows_instances_count = 0
+            linux_instances =  $linux_instances
+            linux_instances_count = 0
+            unknown_instances =  $unknown_instances
+            unknown_instances_count = $unknown_instances.Count
+          }
+
+          if ($get_windows_instances){
+            $return_data["windows_instances_count"] = $windows_instances.Count
+          }
+
+          if ($get_linux_instances){
+            $return_data["linux_instances_count"] = $linux_instances.Count
+          }
+
+          return $return_data
+        }
+        
+        main
+    outputs:
+      - Name: delaystart
+        Selector: $.Payload.delaystart
+      - Name: windows_instances
+        Selector: $.Payload.processed_instances_data.windows_instances
+        Type: StringList
+      - Name: windows_instances_count
+        Selector: $.Payload.processed_instances_data.windows_instances_count
+        Type: Integer
+      - Name: linux_instances
+        Selector: $.Payload.processed_instances_data.linux_instances
+        Type: StringList
+      - Name: linux_instances_count
+        Selector: $.Payload.processed_instances_data.linux_instances_count
+        Type: Integer
+      - Name: unknown_instances
+        Selector: $.Payload.processed_instances_data.unknown_instances
+        Type: StringList
+      - Name: unknown_instances_count
+        Selector: $.Payload.processed_instances_data.unknown_instances_count
+        Type: Integer
+      - Name: deploykey
+        Selector: $.Payload.deploykey
+        Type: String
+      - Name: ruleset_windows
+        Selector: $.Payload.process_rulesets_data.windows
+        Type: String
+      - Name: ruleset_linux
+        Selector: $.Payload.process_rulesets_data.linux
+        Type: String
+      - Name: ruleset_windows_encode
+        Selector: $.Payload.process_rulesets_data.windows_encode
+        Type: String
+      - Name: ruleset_linux_encode
+        Selector: $.Payload.process_rulesets_data.linux_encode
+        Type: String
+      - Name: windows_instances_rulesets
+        Selector: $.Payload.process_rulesets_data.windows_instances
+        Type: StringMap
+      - Name: linux_instances_rulesetss
+        Selector: $.Payload.process_rulesets_data.linux_instances
+        Type: StringMap
+      - Name: windows_instances_rulesets_encoded
+        Selector: $.Payload.process_rulesets_data.windows_instances_encoded
+        Type: String
+      - Name: linux_instances_rulesets_encoded
+        Selector: $.Payload.process_rulesets_data.linux_instances_encoded
+        Type: String
+  - name: installLinuxCheck
+    action: aws:branch
+    inputs:
+      Choices:
+      - NextStep: installLinux
+        Variable: "{{ setupData.linux_instances_count }}"
+        NumericGreater: 0    
+      Default: installWindowsCheck         
+  - name: installLinux
+    action: 'aws:runCommand' 
+    onFailure: Continue 
+    isCritical: true
+    nextStep: installLinuxDelayedCheck
+    inputs:
+      DocumentName: AWS-RunShellScript
+      InstanceIds:
+        - '{{ setupData.linux_instances }}'
+      Parameters:
+        commands: |-
+          #!/bin/bash
+
+          delaystart="{{ setupData.delaystart }}"
+          instanceid=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+          platform=""
+          full_version=""
+          version_id=""
+          processor_arch=""
+          installer="yum"
+          service_name="threatstack"
+          process_name="tsagentd"
+
+          error_installing () {
+            echo "${platform} ${version_id} Not Supported - $1"
+            exit 1
+          }
+
+          delay_start_notsupported () {   
+            error_installing "Delay Start is not supported on ${platform} ${full_version} - ${instanceid}"
+            exit 1
+          }
+
+          set_platform_info () {      
+            platform=$(cat /etc/os-release | grep "^NAME=" | head -n1 | awk -F= '{print $2}' | sed -e 's/^"//' -e 's/"$//')
+            full_version=$(cat /etc/os-release | grep "^VERSION_ID=" | head -n1 | awk -F= '{print $2}' | sed -e 's/^"//' -e 's/"$//')
+            version_id=$full_version
+            
+            if [ -f "/etc/system-release" ]; then
+              systemRelease=$(cat /etc/system-release | awk '{print tolower($0)}')
+              if [[ "${systemRelease}" == amazon\ linux\ ami\ release\ * ]]; then
+                platform="Amazon Linux"  
+                version_id="1"
+
+                if [ "${delaystart}" == "true" ]; then
+                  delay_start_notsupported
+                  exit 1
+                fi
+              fi
+            fi
+
+            processor_arch="64"
+            if [[ "$(uname -m)" != x86_* ]]; then
+              processor_arch="arm"
+            fi
+
+            if [ "${platform}" == "Amazon Linux"  ]; then
+              if [ "${version_id}" == "2" ]; then
+                if [ "${processor_arch}" == "arm" ]; then
+                  version_id="${version_id} - arm64"
+                fi
+              else
+                version_id="1"
+              fi
+            
+            elif [ "${platform}" == "Ubuntu" ]; then
+              version_id=$(echo $version_id | awk -F. '{print $1}')
+              if [ $version_id -lt 14 ]; then
+                error_installing "Not Supported - error"
+                exit 1
+              elif [  $version_id -lt 16  ]; then
+                # there is a bug in dpkg and ensuring it is the latest helps to fix that
+                sudo apt-get clean
+                sudo apt-get update
+                sudo apt-get install dpkg
+
+                service_name="cloudsight"
+                process_name="tsauditd"
+              fi
+
+              if [ "${delaystart}" == "true" ] && [ $version_id -lt 16 ]; then                
+                  delay_start_notsupported
+                  exit 1
+              fi
+
+              installer="apt"
+
+            fi
+
+            echo "platform: ${platform}"
+            echo "version_id: ${version_id}"
+            echo "processor_arch: ${processor_arch}"
+            echo "installer: ${installer}"
+          }
+
+          if [ "$(command -v tsagent )" ]; then
+            if [ $(sudo ps -e | grep -c "$process_name") -gt 0 ]; then            
+              if [ "${delaystart}" == "true" ]; then
+                error_installing "Set to delay start and Threatstack is running instance ${instanceid}"
+                exit 1
+              fi
+             echo "Threatstack already installed"
+             exit
+            fi            
+            if [ "${delaystart}" == "true" ]; then
+              echo "Threatstack installed but not running. Will not try to start because delay flag was set"
+              exit
+            fi
+            
+            if [ -n "$(command -v systemctl)" ]; then
+              sudo systemctl start "${service_name}"
+            else
+              sudo service "${service_name}" start 
+            fi
+            
+            if [ $(sudo ps -e | grep -c "$process_name") -gt 0 ]; then
+             echo "Threatstack already installed"
+             exit
+            fi
+            
+            error_installing "Threatstack installed but not running"
+            exit 1
+
+          fi
+
+          set_platform_info
+
+          echo "pending install"
+          deploykey=$(echo "{{ setupData.deploykey }}" | base64 --decode)
+          ruleset=$(echo "{{ setupData.ruleset_linux_encode }}" | base64 --decode)
+          linux_instances_rulesets=$(echo "{{ setupData.linux_instances_rulesets_encoded }}" | base64 --decode)
+          linux_instances_rulesets=$(echo $linux_instances_rulesets | sed -e 's/^{\s*//' -e 's/\s*}$//')
+          instance_id="$(curl -X GET "http://169.254.169.254/latest/meta-data/instance-id")"
+
+          echo "base ruleset: ${ruleset}"
+          has_instance_ruleset=$(echo $linux_instances_rulesets | awk -v instance_id=$instance_id -F"[,:]" '{for(i=1;i<=NF;i++){if($i~/'${instance_id}'\042/){print $i}}}' | grep -c "${instance_id}")
+          if [ $has_instance_ruleset -gt 0 ]; then
+            instance_ruleset=$(echo $linux_instances_rulesets | sed -e "s/.*${instance_id}\":\"//")
+            ruleset=$(echo $instance_ruleset | sed -e "s/\(\",\(.*\)\)*\(\"}\)$//")
+            echo "instance ruleset: ${ruleset}"
+          fi          
+
+          if [ -z "${ruleset}" ]; then
+            echo "No Ruleset to apply"
+          fi
+          tmp_download_dir="/tmp/$(date | base64 | sed -e 's/\(=\)*$//')" 
+          mkdir -p $tmp_download_dir
+
+          echo "tmp_download_dir: ${tmp_download_dir}"
+
+          if [ "${platform}" == "Amazon Linux"  ]; then
+            cat > "${tmp_download_dir}/threatstack.repo" << EOF
+          [threatstack]
+          name=Threat Stack Package Repository
+          baseurl=https://pkg.threatstack.com/v2/Amazon/${version_id}
+          enabled=1
+          gpgcheck=1
+          EOF
+            
+            sudo wget https://app.threatstack.com/RPM-GPG-KEY-THREATSTACK -O "${tmp_download_dir}/RPM-GPG-KEY-THREATSTACK"
+            
+            sudo mv -f "${tmp_download_dir}/threatstack.repo" /etc/yum.repos.d/threatstack.repo
+            sudo mv "${tmp_download_dir}/RPM-GPG-KEY-THREATSTACK" /etc/pki/rpm-gpg/RPM-GPG-KEY-THREATSTACK
+            
+            sudo rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-THREATSTACK
+
+            sudo yum install -y threatstack-agent 
+
+
+          elif [ "${platform}" == "Ubuntu" ]; then
+            curl https://app.threatstack.com/APT-GPG-KEY-THREATSTACK | sudo apt-key add -
+            
+            if [ "${version_id}" != "14" ]; then
+              echo "deb https://pkg.threatstack.com/v2/Ubuntu `lsb_release -c | cut -f2` main" | sudo tee /etc/apt/sources.list.d/threatstack.list > /dev/null
+            else
+              echo "deb https://pkg.threatstack.com/Ubuntu `lsb_release -c | cut -f2` main" | sudo tee /etc/apt/sources.list.d/threatstack.list > /dev/null
+
+            fi
+
+            sudo apt-get update && sudo apt-get install threatstack-agent -y
+          fi
+
+          if [ "${service_name}" == "threatstack" ]; then            
+            if [ "${delaystart}" == "true" ]; then
+              echo "Delay Start stoping agent setup"
+              systemctl disable "${service_name}"
+              exit
+            fi
+
+            if [ "$(command -v tsagent )" ]; then
+              sudo tsagent setup --deploy-key="${deploykey}" --ruleset="${ruleset}"
+            fi
+          
+          else
+            if [ "${delaystart}" == "true" ]; then
+              echo "cloudsight config"
+              delay_start_notsupported
+              exit 1
+            fi
+            sudo cloudsight setup --deploy-key="${deploykey}" --ruleset="${ruleset}" --agent_type=i
+          fi
+
+          if [ $(sudo ps -e | grep -c "$process_name") -lt 1 ]; then
+            if [ -n "$(command -v systemctl)" ]; then
+              sudo systemctl start "${service_name}"
+            else
+              sudo service $service_name start
+            fi
+
+            if [ $? -gt 0 ]; then
+              error_installing "Not Supported - could not start threatstack"
+              exit 1
+            fi
+          fi
+
+          if [ $(sudo ps -e | grep -c "$process_name") -lt 1 ]; then
+            error_installing "Threatstack service not started"
+            exit 1
+          fi
+
+          rm -Rf $tmp_download_dir
+          echo "Threatstack installed"
+          exit 0
+  - name: installLinuxDelayedCheck
+    action: aws:branch
+    inputs:
+      Choices:
+      - NextStep: installLinuxDelayed
+        Variable: "{{ setupData.delaystart }}"
+        StringEquals: "true"
+      Default: installWindowsCheck         
+  - name: installLinuxDelayed
+    action: 'aws:runCommand' 
+    onFailure: Continue 
+    isCritical: true
+    inputs:
+      DocumentName: AWS-RunShellScript
+      InstanceIds:
+        - '{{ setupData.linux_instances }}'
+      Parameters:
+        commands: |-
+          #!/bin/bash
+          
+          componentname="ThreatStack"
+          scriptname="Custom${componentname}Init"
+          
+          service_name="threatstack"
+          
+          deploykey=$(echo "{{ setupData.deploykey }}" | base64 --decode)
+          ruleset=$(echo "{{ setupData.ruleset_linux_encode }}" | base64 --decode)
+
+          cat > "/usr/bin/${scriptname}.service" << EOF
+          [Unit]
+          Description=Init $componentname on new system
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/bin/${scriptname}
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          cat > "/usr/bin/${scriptname}" << EOF
+          #!/bin/bash
+
+          sudo tsagent setup --deploy-key="${deploykey}" --ruleset="${ruleset}" --hostname=`hostname`
+          
+          sudo systemctl enable $service_name
+          sudo systemctl start $service_name
+
+          sudo systemctl disable $scriptname
+          sudo rm -f /etc/systemd/system/${scriptname}.service
+          sudo rm -- "$0"
+
+          EOF
+
+          sudo chmod 755 "/usr/bin/${scriptname}"
+          sudo chown root:root "/usr/bin/${scriptname}"
+          sudo chown root:root "/etc/systemd/system/${scriptname}.service"
+
+          sudo systemctl enable $scriptname
+
+  - name: installWindowsCheck
+    action: aws:branch
+    inputs:
+      Choices:
+      - NextStep: installWindows
+        Variable: "{{ setupData.windows_instances_count }}"
+        NumericGreater: 0  
+      Default: instanceCheckPreProcess  
+  - name: installWindows
+    action: 'aws:runCommand'    
+    onFailure: Continue 
+    isCritical: true
+    inputs:
+      DocumentName: AWS-RunPowerShellScript
+      InstanceIds:
+        - '{{ setupData.windows_instances }}'
+      Parameters:
+        commands: |-
+          $ErrorActionPreference = "Stop" # This is to ensure the script stops on first error
+
+          $delaystart=$("{{ setupData.delaystart }}" -ieq "true")
+          function set_tls_version {
+            # https://docs.microsoft.com/en-us/dotnet/api/system.net.securityprotocoltype?view=net-5.0
+            $Tls12 = 3072
+            $Tls13 = 12288
+
+            if ($([enum]::getvalues([Net.SecurityProtocolType]) | Select-String -Pattern Tls13).Matches.Count -gt 0){
+              [Net.ServicePointManager]::SecurityProtocol = $($Tls12 -bor $Tls13)
+              return
+            }
+
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            
+          }
+
+          $service_name = "Threat Stack Agent"
+          $agentMissing = ((Get-Service | Where-Object {$_.Name -eq $service_name}).Count -lt 1)
+
+          if ( -not $agentMissing ) {
+            if( (Get-Service -Name $service_name).Status -ieq "running" ){
+              if ($delaystart -eq $True){
+                throw "Threatstack is running. If this is for a base image need to remove the AID manuall or uninstall the service: https://threatstack.zendesk.com/hc/en-us/articles/360028693491"
+                exit 1
+              }
+              Write-Host "Threatstack already installed"
+              exit
+            }            
+
+            if ($delaystart -eq $True){
+              Write-Host "Threatstack already installed. The service is stopped, once the service is started it will attempt to register."
+              exit
+            }
+
+            Write-Host "Starting Service"
+            Start-Service -Name $service_name
+            if( (Get-Service -Name $service_name).Status -ieq "running" ){
+              Write-Host "Threatstack already installed"
+              exit
+            }
+
+            throw "Threatstack already installed but not started"
+            exit 1
+
+          }
+
+          Write-Host "pending install"
+
+          $agent_name = "threatstack_latest.msi"
+          $agent_download_url = "https://pkg.threatstack.com/v2/Windows/Threat+Stack+Cloud+Security+Agent.latest.msi"
+
+
+          $deploykey = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{{ setupData.deploykey }}"))
+          $ruleset = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{{ setupData.ruleset_windows_encode }}"))
+          $windows_instances_rulesets = ([System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{{ setupData.windows_instances_rulesets_encoded }}")) | ConvertFrom-JSON)
+          $instance_id=(Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/instance-id" `
+            -UseBasicParsing `
+            -Method Get `
+          ).Content
+
+          Write-Host "base ruleset: $ruleset"
+
+          if ( ($windows_instances_rulesets.psobject.properties | Where-Object { $_.Name -eq "$instance_id" } ).Count -gt 0  ){
+            $ruleset = $windows_instances_rulesets."$instance_id"
+            Write-Host "instance ruleset: $ruleset"
+          }
+
+          if ( [string]::isNullOrWhitespace($ruleset )){
+            Write-Host "No Ruleset to apply"
+          }
+
+
+          $tmp_download_dir = New-Item -ItemType Directory -Path (Join-Path "$([System.IO.Path]::GetTempPath())" "$([System.Guid]::NewGuid())")
+          $tmp_installer_path = $(Join-Path "$($tmp_download_dir.FullName)" $agent_name)
+
+          Write-Host "tmp_download_dir: $($tmp_download_dir)"
+          Write-Host "tmp_installer_path: $($tmp_installer_path)"
+
+          try {
+            Invoke-WebRequest -Uri "$($agent_download_url)" `
+              -UseBasicParsing `
+              -OutFile $tmp_installer_path `
+              -Method Get 
+            }
+            catch {
+              set_tls_version
+              Invoke-WebRequest -Uri "$($agent_download_url)" `
+                -UseBasicParsing `
+                -OutFile $tmp_installer_path `
+                -Method Get 
+            }
+          $start_process_argumentlist = @("/qn", "/I `"$tmp_installer_path`"", `
+            "TSDEPLOYKEY=`"$deploykey`"" , `
+            "TSRULESETNAMES=`"$ruleset`"" `
+          )          
+
+          if ($delaystart -eq $True){
+            $start_process_argumentlist = $start_process_argumentlist + "TSSTARTSERVICES=`"No`""
+          }
+          Start-Process msiexec.exe `
+          -ArgumentList $start_process_argumentlist `
+          -wait          
+
+          $agentMissing = ((Get-Service | Where-Object {$_.Name -eq $service_name}).Count -lt 1)
+
+          if ( $agentMissing ) {
+            Write-Host "Agent not listed in services please check install log"
+
+            Write-Host "tmp_download_dir: $($tmp_download_dir)"
+            Write-Host "tmp_installer_path: $($tmp_installer_path)"
+
+            throw "Agent not listed in services please check install log"
+            exit 1
+
+          }
+
+          Remove-Item $tmp_download_dir.FullName -Recurse
+
+          Write-Host "Installed"
+  - name: instanceCheckPreProcess
+    action: 'aws:executeScript'
+    onFailure: Abort
+    inputs:
+      Runtime: PowerShell Core 6.0
+      InputPayload:
+        unknown_instances: '{{ setupData.unknown_instances }}'        
+        linux_instances: '{{ setupData.linux_instances }}'
+        windows_instances: '{{ setupData.windows_instances }}'
+        all_instance_ids: '{{ instanceids }}'
+
+      Script: |
+        $inputPayload = $($env:InputPayload | ConvertFrom-Json)
+        $unknown_instances = [System.Collections.Generic.List[String]]$inputPayload.unknown_instances
+        $linux_instances = $inputPayload.linux_instances
+        $windows_instances = $inputPayload.windows_instances
+        $all_instance_ids = $inputPayload.all_instance_ids
+
+        foreach ($instance_id in $all_instance_ids){
+          if ( $linux_instances -icontains $instance_id -or $windows_instances -icontains $instance_id ){
+            continue
+          }
+
+          if ( $unknown_instances -icontains $instance_id ){
+            continue
+          }
+
+          $unknown_instances.Add($instance_id)
+
+        }
+        
+        return @{
+          unknown_instances = $unknown_instances
+        }
+    outputs:
+      - Name: unknown_instances
+        Selector: $.Payload.unknown_instances
+        Type: StringList
+  - name: instanceCheck
+    action: 'aws:executeScript'
+    onFailure: Abort
+    inputs:
+      Runtime: PowerShell Core 6.0
+      InputPayload:
+        unknown_instances: '{{ instanceCheckPreProcess.unknown_instances }}'        
+
+      Script: |
+        $inputPayload = $($env:InputPayload | ConvertFrom-Json)
+        $unknown_instances = $inputPayload.unknown_instances
+
+        if ($unknown_instances.Count -lt 1){
+          Write-Host "All instances processed"
+          exit
+        }
+
+        $unknown_instances
+        throw "Not all instances processed `r`nNot Processed Count: $($unknown_instances.Count) `r`n `r`n$($unknown_instances | Select-Object @{label="Instance ID";expression={"$_"}} | Out-String)"
+        
+        return @{
+          unknown_instances = $unknown_instances
+        }
+    outputs:
+      - Name: unknown_instances
+        Selector: $.setupData.unknown_instances
+        Type: StringList

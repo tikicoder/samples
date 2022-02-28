@@ -1,0 +1,9 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+.cache/
+
+.terraform/
+
+*.tfstate
+*.tfstate.backup
+*.lock.hcl

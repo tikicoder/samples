@@ -1,0 +1,367 @@
+name: Component-Initializer
+description: General Init for images
+schemaVersion: 1.0
+
+constants:
+  - TempDir:
+      type: string
+      value: /tmp/imageBuilder
+  - ComponentName:
+      type: string
+      value: Initializer
+  - ComponentFolder:
+      type: string
+      value: /
+  - ComponentAWSMetaUrl:
+      type: string
+      value: http://169.254.169.254/latest/meta-data
+  - ComponentFolderJQInstall:
+      type: string
+      value: jqInstall
+  - ComponentFolderCLIConfig:
+      type: string
+      value: cliConfig
+  - ComponentFolderCLIv1Remove:
+      type: string
+      value: cliV1Remove
+  - ComponentFolderEC2AuditEnable:
+      type: string
+      value: ec2AuditEnable
+
+phases:
+  - name: build
+    steps:
+      - name: Init
+        action: ExecuteBash
+        inputs:
+          commands:
+            - logger -i -t "AIMComponent-{{ ComponentName }}"  "Initializer"
+            - "[[ ! -d \"{{ TempDir }}{{ ComponentFolder }}\" ]] && sudo mkdir -p {{ TempDir }}{{ ComponentFolder }}"
+            - sudo chmod -R 777 {{ TempDir }}{{ ComponentFolder }}
+      
+      - name: CreateImageBuildingFile
+        action: CreateFile
+        inputs:
+          - path: '{{ TempDir }}{{ ComponentFolder }}imageBuildInProgress'
+            overwrite: true
+            content: |
+              imageBuildInProgress
+
+
+# Component JQ_Install
+      - name: InstallJQ
+        action: ExecuteBash
+        inputs:
+          commands:
+            - logger -i -t "AIMComponent-{{ ComponentName }}"  "JQ Install Script"
+
+      - name: InstallJQScript
+        action: CreateFile
+        inputs:
+          - path: '{{ TempDir }}{{ ComponentFolder }}{{ ComponentFolderJQInstall }}/{{ ComponentName }}Setup.sh'
+            overwrite: true
+            content: |
+              #!/bin/sh
+
+              if [ -n "$(command -v dnf)" ]; then 
+                sudo dnf -y install jq
+                exit
+              fi
+
+              if [ -n "$(command -v yum)" ]; then 
+                sudo yum -y install jq
+                exit
+              fi
+
+              if [ -n "$(command -v apt)" ]; then 
+                sudo apt -y install jq
+                exit
+              fi
+
+      - name: InstallJQScriptExecute
+        action: ExecuteBash
+        inputs:
+          commands:
+            - logger -i -t "AIMComponent-{{ ComponentName }}"  "Install JQ Script Execute"
+            - chmod 755 {{ TempDir }}{{ ComponentFolder }}{{ ComponentFolderJQInstall }}/{{ ComponentName }}Setup.sh
+            - "{{ TempDir }}{{ ComponentFolder }}/{{ ComponentName }}Setup.sh"
+            - "sudo rm -R {{ TempDir }}{{ ComponentFolder }}{{ ComponentFolderJQInstall }}/"
+
+
+# Component CLIConfigure
+      - name: CLIConfigure
+        action: ExecuteBash
+        inputs:
+          commands:
+            - logger -i -t "AIMComponent-{{ ComponentName }}"  "CLI Configure Install Script"
+      - name: DefaultAWSConfig
+        action: CreateFile
+        inputs:
+          - path: '{{ TempDir }}{{ ComponentFolder }}{{ ComponentFolderCLIConfig }}/default.config'
+            overwrite: true
+            content: |
+              [default]
+              credential_source = Ec2InstanceMetadata
+              output=json
+      
+      - name: CreateCLIConfigFile
+        action: CreateFile
+        inputs:
+          - path: '{{ TempDir }}{{ ComponentFolder }}{{ ComponentFolderCLIConfig }}/cliConfig.sh'
+            overwrite: true
+            content: |
+              #!/bin/sh
+
+              componentName=$1
+
+              if [ -z "${componentName}" ]; then
+                componentName="{{ ComponentName }}"
+              fi
+
+              logger -i -t "AIMComponent-${componentName}"  "Running Configure CLI"
+
+              if [ ! -n "$(command -v jq)" ]; then
+                echo "JQ Install required"
+                exit 1
+              fi
+
+              awsCLIFile="{{ TempDir }}{{ ComponentFolder }}{{ ComponentFolderCLIConfig }}/awsCLISecurity.txt"
+              
+              if [ ! -f "${awsCLIFile}" ]; then
+              
+                  iamRoleName=$(curl {{ ComponentAWSMetaUrl }}/iam/security-credentials/)
+                  securityInfo=$(curl {{ ComponentAWSMetaUrl }}/iam/security-credentials/$iamRoleName | jq -r "{\"id\":.AccessKeyId, \"key\":.SecretAccessKey, \"token\":.Token, \"region\": \"$(curl {{ ComponentAWSMetaUrl }}/placement/region)\"}")
+              
+                  echo $securityInfo | base64 > $awsCLIFile
+
+                  chmod 644 $awsCLIFile
+              
+              else
+                  securityInfo=$(cat $awsCLIFile | base64 -d)
+              fi
+
+              export AWS_ACCESS_KEY_ID=$(echo $securityInfo | jq -r ".id") 
+              export AWS_SECRET_ACCESS_KEY=$(echo $securityInfo | jq -r ".key") 
+              export AWS_SECURITY_TOKEN=$(echo $securityInfo | jq -r ".token") 
+              export AWS_DEFAULT_REGION=$(echo $securityInfo | jq -r ".region")
+      
+      - name: UpdatePermissionsCLIScript
+        action: ExecuteBash
+        inputs:
+          commands:
+            - chmod 755 {{ TempDir }}{{ ComponentFolder }}{{ ComponentFolderCLIConfig }}/cliConfig.sh
+
+
+# Component CLIv1Remove
+      - name: RemoveCLIv1
+        action: ExecuteBash
+        inputs:
+          commands:
+            - logger -i -t "AIMComponent-{{ ComponentName }}"  "CLI v1 Remove Script"
+
+      - name: RemoveCLIv1Script
+        action: CreateFile
+        inputs:
+          - path: '{{ TempDir }}{{ ComponentFolder }}{{ ComponentFolderCLIv1Remove }}/{{ ComponentName }}Setup.sh'
+            overwrite: true
+            content: |
+              #!/bin/sh
+
+              awsVersion=""
+              
+              if [ ! -n "$(command -v aws)" ]; then
+                echo "no aws cli installed"
+                exit;
+              fi
+
+              awsVersion=$(aws --version)
+
+              if [ -z "${awsVersion}" ]; then
+                awsVersion="1.0.0"
+              fi
+
+              if [[ $awsVersion != 1.* ]]; then
+                echo "Not aws cli version 1";
+                exit
+              fi
+
+
+              if [ -n "$(command -v dnf)" ]; then
+                sudo dnf remove -y awscli
+              elif [ -n "$(command -v yum)" ]; then
+                sudo yum remove -y awscli
+              else
+                sudo apt remove remove -y awscli
+              fi
+
+              [[ -f "/usr/bin/aws" ]] && sudo rm -rf /usr/bin/aws 
+              [[ -f "/usr/local/bin/aws" ]] && sudo rm -rf /usr/local/bin/aws
+              [[ -f "/usr/bin/aws_completer" ]] && sudo rm -rf /usr/bin/aws_completer
+
+              
+
+              if [ -n "$(command -v aws)" ]; then
+                echo "Could not remove CLI"
+                exit 1;
+              fi
+
+      - name: RemoveCLIv1ScriptExecute
+        action: ExecuteBash
+        inputs:
+          commands:
+            - logger -i -t "AIMComponent-{{ ComponentName }}"  "Remove CLI v1 Execute"
+            - chmod 755 {{ TempDir }}{{ ComponentFolder }}{{ ComponentFolderCLIv1Remove }}/{{ ComponentName }}Setup.sh
+            - "{{ TempDir }}{{ ComponentFolder }}{{ ComponentFolderCLIv1Remove }}/{{ ComponentName }}Setup.sh"
+            - "sudo rm -R {{ TempDir }}{{ ComponentFolder }}{{ ComponentFolderCLIv1Remove }}/"
+
+
+# Component EC2AuditEnable
+      - name: InstallEC2Audit
+        action: ExecuteBash
+        inputs:
+          commands:
+            - logger -i -t "AIMComponent-{{ ComponentName }}"  "Install EC2 Audit Script"
+
+      - name: InstallEC2AuditScript
+        action: CreateFile
+        inputs:
+          - path: '{{ TempDir }}{{ ComponentFolder }}{{ ComponentFolderEC2AuditEnable }}/{{ ComponentName }}Setup.sh'
+            overwrite: true
+            content: |
+              #!/bin/bash
+              
+              function InstallAudit() {
+                if [ -n "$(command -v auditd)" ]; then
+                  return
+                fi
+
+                if [ -n "$(command -v yum)" ]; then
+
+                  if [ -f "/etc/system-release" ]; then
+                    systemRelease=$(cat /etc/system-release | awk '{print tolower($0)}')
+                    if [[ "${systemRelease}" == amazon\ linux\ release\ 2* ]]; then
+                      sudo yum -y install audit 
+                      return
+                    elif [[ "${systemRelease}" == amazon\ linux\ ami\ release\ * ]]; then
+                      sudo yum -y install audit 
+                      return
+                    fi
+                
+                  elif [ -f /etc/redhat-release ] || [ -f "" ]; then
+                    sudo yum -y install audit 
+                    return
+
+                  elif [ -f /etc/SuSE-release ]; then
+                    sudo zypper -y install audit   
+                    return    
+                  
+                  elif [ -f "/etc/os-release" ]; then
+                    grepCount=$(grep -ic "amazon linux ami" /etc/os-release)
+                    if [  grepCount -gt 0 ]; then
+                      sudo yum -y install audit 
+                      return
+                    fi
+                  fi
+
+                  echo "Unknown OS please verify if supported"
+                  echo "https://aws.amazon.com/premiumsupport/knowledge-center/ec2-linux-track-changes/"
+                  exit 1;
+
+                fi
+
+
+              }
+
+              InstallAudit
+
+              . {{ TempDir }}/cliConfig/cliConfig.sh "{{ ComponentName }}"
+
+              auditRule=""
+
+              if [ -n "$(command -v yum)" ]; then
+
+                if [ -f "/etc/system-release" ]; then
+                  systemRelease=$(cat /etc/system-release | awk '{print tolower($0)}')
+                  if [[ "${systemRelease}" == amazon\ linux\ release\ 2* ]]; then
+                    auditRule=$(aws ssm get-parameter --name "/ec2ImageBuilder/EC2AuditEnable/AWSLinux2" | jq -r ".Parameter.Value")
+                  elif [[ "${systemRelease}" == amazon\ linux\ ami\ release\ * ]]; then
+                    auditRule=$(aws ssm get-parameter --name "/ec2ImageBuilder/EC2AuditEnable/AWSLinux1" | jq -r ".Parameter.Value")
+                  fi
+              
+                elif [ -f /etc/redhat-release ] || [ -f "" ]; then
+                  rhelID=$(cat /etc/redhat-release |awk '{print $1}')
+                  majversion=$(lsb_release -rs | cut -f1 -d.)
+                  
+                  if [ "${rhelID}" = "CentOS" ] || [ "${rhelID}" = "Red" ]; then
+                    if [ "${majversion}" != "6" ]; then
+                      auditRule=$(aws ssm get-parameter --name "/ec2ImageBuilder/EC2AuditEnable/AWSLinux2" | jq -r ".Parameter.Value")
+                    else
+                      auditRule=$(aws ssm get-parameter --name "/ec2ImageBuilder/EC2AuditEnable/AWSLinux1" | jq -r ".Parameter.Value")
+                    fi
+                  fi   
+
+                elif [ -f /etc/SuSE-release ]; then
+                  auditRule="" 
+                
+                elif [ -f "/etc/os-release" ]; then
+                  grepCount=$(grep -ic "amazon linux ami" /etc/os-release)
+                  if [  grepCount -gt 0 ]; then
+                    auditRule=$(aws ssm get-parameter --name "/ec2ImageBuilder/EC2AuditEnable/AWSLinux1" | jq -r ".Parameter.Value")
+                  fi
+                fi
+              fi
+
+              if [ -z "${auditRule}" ]; then              
+                echo "Unknown OS please verify if supported"
+                echo "https://aws.amazon.com/premiumsupport/knowledge-center/ec2-linux-track-changes/"
+                exit 1;
+              fi
+
+              auditRulesFile="/etc/audit/rules.d/audit.rules"
+              auditRulesFileExists=$(sudo bash -c "if [ -f $auditRulesFile ] ; then echo true; else echo false ; fi")
+
+              if [ "${auditRulesFileExists}" != "true" ]; then
+                auditRulesFile="/etc/audit/audit.rules"
+                auditRulesFileExists=$(sudo bash -c "if [ -f $auditRulesFile ] ; then echo true; else echo false ; fi")
+                if [ "${auditRulesFileExists}" != "true" ]; then
+                  echo "could not find audit rules"
+                  exit 1
+                fi
+              fi
+
+              if [ $(sudo grep -ic "Custom Rules" $auditRulesFile) -gt 0 ]; then
+                echo "Audit log contains \"Custom Rules\" appears to be configured"
+                exit
+              fi
+
+              sudo bash -c "echo \"\" >> ${auditRulesFile}"
+              sudo bash -c "echo \"Custom Rules\" >> ${auditRulesFile}"
+              sudo bash -c "echo -e \"${auditRule}\" >> ${auditRulesFile}"
+
+              sudo chkconfig auditd on
+              sudo service auditd restart &>/dev/null
+
+              echo "Setup & Config complete"
+
+      - name: InstallEC2AuditScriptExecute
+        action: ExecuteBash
+        inputs:
+          commands:
+            - logger -i -t "AIMComponent-{{ ComponentName }}"  "Install EC2 Audit Script Execute"
+            - chmod 755 {{ TempDir }}{{ ComponentFolder }}{{ ComponentFolderEC2AuditEnable }}/{{ ComponentName }}Setup.sh
+            - "{{ TempDir }}{{ ComponentFolder }}{{ ComponentFolderEC2AuditEnable }}/{{ ComponentName }}Setup.sh"
+            - sudo rm -R {{ TempDir }}{{ ComponentFolder }}{{ ComponentFolderEC2AuditEnable }}/
+
+      
+      
+
+      - name: cleanUp
+        action: ExecuteBash
+        inputs:
+          commands:
+            - sudo rm -R {{ TempDir }}
+
+            
+
+
+            
