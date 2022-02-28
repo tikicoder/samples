@@ -8,8 +8,6 @@ if ($(wsl -l | Where-Object {$_ -ieq $($general_defaults.main_distro) -or $_ -ie
   write-host "Opening $($general_defaults.main_distro) to Configure Once configured please type exit to go back to PowerShell"
   Start-Process $($general_defaults.main_distro) -Wait
   wsl --setdefault $($general_defaults.main_distro)
-  wsl -d $($general_defaults.main_distro) sudo apt update 
-  wsl -d $($general_defaults.main_distro) sudo apt upgrade -y
 }
 
 
