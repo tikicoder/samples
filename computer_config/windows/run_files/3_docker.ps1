@@ -47,7 +47,7 @@ $path_tiki_docker_desktop = $(Join-Path -Path $HOME -ChildPath "AppData\Local\Pa
 if ((Test-Path -Path $path_tiki_docker_desktop)) {
   Write-Host "There is an existing setup, please backup now if you want to keep - $path_tiki_docker_desktop"
   pause
-  if ($(wsl -l | Where-Object {$_ -ieq $($general_defaults.docker_distro)} | Measure-Object).Count -gt 0){
+  if ($(wsl -l | Where-Object {$_ -ieq $($general_defaults.docker_distro) -or $_ -ieq "$($general_defaults.docker_distro) (default)"} | Measure-Object).Count -gt 0){
     wsl --terminate $($general_defaults.docker_distro)
     wsl --unregister $($general_defaults.docker_distro)
   }
