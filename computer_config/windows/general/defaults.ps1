@@ -76,3 +76,4 @@ function Load-Settings(){
 $general_defaults = Load-Settings -path_to_settings $(Join-Path -Path $scriptPath_init_generalmain -ChildPath "defaults.json")
 $general_defaults.root_path = $(Join-Path -Path $scriptPath_init_generalmain -ChildPath "..\")
 $general_defaults.repo_root = $(Join-Path -Path $scriptPath_init_generalmain -ChildPath "..\..\..\")
+$general_defaults.main_distro = ""
