@@ -89,7 +89,7 @@ wsl -d $($general_defaults.docker_distro) -e sed -i '/sslverify/d' /etc/dnf/dnf.
 
 wsl -d $($general_defaults.docker_distro) -e sed -i '$a sslverify=0' /etc/dnf/dnf.conf
 
-wsl -d $($general_defaults.docker_distro) -e sed -i "/^\[automount\]$/a default=$newUsername" /etc/wsl.conf
+wsl -d $($general_defaults.docker_distro) -e sed -i "/^\[user\]$/a default=$newUsername" /etc/wsl.conf
 
 wsl -d $($general_defaults.docker_distro) yum update -y
 wsl -d $($general_defaults.docker_distro) yum install glibc-langpack-en -y
