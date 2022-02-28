@@ -163,4 +163,3 @@ dotnet tool install --global Clojure.Main
 
 popd
 
-rm -Rf $tmp_directory
