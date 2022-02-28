@@ -21,8 +21,6 @@ full_path=$(realpath $0)
 dir_path=$(dirname $full_path)
 parent_path=$(realpath "${dir_path}/../")
 
-source "${dir_path}/defaults.sh"
-
 user_name=$(whoami)
 user_home="${HOME}"
 user_aliases="${user_home}/.bash_aliases"
@@ -59,11 +57,11 @@ sudo cp  ./wsl.conf /etc/wsl.conf
 # apt install -y python3.9
 
 # Install genisoimage helpful for converting AWS Linux 2 to Azure
-sudo apt install genisoimage
+sudo apt install -y genisoimage
 
 # Docker Requirments
 # https://docs.docker.com/engine/install/ubuntu/
-sudo apt-get install \
+sudo apt-get -y install \
   ca-certificates \
   curl \
   gnupg \
@@ -80,10 +78,13 @@ echo \
 
 # Docker CLI
 sudo apt-get update
-sudo apt-get install docker-ce-cli
+sudo apt-get install -y docker-ce-cli
 
 # This updates the Docker ID to match the global id
 sudo groupmod -g 36257 docker
+
+# Updates the connected user
+sudo usermod -aG docker user_name
 
 # JQ
 # https://hub.docker.com/r/stedolan/jq
@@ -103,10 +104,10 @@ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
 sudo apt update -y
-sudo apt install gh
+sudo apt install -y gh
 
 # Git Install
-sudo apt install git
+sudo apt install -y git
 
 # # Azure CLI
 # # https://docs.microsoft.com/en-us/cli/azure/run-azure-cli-docker
