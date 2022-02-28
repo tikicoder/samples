@@ -28,6 +28,7 @@ user_aliases="${user_home}/.bash_aliases"
 mkdir -p "${HOME}/.local/bin"
 
 tmp_directory=$1
+docker_groupid=$
 
 mkdir -p $tmp_directory
 pushd $tmp_directory
@@ -79,12 +80,6 @@ echo \
 # Docker CLI
 sudo apt-get update
 sudo apt-get install -y docker-ce-cli
-
-# This updates the Docker ID to match the global id
-sudo groupmod -g 36257 docker
-
-# Updates the connected user
-sudo usermod -aG docker user_name
 
 # JQ
 # https://hub.docker.com/r/stedolan/jq

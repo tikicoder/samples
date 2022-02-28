@@ -4,6 +4,7 @@
   "wsl_config_path":"/etc/wsl.conf",
   "wsl_share": "/mnt/wsl",
   "docker_distro": "tiki_docker_desktop",
+  "docker_gropuid": 36257,
   "docker_sock": "/mnt/wsl/shared-docker/docker.sock",
   "docker_host_sock": "unix:///mnt/wsl/shared-docker/docker.sock",
   "docker_host_tcp": "tcp://127.0.0.1:2375",

@@ -5,6 +5,21 @@ DOCKER_HOST="$2"
 DOCKER_DISTRO="$3"
 DOCKER_DIR="$4/shared-docker"
 
+docker_groupid=$5
+
+# This updates the Docker ID to match the global id
+if [ $(grep -ic "^docker:x" /etc/group) -lt 1 ]; then
+  addgroup --gid $docker_groupid docker
+else
+  sudo groupmod -g $docker_groupid docker
+fi
+
+
+
+
+# Updates the connected user
+sudo usermod -aG docker user_name
+
 if [ $(grep -ic "export DOCKER_SOCK=" $HOME/.bashrc) -lt 1 ]; then
   echo "" >> $HOME/.bashrc
   echo "# Docker Default Socket" >> $HOME/.bashrc

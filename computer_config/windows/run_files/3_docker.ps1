@@ -187,7 +187,7 @@ wsl -d $($general_defaults.docker_distro) sudo systemctl start docker
 if (Test-Path "\\wsl$\$($general_defaults.docker_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.docker_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"}
 Write-Host "Coping Script disable_sudo_pass.sh"
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\user_docker_init.sh") -Destination "\\wsl$\$($general_defaults.docker_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"
-wsl -d $($general_defaults.docker_distro) bash "$($general_defaults.tmp_directory)/user_docker_init.sh" "'$($general_defaults.docker_sock)'" "'$($general_defaults.docker_host_sock)'" "'$($general_defaults.docker_distro)'" "'$($general_defaults.docker_dir)'"
+wsl -d $($general_defaults.docker_distro) bash "$($general_defaults.tmp_directory)/user_docker_init.sh" "'$($general_defaults.docker_sock)'" "'$($general_defaults.docker_host_sock)'" "'$($general_defaults.docker_distro)'" "'$($general_defaults.docker_dir)'" "$($general_defaults.docker_gropuid)"
 
 
 Write-Host "Temp Directory Cleanup"
