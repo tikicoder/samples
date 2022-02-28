@@ -29,12 +29,19 @@ user_aliases="${user_home}/.bash_aliases"
 
 mkdir -p "${HOME}/.local/bin"
 
+tmp_directory=$1
+
 mkdir -p $tmp_directory
-cd $tmp_directory
+pushd $tmp_directory
 
 
 sudo apt update
 sudo apt upgrade -y
+
+if [ $(sudo ls /etc/ | grep -ic '^wsl.conf$') -gt 0  ]; then
+  sudo rm -f /etc/wsl.conf
+fi
+sudo cp  ./wsl.conf /etc/wsl.conf
 
 # Goal run as much as I can via Docker
 # https://blog.jessfraz.com/post/docker-containers-on-the-desktop/
@@ -154,5 +161,6 @@ sudo apt-get install -y dotnet-sdk-5.0
 # Installing ClojureCLR as a dotnet tool
 dotnet tool install --global Clojure.Main
 
-cd /tmp
+popd
+
 rm -Rf $tmp_directory

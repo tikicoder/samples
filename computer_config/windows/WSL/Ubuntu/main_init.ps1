@@ -2,9 +2,10 @@ $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 
 . "$(Join-Path -Path $scriptPath_init -ChildPath "general\defaults.ps1")"
 
-if ($(wsl -l | Where-Object {$_ -ieq 'Ubuntu'} | Measure-Object).Count -lt 1){
-  write-host "Ubuntu installing"
+if ($(wsl -l | Where-Object {$_ -ieq 'Ubuntu' -or $_ -ieq 'Ubuntu (Default)'} | Measure-Object).Count -lt 1){
+  write-host "Ubuntu installing via winget"
   winget install -e --id Canonical.Ubuntu
+  write-host "Opening Ubuntu to Configure Once configured please type exit to go back to PowerShell"
   wsl -d Ubuntu
   wsl --setdefault Ubuntu
   wsl -d Ubuntu sudo apt update 
@@ -13,9 +14,6 @@ if ($(wsl -l | Where-Object {$_ -ieq 'Ubuntu'} | Measure-Object).Count -lt 1){
 
 
 wsl -d Ubuntu mkdir -p $general_defaults.tmp_directory
-`
-if (Test-Path "\\wsl$\Ubuntu\etc\wsl.conf"){Remove-Item -Path "\\wsl$\Ubuntu\etc\wsl.conf"}
-Copy-item -Path $(Join-Path -Path $scriptPath_init -ChildPath "..\..\general\wsl\config\wsl.conf") -Destination "\\wsl$\Ubuntu\etc\wsl.conf"
 
 # disable sudo password for default user
 if (Test-Path "\\wsl$\Ubuntu$($general_defaults.tmp_directory)\disable_sudo_pass.sh"){Remove-Item -Path "\\wsl$\Ubuntu$($general_defaults.tmp_directory)\disable_sudo_pass.sh"}
@@ -23,6 +21,7 @@ Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "genera
 
 wsl -d Ubuntu bash "$($general_defaults.tmp_directory)/disable_sudo_pass.sh"
 
+wsl -d Ubuntu sudo apt list --upgradable
 
 $files_copy = $(Get-ChildItem "$($scriptPath_init)/run_files/*.ps1" -File | Sort-Object -Property Name)
 foreach ( $file in $missing_root_certs){
