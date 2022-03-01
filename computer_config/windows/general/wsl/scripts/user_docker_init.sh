@@ -9,7 +9,7 @@ docker_groupid=$5
 
 # This updates the Docker ID to match the global id
 if [ $(grep -ic "^docker:x" /etc/group) -lt 1 ]; then
-  addgroup --gid $docker_groupid docker
+  sudo addgroup --gid $docker_groupid docker
 else
   sudo groupmod -g $docker_groupid docker
 fi
