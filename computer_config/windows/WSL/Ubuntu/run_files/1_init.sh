@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-#!/bin/bash
 if [ ! $(command -v "realpath") ]; then
     realpath() {
     OURPWD=$PWD
