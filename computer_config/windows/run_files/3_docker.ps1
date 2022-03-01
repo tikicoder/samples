@@ -122,6 +122,18 @@ Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "genera
 
 wsl -d $($general_defaults.docker_distro) -e bash "$($general_defaults.tmp_directory)/disable_sudo_pass.sh"
 
+# Enable PowerTools Repository on Rocky Linux 8
+# https://linuxways.net/red-hat/how-to-enable-powertools-repository-on-rocky-linux-8/
+# needed to install docker
+wsl -d $($general_defaults.docker_distro) sudo dnf install -y dnf-plugins-core
+wsl -d $($general_defaults.docker_distro) sudo dnf config-manager --set-enabled powertools
+
+# Enable EPEL repo
+# https://docs.fedoraproject.org/en-US/epel/#How_can_I_use_these_extra_packages.3F
+wsl -d $($general_defaults.docker_distro) sudo dnf install epel-release
+
+wsl -d $($general_defaults.docker_distro) -e sudo dnf upgrade -y
+
 wsl -d $($general_defaults.docker_distro) mkdir -p "$($general_defaults.tmp_directory)/missing_certs"
 Copy-Missing-Certs -DestinationTempFolderInDistro "$($general_defaults.tmp_directory)/missing_certs" -Distro $($general_defaults.docker_distro) -DestinationSSLFolderInDistro "/etc/pki/ca-trust/source/anchors/"
 
@@ -131,15 +143,11 @@ wsl -d $($general_defaults.docker_distro) -e sudo /usr/bin/tiki_auto_cert_update
 wsl -d $($general_defaults.docker_distro) sudo dnf check-update
 wsl -d $($general_defaults.docker_distro) sudo dnf update -y
 
-# Enable EPEL repo
-wsl -d $($general_defaults.docker_distro) sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+wsl --terminate $($general_defaults.docker_distro)
+wsl -d $($general_defaults.docker_distro) -e echo "connected"
+wsl -d $($general_defaults.docker_distro) -e echo "connected"
 
-# Enable PowerTools Repository on Rocky Linux 8
-# https://linuxways.net/red-hat/how-to-enable-powertools-repository-on-rocky-linux-8/
-# needed to install docker
-wsl -d $($general_defaults.docker_distro) sudo dnf install -y dnf-plugins-core
-wsl -d $($general_defaults.docker_distro) sudo dnf config-manager --set-enabled powertools
-
+wsl -d $($general_defaults.docker_distro) -e sudo dnf remove --oldinstallonly --setopt installonly_limit=2 kernel
 wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_Distrod.sh" "$($general_defaults.tmp_directory)"
 
 # If you want to have this as part of auto win startup
