@@ -18,7 +18,7 @@ fi
 
 
 # Updates the connected user
-sudo usermod -aG docker user_name
+sudo usermod -aG docker `whoami`
 
 if [ $(grep -ic "export DOCKER_SOCK=" $HOME/.bashrc) -lt 1 ]; then
   echo "" >> $HOME/.bashrc
