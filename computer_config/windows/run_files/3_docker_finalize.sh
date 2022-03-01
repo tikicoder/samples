@@ -11,7 +11,7 @@ fi
 echo "create/modify /etc/docker/daemon.json"
 cat > ./daemon.json << EOF
 {
-  "hosts": ["${DOCKER_HOST}", "$2"],
+  "hosts": ["$2", "$3"],
   "iptables": false
 }
 EOF

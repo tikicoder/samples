@@ -163,7 +163,7 @@ wsl --terminate $($general_defaults.docker_distro)
 wsl -d $($general_defaults.docker_distro) -e echo "connected"
 wsl -d $($general_defaults.docker_distro) -e echo "connected"
 
-wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_finalize.sh" "$($general_defaults.docker_dir)" "$($general_defaults.docker_host_tcp)"
+wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_finalize.sh" "$($general_defaults.docker_dir)" "$($general_defaults.docker_host_sock)" "$($general_defaults.docker_host_tcp)"
 wsl --terminate $($general_defaults.docker_distro)
 
 wsl -d $($general_defaults.docker_distro) -e echo "connected"
