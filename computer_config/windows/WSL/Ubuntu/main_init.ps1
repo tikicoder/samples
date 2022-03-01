@@ -24,6 +24,16 @@ Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "genera
 
 wsl -d $($general_defaults.main_distro) bash "$($general_defaults.tmp_directory)/disable_sudo_pass.sh"
 
+wsl -d $($general_defaults.main_distro) rm -Rf $($general_defaults.tmp_directory)
+
+wsl -d $($general_defaults.main_distro) sudo usermod -u $($general_defaults.user_info.uid) ``whoami``
+wsl -d $($general_defaults.main_distro) sudo groupmod  -g $($general_defaults.user_info.gid) ``whoami``
+
+wsl -d $($general_defaults.main_distro) sudo find / -group 1000 -exec chgrp -h ``whoami`` {} \;
+wsl -d $($general_defaults.main_distro) sudo find / -user 1000 -exec chown -h ``whoami`` {} \;
+
+wsl -d $($general_defaults.main_distro) mkdir -p $general_defaults.tmp_directory
+
 wsl -d $($general_defaults.main_distro) sudo apt list --upgradable
 
 $files_copy = $(Get-ChildItem "$($scriptPath_init_mainset)/run_files/*.ps1" -File | Sort-Object -Property Name)

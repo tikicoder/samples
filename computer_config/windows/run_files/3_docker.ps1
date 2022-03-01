@@ -95,13 +95,14 @@ wsl -d $($general_defaults.docker_distro) yum update -y
 wsl -d $($general_defaults.docker_distro) yum install glibc-langpack-en -y
 wsl -d $($general_defaults.docker_distro) yum install passwd sudo cracklib-dicts -y
 wsl -d $($general_defaults.docker_distro) yum reinstall passwd sudo cracklib-dicts -y
-wsl -d $($general_defaults.docker_distro) adduser -G wheel $newUsername
+wsl -d $($general_defaults.docker_distro) adduser -G wheel --gid $general_defaults.user_info.gid --uid $general_defaults.user_info.uid $newUsername
 wsl -d $($general_defaults.docker_distro) passwd $newUsername
 
 wsl --terminate $($general_defaults.docker_distro)
 
 wsl -d $($general_defaults.docker_distro) -e echo "connected"
 wsl -d $($general_defaults.docker_distro) -e echo "connected"
+
 
 wsl -d $($general_defaults.docker_distro) -e mkdir -p $general_defaults.tmp_directory
 
