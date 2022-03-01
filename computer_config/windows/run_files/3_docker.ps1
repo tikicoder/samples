@@ -130,7 +130,7 @@ wsl -d $($general_defaults.docker_distro) sudo dnf config-manager --set-enabled 
 
 # Enable EPEL repo
 # https://docs.fedoraproject.org/en-US/epel/#How_can_I_use_these_extra_packages.3F
-wsl -d $($general_defaults.docker_distro) sudo dnf install epel-release
+wsl -d $($general_defaults.docker_distro) sudo dnf install -y epel-release
 
 wsl -d $($general_defaults.docker_distro) -e sudo dnf upgrade -y
 
