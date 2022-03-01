@@ -91,11 +91,11 @@ wsl -d $($general_defaults.docker_distro) -e sed -i '$a sslverify=0' /etc/dnf/dn
 
 wsl -d $($general_defaults.docker_distro) -e sed -i "/^\[user\]$/a default=$newUsername" /etc/wsl.conf
 
-wsl -d $($general_defaults.docker_distro) yum update -y
-wsl -d $($general_defaults.docker_distro) yum install glibc-langpack-en -y
-wsl -d $($general_defaults.docker_distro) yum install passwd sudo cracklib-dicts -y
-wsl -d $($general_defaults.docker_distro) yum reinstall passwd sudo cracklib-dicts -y
-wsl -d $($general_defaults.docker_distro) addgroup --gid $general_defaults.user_info.gid $newUsername
+wsl -d $($general_defaults.docker_distro) dnf update -y
+wsl -d $($general_defaults.docker_distro) dnf install glibc-langpack-en -y
+wsl -d $($general_defaults.docker_distro) dnf install passwd sudo cracklib-dicts -y
+wsl -d $($general_defaults.docker_distro) dnf reinstall passwd sudo cracklib-dicts -y
+wsl -d $($general_defaults.docker_distro) groupadd --gid $general_defaults.user_info.gid $newUsername
 wsl -d $($general_defaults.docker_distro) adduser -G wheel --gid $general_defaults.user_info.gid --uid $general_defaults.user_info.uid $newUsername
 wsl -d $($general_defaults.docker_distro) passwd $newUsername
 
@@ -131,11 +131,13 @@ wsl -d $($general_defaults.docker_distro) -e sudo /usr/bin/tiki_auto_cert_update
 wsl -d $($general_defaults.docker_distro) sudo dnf check-update
 wsl -d $($general_defaults.docker_distro) sudo dnf update -y
 
+# Enable EPEL repo
+wsl -d $($general_defaults.docker_distro) sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+
 # Enable PowerTools Repository on Rocky Linux 8
 # https://linuxways.net/red-hat/how-to-enable-powertools-repository-on-rocky-linux-8/
-wsl -d $($general_defaults.docker_distro) sudo dnf install -y dnf-plugins-core
-wsl -d $($general_defaults.docker_distro) sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-wsl -d $($general_defaults.docker_distro) sudo dnf config-manager --set-enabled powertools
+# wsl -d $($general_defaults.docker_distro) sudo dnf install -y dnf-plugins-core
+# wsl -d $($general_defaults.docker_distro) sudo dnf config-manager --set-enabled powertools
 
 wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_Distrod.sh" "$($general_defaults.tmp_directory)"
 
