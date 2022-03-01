@@ -136,8 +136,9 @@ wsl -d $($general_defaults.docker_distro) sudo dnf install -y https://dl.fedorap
 
 # Enable PowerTools Repository on Rocky Linux 8
 # https://linuxways.net/red-hat/how-to-enable-powertools-repository-on-rocky-linux-8/
-# wsl -d $($general_defaults.docker_distro) sudo dnf install -y dnf-plugins-core
-# wsl -d $($general_defaults.docker_distro) sudo dnf config-manager --set-enabled powertools
+# needed to install docker
+wsl -d $($general_defaults.docker_distro) sudo dnf install -y dnf-plugins-core
+wsl -d $($general_defaults.docker_distro) sudo dnf config-manager --set-enabled powertools
 
 wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_Distrod.sh" "$($general_defaults.tmp_directory)"
 
