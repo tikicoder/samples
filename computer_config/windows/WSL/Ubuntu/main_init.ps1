@@ -12,6 +12,9 @@ if ($(wsl -l | Where-Object {$_ -ieq $($general_defaults.main_distro) -or $_ -ie
   }
   write-host "$($general_defaults.main_distro) installed"
 
+  if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\wsl.conf"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\wsl.conf"}
+Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\config\wsl.conf") -Destination "\\wsl$\$($general_defaults.main_distro)\etc\wsl.conf"
+
   write-host "$($general_defaults.main_distro): Pending User Setup"
   while($(wsl -d $($general_defaults.main_distro) echo ``whoami``) -ieq "root"){
     Start-Sleep -m 500
@@ -31,7 +34,7 @@ Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "genera
 # base init
 Copy-item -Path $(Join-Path -Path $scriptPath_init_mainset -ChildPath "base_init.sh") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\base_init.sh"
 
-wsl -d $general_defaults.main_distro -e bash "$($general_defaults.tmp_directory)/base_init.sh" "$($general_defaults.tmp_directory)" "$($general_defaults.user_info.uid)" "$($general_defaults.user_info.gid)"
+wsl -d $general_defaults.main_distro -e bash "$($general_defaults.tmp_directory)/base_init.sh" "$($general_defaults.tmp_directory)"
 
 
 if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"}
