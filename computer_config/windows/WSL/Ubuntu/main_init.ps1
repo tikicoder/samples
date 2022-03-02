@@ -19,7 +19,7 @@ if ($(wsl -l | Where-Object {$_ -ieq $($general_defaults.main_distro) -or $_ -ie
   wsl --setdefault $($general_defaults.main_distro)
 }
 
-
+Wait-Distro-Start -Distro $general_defaults.main_distro
 wsl -d $($general_defaults.main_distro) mkdir -p $general_defaults.tmp_directory
 
 if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\disable_sudo_pass.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\disable_sudo_pass.sh"}
