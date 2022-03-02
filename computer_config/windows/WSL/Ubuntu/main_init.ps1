@@ -33,9 +33,6 @@ wsl -d $($general_defaults.main_distro) rm -Rf $($general_defaults.tmp_directory
 wsl -d $($general_defaults.main_distro) sudo usermod -u $($general_defaults.user_info.uid) ``whoami``
 wsl -d $($general_defaults.main_distro) sudo groupmod  -g $($general_defaults.user_info.gid) ``whoami``
 
-wsl -d $($general_defaults.main_distro) sudo find / -group 1000 -exec chgrp -h ``whoami`` {} \;
-wsl -d $($general_defaults.main_distro) sudo find / -user 1000 -exec chown -h ``whoami`` {} \;
-
 wsl -d $($general_defaults.main_distro) mkdir -p $general_defaults.tmp_directory
 
 wsl -d $($general_defaults.main_distro) sudo apt list --upgradable
