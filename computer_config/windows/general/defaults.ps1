@@ -7,10 +7,12 @@ function Wait-Distro-Start()
   )
   
   Write-Host "Pending Distro Start"
-  wsl -d $Distro echo "Connected"
+  wsl -d $Distro echo "Connecting"
   while ($(wsl -l --running | Where-Object {$_ -ieq $Distro -or $_ -ieq "$Distro (default)"} | Measure-Object).Count -lt 1){
+    wsl -d Ubuntu echo "test" > $null
     Start-Sleep -m 500
   }
+  wsl -d $Distro echo "Connected"
 }
 
 function Copy-Missing-Certs(){
