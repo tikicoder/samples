@@ -20,7 +20,7 @@ base_dir="$(dirname $(realpath $0))"
 
 cd ~
 current_user=$(echo `whoami`)
-bash "$base_dir/disable_sudo_pass.sh"
+bash "$base_dir/disable_sudo_pass.sh" "$current_user"
 
 
 sudo apt list --upgradable
