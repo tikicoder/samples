@@ -63,8 +63,7 @@ New-Item -ItemType Directory -Path $(Join-Path -Path $path_tiki_docker_desktop -
 wsl --import $($general_defaults.docker_distro) $(Join-Path -Path $path_tiki_docker_desktop -ChildPath "LocalState") $(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\docker_images\rocky_linux\rocky-container.8.4.tar.gz")
 
 $newUsername="tiki_docker"
-wsl -d $($general_defaults.docker_distro) -e echo "connected"
-wsl -d $($general_defaults.docker_distro) -e echo "connected"
+Wait-Distro-Start -Distro $general_defaults.docker_distro
 
 
 if (Test-Path "\\wsl$\$($general_defaults.docker_distro)\usr\bin\tiki_auto_cert_update.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.docker_distro)\usr\bin\tiki_auto_cert_update.sh"}
@@ -100,9 +99,7 @@ wsl -d $($general_defaults.docker_distro) adduser -G wheel --gid $general_defaul
 wsl -d $($general_defaults.docker_distro) passwd $newUsername
 
 wsl --terminate $($general_defaults.docker_distro)
-
-wsl -d $($general_defaults.docker_distro) -e echo "connected"
-wsl -d $($general_defaults.docker_distro) -e echo "connected"
+Wait-Distro-Start -Distro $general_defaults.docker_distro
 
 
 wsl -d $($general_defaults.docker_distro) -e mkdir -p $general_defaults.tmp_directory
@@ -144,8 +141,7 @@ wsl -d $($general_defaults.docker_distro) sudo dnf check-update
 wsl -d $($general_defaults.docker_distro) sudo dnf update -y
 
 wsl --terminate $($general_defaults.docker_distro)
-wsl -d $($general_defaults.docker_distro) -e echo "connected"
-wsl -d $($general_defaults.docker_distro) -e echo "connected"
+Wait-Distro-Start -Distro $general_defaults.docker_distro
 
 wsl -d $($general_defaults.docker_distro) -e sudo dnf remove --oldinstallonly --setopt installonly_limit=2 kernel
 wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_Distrod.sh" "$($general_defaults.tmp_directory)"
@@ -155,9 +151,7 @@ wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_dir
 wsl -d $($general_defaults.docker_distro) sudo /opt/distrod/bin/distrod enable 
 
 wsl --terminate $($general_defaults.docker_distro)
-
-wsl -d $($general_defaults.docker_distro) -e echo "connected"
-wsl -d $($general_defaults.docker_distro) -e echo "connected"
+Wait-Distro-Start -Distro $general_defaults.docker_distro
 
 
 wsl -d $($general_defaults.docker_distro) sudo dnf check-update
@@ -166,21 +160,15 @@ wsl -d $($general_defaults.docker_distro) sudo dnf update -y
 
 wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_Install.sh" "$newUsername" "$($general_defaults.docker_sock)" "$($general_defaults.docker_host_sock)"
 wsl --terminate $($general_defaults.docker_distro)
-
-wsl -d $($general_defaults.docker_distro) -e echo "connected"
-wsl -d $($general_defaults.docker_distro) -e echo "connected"
+Wait-Distro-Start -Distro $general_defaults.docker_distro
 
 wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_updategroup.sh"
 wsl --terminate $($general_defaults.docker_distro)
-
-wsl -d $($general_defaults.docker_distro) -e echo "connected"
-wsl -d $($general_defaults.docker_distro) -e echo "connected"
+Wait-Distro-Start -Distro $general_defaults.docker_distro
 
 wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_finalize.sh" "$($general_defaults.docker_dir)" "$($general_defaults.docker_host_sock)" "$($general_defaults.docker_host_tcp)"
 wsl --terminate $($general_defaults.docker_distro)
-
-wsl -d $($general_defaults.docker_distro) -e echo "connected"
-wsl -d $($general_defaults.docker_distro) -e echo "connected"
+Wait-Distro-Start -Distro $general_defaults.docker_distro
 
 
 Write-Host "Removing DNF SSl Verification skip"

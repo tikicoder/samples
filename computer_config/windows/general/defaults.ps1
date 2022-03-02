@@ -1,5 +1,18 @@
 $scriptPath_init_generalmain = split-path -parent $MyInvocation.MyCommand.Definition
 
+function Wait-Distro-Start()
+{
+  param (
+    [string]$Distro
+  )
+  
+  Write-Host "Pending Distro Start"
+  wsl -d $Distro echo "Connected"
+  while ($(wsl -l --running | Where-Object {$_ -ieq $Distro -or $_ -ieq "$Distro (default)"} | Measure-Object).Count -lt 1){
+    Start-Sleep -m 500
+  }
+}
+
 function Copy-Missing-Certs(){
   param (
     [string]$DestinationTempFolderInDistro,    
