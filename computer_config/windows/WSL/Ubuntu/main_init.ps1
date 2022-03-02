@@ -4,7 +4,12 @@ $scriptPath_init_mainset = split-path -parent $MyInvocation.MyCommand.Definition
 
 if ($(wsl -l | Where-Object {$_ -ieq $($general_defaults.main_distro) -or $_ -ieq "$($general_defaults.main_distro) (Default)"} | Measure-Object).Count -lt 1){
     write-host "Opening $($general_defaults.main_distro) to Configure Once configured please type exit to go back to PowerShell"
-  Start-Process "wsl --install -d $($general_defaults.main_distro)" -Wait
+  Start-Process "wsl.exe" -ArgumentList @("--install", "-d", $general_defaults.main_distro) -passthru -Wait
+  
+  write-host "Waiting for $($general_defaults.main_distro) to be configured"
+  while(($(wsl -l | Where-Object {$_ -ieq $($general_defaults.main_distro) -or $_ -ieq "$($general_defaults.main_distro) (Default)"} | Measure-Object).Count -lt 1)){
+    Start-Sleep -m 500
+  }
   wsl --setdefault $($general_defaults.main_distro)
 }
 
