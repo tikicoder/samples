@@ -31,7 +31,14 @@ Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "genera
 # base init
 Copy-item -Path $(Join-Path -Path $scriptPath_init_mainset -ChildPath "base_init.sh") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\base_init.sh"
 
-wsl -d $general_defaults.main_distro -e bash "$($general_defaults.tmp_directory)/user_docker_init.sh" "$($general_defaults.tmp_directory)" "$($general_defaults.user_info.uid)" "$($general_defaults.user_info.gid)"
+wsl -d $general_defaults.main_distro -e bash "$($general_defaults.tmp_directory)/base_init.sh" "$($general_defaults.tmp_directory)" "$($general_defaults.user_info.uid)" "$($general_defaults.user_info.gid)"
+
+
+if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"}
+Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\user_docker_init.sh") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"
+
+wsl --terminate $($general_defaults.main_distro)
+Wait-Distro-Start -Distro $general_defaults.main_distro
 
 # General Run steps
 $files_copy = $(Get-ChildItem "$($scriptPath_init_mainset)/run_files/*.ps1" -File | Sort-Object -Property Name)
@@ -40,14 +47,12 @@ foreach ( $file in $files_copy){
   & $file.FullName 
 }
 
-Write-Host "Running VS Code restore"
-& "$(Join-Path -Path $scriptPath_init_mainset -ChildPath "..\..\..\..\general_programming_scripting\powershell\vsCode\vsCodeManuallBackup.ps1" | Resolve-Path)" -isRestore $true -wsl_command $($general_defaults.main_distro)
-
-if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"}
-Write-Host "Coping Script user_docker_init.sh"
-Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\user_docker_init.sh") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"
+Write-Host "Running Script user_docker_init.sh"
 wsl -d $($general_defaults.main_distro) bash "$($general_defaults.tmp_directory)/user_docker_init.sh" "'$($general_defaults.docker_sock)'" "'$($general_defaults.docker_host_sock)'" "'$($general_defaults.docker_distro)'" "'$($general_defaults.docker_dir)'" "$($general_defaults.docker_gropuid)"
 
+
+Write-Host "Running VS Code restore"
+& "$(Join-Path -Path $scriptPath_init_mainset -ChildPath "..\..\..\..\general_programming_scripting\powershell\vsCode\vsCodeManuallBackup.ps1" | Resolve-Path)" -isRestore $true -wsl_command $($general_defaults.main_distro)
 
 
 wsl -d $($general_defaults.main_distro) rm -Rf $($general_defaults.tmp_directory)
