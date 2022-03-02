@@ -26,3 +26,5 @@ bash "$base_dir/disable_sudo_pass.sh" "$current_user"
 sudo apt list --upgradable
 sudo apt update
 sudo apt upgrade -y
+
+sudo apt install -y ca-certificates
