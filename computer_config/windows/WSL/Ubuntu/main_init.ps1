@@ -22,21 +22,18 @@ if ($(wsl -l | Where-Object {$_ -ieq $($general_defaults.main_distro) -or $_ -ie
 
 wsl -d $($general_defaults.main_distro) mkdir -p $general_defaults.tmp_directory
 
-# disable sudo password for default user
 if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\disable_sudo_pass.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\disable_sudo_pass.sh"}
+if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\base_init.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\base_init.sh"}
+
+# disable sudo password for default user
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\disable_sudo_pass.sh") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
 
-wsl -d $($general_defaults.main_distro) bash "$($general_defaults.tmp_directory)/disable_sudo_pass.sh"
+# base init
+Copy-item -Path $(Join-Path -Path $scriptPath_init_mainset -ChildPath "base_init.sh") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\base_init.sh"
 
-wsl -d $($general_defaults.main_distro) rm -Rf $($general_defaults.tmp_directory)
+wsl -d $general_defaults.main_distro -e bash "$($general_defaults.tmp_directory)/user_docker_init.sh" "$($general_defaults.tmp_directory)" "$($general_defaults.user_info.uid)" "$($general_defaults.user_info.gid)"
 
-wsl -d $($general_defaults.main_distro) sudo usermod -u $($general_defaults.user_info.uid) ``whoami``
-wsl -d $($general_defaults.main_distro) sudo groupmod  -g $($general_defaults.user_info.gid) ``whoami``
-
-wsl -d $($general_defaults.main_distro) mkdir -p $general_defaults.tmp_directory
-
-wsl -d $($general_defaults.main_distro) sudo apt list --upgradable
-
+# General Run steps
 $files_copy = $(Get-ChildItem "$($scriptPath_init_mainset)/run_files/*.ps1" -File | Sort-Object -Property Name)
 foreach ( $file in $files_copy){
   Write-Host "Running $($file.Name)"
