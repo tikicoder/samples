@@ -182,7 +182,7 @@ if ( -not [string]::IsNullorWhitespace($existing_repo_sslverify) ){
 
 Start-Sleep -s 2
 Write-Host "Start Docker"
-wsl -d $($general_defaults.docker_distro) sudo systemctl status dbus
+wsl -d $($general_defaults.docker_distro) sudo systemctl start dbus
 wsl -d $($general_defaults.docker_distro) sudo systemctl start docker
 
 if (Test-Path "\\wsl$\$($general_defaults.docker_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.docker_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"}
