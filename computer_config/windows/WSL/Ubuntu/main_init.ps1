@@ -10,6 +10,12 @@ if ($(wsl -l | Where-Object {$_ -ieq $($general_defaults.main_distro) -or $_ -ie
   while(($(wsl -l | Where-Object {$_ -ieq $($general_defaults.main_distro) -or $_ -ieq "$($general_defaults.main_distro) (Default)"} | Measure-Object).Count -lt 1)){
     Start-Sleep -m 500
   }
+  write-host "$($general_defaults.main_distro) installed"
+
+  write-host "$($general_defaults.main_distro): Pending User Setup"
+  while($(wsl -d $($general_defaults.main_distro) echo ``whoami``) -ieq "root"){
+    Start-Sleep -m 500
+  }
   wsl --setdefault $($general_defaults.main_distro)
 }
 
