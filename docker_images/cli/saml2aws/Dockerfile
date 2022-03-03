@@ -1,8 +1,8 @@
 FROM alpine:latest
 
-RUN apt-get update && \
-    apt-get install -y ca-certificates curl && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk update && \
+    apk add -y ca-certificates curl && \
+    rm -rf /var/lib/apk/lists/*
 
 
 ENV SAML2AWS_VERSION_LATEST=$(curl -Ls https://api.github.com/repos/Versent/saml2aws/releases/latest | grep 'tag_name' | cut -d'v' -f2 | cut -d'"' -f1)
