@@ -45,11 +45,15 @@ fi
 EOF
 fi
 
-# https://hub.docker.com/r/amazon/aws-cli
-echo "alias aws='docker run --rm -ti -v ~/.aws:/root/.aws -v $(pwd):/aws amazon/aws-cli:latest'" >> "${HOME}/.bashrc_alias"
+if [ $(grep -ic "alias aws=" "${HOME}/.bashrc_alias" ) -lt 1  ]; then
+  # https://hub.docker.com/r/amazon/aws-cli
+  echo "alias aws='docker run --rm -ti -v ~/.aws:/root/.aws -v $(pwd):/aws amazon/aws-cli:latest'" >> "${HOME}/.bashrc_alias"
+fi
 
-# https://hub.docker.com/_/microsoft-azure-cli
-echo "alias az='docker run --rm -ti -v ~/.azure:/root/.azure mcr.microsoft.com/azure-cli:latest'" >> "${HOME}/.bashrc_alias"
+if [ $(grep -ic "alias az=" "${HOME}/.bashrc_alias" ) -lt 1  ]; then
+  # https://hub.docker.com/_/microsoft-azure-cli
+  echo "alias az='docker run --rm -ti -v ~/.azure:/root/.azure mcr.microsoft.com/azure-cli:latest'" >> "${HOME}/.bashrc_alias"
+fi
 
 
 popd
