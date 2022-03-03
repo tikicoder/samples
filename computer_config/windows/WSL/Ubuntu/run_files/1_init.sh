@@ -22,7 +22,7 @@ parent_path=$(realpath "${dir_path}/../")
 
 user_name=$(whoami)
 user_home="${HOME}"
-user_aliases="${user_home}/.bash_aliases"
+user_aliases="${user_home}/.bashrc_alias"
 
 mkdir -p "${HOME}/.local/bin"
 
