@@ -56,5 +56,6 @@ if [ $(grep -ic "alias az=" "${HOME}/.bashrc_alias" ) -lt 1  ]; then
 fi
 
 
+. "$HOME/.bashrc_alias"
 popd
 
