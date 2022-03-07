@@ -59,5 +59,8 @@ fi
 
 
 . "$HOME/.bashrc_alias"
+az --version
+aws --version
+
 popd
 
