@@ -32,7 +32,7 @@ docker_groupid=$
 mkdir -p $tmp_directory
 pushd $tmp_directory
 
-if [ ! -f "${HOME}/.bashrc_alias" ]
+if [ ! -f "${HOME}/.bashrc_alias" ]; then
   touch "${HOME}/.bashrc_alias"
 fi
 
