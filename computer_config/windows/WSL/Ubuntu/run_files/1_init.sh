@@ -68,7 +68,7 @@ sudo apt-get -y install \
   lsb-release
 
 # Docker GPG
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg -f --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
 # Docker repo
 echo \
