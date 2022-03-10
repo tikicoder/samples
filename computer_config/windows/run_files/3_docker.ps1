@@ -60,7 +60,7 @@ if ((Test-Path -Path $path_tiki_docker_desktop)) {
 New-Item -ItemType Directory -Path $path_tiki_docker_desktop
 New-Item -ItemType Directory -Path $(Join-Path -Path $path_tiki_docker_desktop -ChildPath "LocalState")
 
-wsl --import $($general_defaults.docker_distro) $(Join-Path -Path $path_tiki_docker_desktop -ChildPath "LocalState") $(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\docker_images\rocky_linux\rocky-container.8.4.tar.gz")
+wsl --import $($general_defaults.docker_distro) $(Join-Path -Path $path_tiki_docker_desktop -ChildPath "LocalState") $(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\docker_images\rocky_linux\rocky-container.8.5.tar.gz")
 
 $newUsername="tiki_docker"
 Wait-Distro-Start -Distro $general_defaults.docker_distro
