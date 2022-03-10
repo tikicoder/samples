@@ -1,4 +1,5 @@
-FROM alpine:${python_version}
+ARG alpine_version="latest"
+FROM alpine:${alpine_version}
 
 RUN rm -rf /var/cache/apk/* && \
     rm -rf /tmp/*
