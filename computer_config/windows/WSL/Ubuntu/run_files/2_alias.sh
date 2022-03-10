@@ -46,6 +46,7 @@ fi
 
 # https://docs.docker.com/network/bridge/#differences-between-user-defined-bridges-and-the-default-bridge
 # using --network host while work to figure the bridge config out
+
 if [ $(grep -ic "alias aws=" "${user_home}/.bashrc_alias" ) -lt 1  ]; then
   mkdir -p "~/.docker_containers/aws"
   # https://hub.docker.com/r/amazon/aws-cli
