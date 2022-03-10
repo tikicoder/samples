@@ -71,7 +71,9 @@ sudo apt-get -y install \
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg ---dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
 # Docker repo
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 
 # Docker CLI
@@ -79,7 +81,7 @@ sudo apt-get update
 sudo apt-get install -y docker-ce-cli
 
 # kubectl key and repo
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg ---dearmor -o /usr/share/keyrings/kubernetes.gpg
 echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 # JQ
