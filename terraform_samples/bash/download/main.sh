@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if [ ! $(command -v "realpath") ]; then
     realpath() {
