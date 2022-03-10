@@ -5,6 +5,13 @@ $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 # https://download.docker.com/win/static/stable/x86_64/
 # https://lippertmarkus.com/2021/09/04/containers-without-docker-desktop/
 
+$docker_hub_image = $(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\docker_images\os\linux\rocky_linux\rocky-container.8.5.tar.gz")
+if (-not (Test-Path -Path $tmp_dir)) {
+  Write-Host "Could not find docker hub image $($docker_hub_image)"
+  exit
+}
+
+$docker_hub_image = $($docker_hub_image  | Resolve-Path)
 $docker_Version = "docker-20.10.9.zip"
 $tmp_dir = (Join-Path -Path "$([System.IO.Path]::GetTempPath())" -ChildPath "win_docker")
 if (-not (Test-Path -Path $tmp_dir)) {New-Item -ItemType Directory -Path $tmp_dir}
@@ -60,7 +67,8 @@ if ((Test-Path -Path $path_tiki_docker_desktop)) {
 New-Item -ItemType Directory -Path $path_tiki_docker_desktop
 New-Item -ItemType Directory -Path $(Join-Path -Path $path_tiki_docker_desktop -ChildPath "LocalState")
 
-wsl --import $($general_defaults.docker_distro) $(Join-Path -Path $path_tiki_docker_desktop -ChildPath "LocalState") $(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\docker_images\rocky_linux\rocky-container.8.5.tar.gz")
+
+wsl --import $($general_defaults.docker_distro) $(Join-Path -Path $path_tiki_docker_desktop -ChildPath "LocalState") $docker_hub_image
 
 $newUsername="tiki_docker"
 Wait-Distro-Start -Distro $general_defaults.docker_distro
