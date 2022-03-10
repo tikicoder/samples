@@ -42,7 +42,7 @@ done
 if [ $os_type == "rhel" ]; then
   sudo update-ca-trust
 else
-  update-ca-certificates --fresh
+  sudo update-ca-certificates --fresh
 fi
 popd
 rm -Rf /tmp/custom_certs_add
