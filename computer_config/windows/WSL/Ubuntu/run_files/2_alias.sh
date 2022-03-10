@@ -44,17 +44,19 @@ fi
 EOF
 fi
 
+# https://docs.docker.com/network/bridge/#differences-between-user-defined-bridges-and-the-default-bridge
+# using --network host while work to figure the bridge config out
 if [ $(grep -ic "alias aws=" "${user_home}/.bashrc_alias" ) -lt 1  ]; then
   mkdir -p "~/.docker_containers/aws"
   # https://hub.docker.com/r/amazon/aws-cli
-  echo "alias aws='docker run --rm -it -v ~/.docker_containers/aws:/root/.aws -v $(pwd):/aws amazon/aws-cli:latest'" >> "${HOME}/.bashrc_alias"
+  echo "alias aws='docker run --network host --rm -it -v ~/.docker_containers/aws:/root/.aws -v $(pwd):/aws amazon/aws-cli:latest'" >> "${HOME}/.bashrc_alias"
 fi
 
 if [ $(grep -ic "alias az=" "${user_home}/.bashrc_alias" ) -lt 1  ]; then
   mkdir -p "~/.docker_containers/azure"
   mkdir -p "~/.docker_containers/Azure"
   # https://hub.docker.com/_/microsoft-azure-cli
-  echo "alias az='docker run --rm -it -v ${user_home}/.ssh:/root/.ssh -v ~/.docker_containers/azure:/root/.azure -v ~/.docker_containers/Azure:/root/.Azure mcr.microsoft.com/azure-cli:latest /usr/local/bin/az'" >> "${HOME}/.bashrc_alias"
+  echo "alias az='docker run --network host --rm -it -v ${user_home}/.ssh:/root/.ssh -v ~/.docker_containers/azure:/root/.azure -v ~/.docker_containers/Azure:/root/.Azure mcr.microsoft.com/azure-cli:latest /usr/local/bin/az'" >> "${HOME}/.bashrc_alias"
   echo "alias az_update='docker pull mcr.microsoft.com/azure-cli'"
 fi
 
