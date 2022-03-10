@@ -59,6 +59,7 @@ sudo apt install -y genisoimage
 
 # Docker Requirments
 # https://docs.docker.com/engine/install/ubuntu/
+# https://dev.to/bowmanjd/install-docker-on-windows-wsl-without-docker-desktop-34m9
 sudo apt-get -y install \
   ca-certificates \
   curl \
@@ -66,12 +67,12 @@ sudo apt-get -y install \
   lsb-release
 
 # Docker GPG
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+source /etc/os-release
+curl -fsSL https://download.docker.com/linux/${ID}/gpg | sudo apt-key add -
 
 # Docker repo
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+echo "deb [arch=amd64] https://download.docker.com/linux/${ID} ${VERSION_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/docker.list
+sudo apt update
 
 
 # Docker CLI
