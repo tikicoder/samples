@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if [ ! $(command -v "realpath") ]; then
     realpath() {
@@ -21,13 +20,12 @@ dir_path=$(dirname $full_path)
 parent_path=$(realpath "${dir_path}/../")
 
 user_name=$(whoami)
-user_home="${HOME}"
+user_home="/home/${user_name}"
 user_aliases="${user_home}/.bashrc_alias"
 
-mkdir -p "${HOME}/.local/bin"
+mkdir -p "${user_home}/.local/bin"
 
 tmp_directory=$1
-docker_groupid=$
 
 mkdir -p $tmp_directory
 pushd $tmp_directory
@@ -68,7 +66,7 @@ sudo apt-get -y install \
   lsb-release
 
 # Docker GPG
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg ---dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 
 # Docker repo
 echo \
@@ -81,7 +79,7 @@ sudo apt-get update
 sudo apt-get install -y docker-ce-cli
 
 # kubectl key and repo
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg ---dearmor -o /usr/share/keyrings/kubernetes.gpg
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 # JQ
