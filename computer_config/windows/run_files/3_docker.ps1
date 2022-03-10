@@ -6,7 +6,7 @@ $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 # https://lippertmarkus.com/2021/09/04/containers-without-docker-desktop/
 
 $docker_hub_image = $(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\docker_images\os\linux\rocky_linux\rocky-container.8.5.tar.gz")
-if (-not (Test-Path -Path $tmp_dir)) {
+if (-not (Test-Path -Path $docker_hub_image)) {
   Write-Host "Could not find docker hub image $($docker_hub_image)"
   exit
 }
