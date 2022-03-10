@@ -58,7 +58,7 @@ if [ $(grep -ic "alias az=" "${user_home}/.bashrc_alias" ) -lt 1  ]; then
   mkdir -p "~/.docker_containers/Azure"
   # https://hub.docker.com/_/microsoft-azure-cli
   echo "alias az='docker run --network host --rm -it -v ${user_home}/.ssh:/root/.ssh -v ~/.docker_containers/azure:/root/.azure -v ~/.docker_containers/Azure:/root/.Azure mcr.microsoft.com/azure-cli:latest /usr/local/bin/az'" >> "${HOME}/.bashrc_alias"
-  echo "alias az_update='docker pull mcr.microsoft.com/azure-cli && az config set extension.use_dynamic_install=yes_prompt'"
+  echo "alias az_update='docker pull mcr.microsoft.com/azure-cli && az config set extension.use_dynamic_install=yes_prompt'" >> "${HOME}/.bashrc_alias"
 fi
 
 . "$user_home/.bashrc"
