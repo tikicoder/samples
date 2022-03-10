@@ -6,7 +6,7 @@ function Wait-Distro-Start()
     [string]$Distro
   )
   
-  Write-Host "Pending Distro Start"
+  Write-Host "Pending Distro Start - $Distro"
   while ($(wsl -l --running | Where-Object {$_ -ieq $Distro -or $_ -ieq "$Distro (default)"} | Measure-Object).Count -lt 1){
     wsl -d Distro echo "test" > $null
     Start-Sleep -m 500
