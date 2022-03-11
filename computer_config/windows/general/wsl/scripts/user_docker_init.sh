@@ -49,6 +49,10 @@ if [ $(grep -ic "sudo systemctl start docker" $HOME/.bashrc) -lt 1 ]; then
   echo "# Auto Start Docker on distro start" >> $HOME/.bashrc
   cat >> $HOME/.bashrc << EOF
 if [ ! -S "\$DOCKER_SOCK" ]; then
+  if [ !-d "\${DOCKER_DIR}" ]; then
+    mkdir -p "\${DOCKER_DIR}"
+    chgrp docker "\${DOCKER_DIR}"
+  fi
   /mnt/c/Windows/System32/wsl.exe -d "\$DOCKER_DISTRO" sudo systemctl start docker
 fi
 EOF
