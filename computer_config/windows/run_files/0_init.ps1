@@ -2,7 +2,7 @@ $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 . "$(Join-Path -Path $scriptPath_init -ChildPath "..\general\defaults.ps1")"
 
 write-host "Enable IIS"
-dism /online /enable-feature `
+dism /online /enable-feature /all `
   /featurename:WCF-Services45 `
   /featurename:WCF-TCP-PortSharing45 `
   /featurename:IIS-WebServerRole `
