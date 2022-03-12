@@ -137,6 +137,8 @@ sudo /bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/turbot/steampipe
 steampipe plugin install steampipe
 
 # Install Poetry
+apt install python3.8-venv
+
 # https://python-poetry.org/docs/master/#installing-with-the-official-installer
 curl -sSL https://install.python-poetry.org | python3 -
 
