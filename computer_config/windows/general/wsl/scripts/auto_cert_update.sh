@@ -6,6 +6,8 @@ pushd /tmp/custom_certs_add
 
 openssl s_client -showcerts -verify 5 -connect ip.zscaler.com:443 < /dev/null | awk '/BEGIN/,/END/{ if(/BEGIN/){a++}; out="cert"a".pem"; print >out}'; for cert in *.pem; do newname=$(openssl x509 -noout -subject -in $cert | sed -nE 's/.*CN ?= ?(.*)/\1/; s/[ ,.*]/_/g; s/__/_/g; s/_-_/-/; s/^_//g;p' | tr '[:upper:]' '[:lower:]').pem; echo "${newname}"; mv "${cert}" "${newname}"; done
 openssl s_client -showcerts -verify 5 -connect update.code.visualstudio.com:443 < /dev/null | awk '/BEGIN/,/END/{ if(/BEGIN/){a++}; out="cert"a".pem"; print >out}'; for cert in *.pem; do newname=$(openssl x509 -noout -subject -in $cert | sed -nE 's/.*CN ?= ?(.*)/\1/; s/[ ,.*]/_/g; s/__/_/g; s/_-_/-/; s/^_//g;p' | tr '[:upper:]' '[:lower:]').pem; echo "${newname}"; mv "${cert}" "${newname}"; done
+openssl s_client -showcerts -verify 5 -connect google.com:443 < /dev/null | awk '/BEGIN/,/END/{ if(/BEGIN/){a++}; out="cert"a".pem"; print >out}'; for cert in *.pem; do newname=$(openssl x509 -noout -subject -in $cert | sed -nE 's/.*CN ?= ?(.*)/\1/; s/[ ,.*]/_/g; s/__/_/g; s/_-_/-/; s/^_//g;p' | tr '[:upper:]' '[:lower:]').pem; echo "${newname}"; mv "${cert}" "${newname}"; done
+openssl s_client -showcerts -verify 5 -connect raw.githubusercontent.co:443 < /dev/null | awk '/BEGIN/,/END/{ if(/BEGIN/){a++}; out="cert"a".pem"; print >out}'; for cert in *.pem; do newname=$(openssl x509 -noout -subject -in $cert | sed -nE 's/.*CN ?= ?(.*)/\1/; s/[ ,.*]/_/g; s/__/_/g; s/_-_/-/; s/^_//g;p' | tr '[:upper:]' '[:lower:]').pem; echo "${newname}"; mv "${cert}" "${newname}"; done
 
 FILES="/tmp/custom_certs_add/*"
 
@@ -21,7 +23,7 @@ else
   pem_path=""
 fi
 
-if [ -z "$pem_path"]; then
+if [ -z "$pem_path" ]; then
   echo "Could not determin pem save path"
   exit
 fi
@@ -35,9 +37,12 @@ do
     echo "$f is CA"
     echo "     $fingerprint"
     sudo mv -f "$f.pem" "$pem_path/$fingerprint.pem"
+    sudo mv -f "$f" "$pem_path/$fingerprint-$f"
   fi
 
 done
+chown -R root:root $pem_path
+chmod -R 644 $pem_path
 
 if [ $os_type == "rhel" ]; then
   sudo update-ca-trust
