@@ -4,3 +4,5 @@
 **/python/**/__pycache__/*
 **/config_override/*
 .cache
+
+**/ca_certs/private/*

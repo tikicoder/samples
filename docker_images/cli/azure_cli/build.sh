@@ -40,10 +40,10 @@ pushd "${base_dir}/ca_certs"
 mkdir -p "private"
 mkdir -p "public"
 
-pushd "${base_dir}/ca_certs/private"
+pushd "${base_dir}/ca_certs/public"
 process_base_files "${base_dir}/ca_certs/public/*"
 popd
-pushd "${base_dir}/ca_certs/public"
+pushd "${base_dir}/ca_certs/private"
 process_base_files "${base_dir}/ca_certs/private/*"
 popd
 
