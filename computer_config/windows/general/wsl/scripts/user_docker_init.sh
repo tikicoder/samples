@@ -3,7 +3,7 @@
 DOCKER_SOCK="$1"
 DOCKER_HOST="$2"
 DOCKER_DISTRO="$3"
-DOCKER_DIR="$4/shared-docker"
+DOCKER_DIR="$4"
 
 docker_groupid=$5
 

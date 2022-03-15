@@ -40,6 +40,13 @@ if [ $(sudo ls /etc/ | grep -ic '^wsl.conf$') -gt 0  ]; then
 fi
 sudo cp  ./wsl.conf /etc/wsl.conf
 
+# This will allow the docker host to see files here
+sudo sh -c "echo \"/ /mnt/wsl/instances/Ubuntu none defaults,bind,X-mount.mkdir 0 0\" >> /etc/fstab"
+sudo mount -a
+
+# adding the ability to zip/unzip
+sudo apt-get install zip unzip
+
 # Goal run as much as I can via Docker
 # https://blog.jessfraz.com/post/docker-containers-on-the-desktop/
 

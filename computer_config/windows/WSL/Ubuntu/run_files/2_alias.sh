@@ -56,14 +56,22 @@ if [ $(grep -ic "alias aws=" "${user_home}/.bashrc_alias" ) -lt 1  ]; then
   echo "" >> "${user_home}/.bashrc_alias"
 fi
 
-if [ $(grep -ic "alias az=" "${user_home}/.bashrc_alias" ) -lt 1  ]; then
+if [ ! -f "${user_home}/.local/bin/az" ]; then
   mkdir -p "${user_home}/.docker_containers/azure/azure"
   mkdir -p "${user_home}/.docker_containers/Azure"
-  # https://hub.docker.com/_/microsoft-azure-cli
-  echo "alias az='docker run --network host --rm -it -v ~/.ssh:/root/.ssh -v ~/.docker_containers/azure/azure:/root/.azure -v ~/.docker_containers/azure/Azure:/root/.Azure mcr.microsoft.com/azure-cli:latest /usr/local/bin/az'" >> "${user_home}/.bashrc_alias"
 
   echo "alias az_update='docker pull mcr.microsoft.com/azure-cli && az config set extension.use_dynamic_install=yes_prompt'" >> "${user_home}/.bashrc_alias"
-  echo "" >> "${user_home}/.bashrc_alias"
+
+  cat >> "${user_home}/.local/bin/az" << EOF
+args=""
+while (( "$#" )); do
+  args="${args} ${1}"
+  shift
+done
+
+docker run --network host --rm -it -v ~/.ssh:/root/.ssh -v ~/.docker_containers/azure/azure:/root/.azure -v ~/.docker_containers/azure/Azure:/root/.Azure tiki/azure_cli /usr/local/bin/az $args
+EOF
+chmod 755 "${user_home}/.local/bin/az"
 fi
 
 . "$user_home/.bashrc"

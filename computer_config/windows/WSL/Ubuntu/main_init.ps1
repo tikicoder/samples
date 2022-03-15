@@ -22,6 +22,10 @@ if ($(wsl -l | Where-Object {$_ -ieq $($general_defaults.main_distro) -or $_ -ie
 Wait-Distro-Start -Distro $general_defaults.main_distro
 wsl -d $($general_defaults.main_distro) mkdir -p $general_defaults.tmp_directory
 
+$local_user = $(wsl -d Ubuntu echo ``whoami``)
+$local_user_groupid = $(wsl -d Ubuntu echo ``id -u $local_user``)
+$local_user_id = $(wsl -d Ubuntu echo ``getent group $local_user `| `cut `-d: `-f3``)
+
 if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\disable_sudo_pass.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\disable_sudo_pass.sh"}
 if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\base_init.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\base_init.sh"}
 
@@ -61,6 +65,9 @@ if ( Test-Path $vsbackup ){
   & $vsbackup -isRestore $true -wsl_command $($general_defaults.main_distro)
 }
 
+wsl -d $($general_defaults.docker_distro) sudo groupadd --gid $local_user_groupid $local_user
+wsl -d $($general_defaults.docker_distro) sudo adduser -G wheel --gid $local_user_groupid --uid $local_user_id $local_user --home "/mnt/wsl/instances/$($general_defaults.main_distro)/home/$local_user"
+wsl -d $($general_defaults.docker_distro) sudo ln -s "/mnt/wsl/instances/$($general_defaults.main_distro)/home/$($local_user)/" "/home/$($local_user)/"
 
 wsl -d $($general_defaults.main_distro) rm -Rf $($general_defaults.tmp_directory)
 wsl -d $($general_defaults.main_distro) sudo rm /etc/sudoers.d/``whoami``
