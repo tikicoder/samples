@@ -1,5 +1,5 @@
 ; https://docs.microsoft.com/en-us/windows/wsl/wsl-config
 [wsl2]
-memory=4GB
-swap=8GB
+memory=2GB
+swap=4GB
 processors=2

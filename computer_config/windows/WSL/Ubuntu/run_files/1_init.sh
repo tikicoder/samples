@@ -65,6 +65,10 @@ sudo apt-get install zip unzip
 # Install genisoimage helpful for converting AWS Linux 2 to Azure
 sudo apt install -y genisoimage
 
+# GraphViz this is a useful tool for graphing and is used for Diagramming as Code.
+# https://graphviz.gitlab.io/download/
+sudo apt install graphviz
+
 # Docker Requirments
 # https://docs.docker.com/engine/install/ubuntu/
 # https://dev.to/bowmanjd/install-docker-on-windows-wsl-without-docker-desktop-34m9

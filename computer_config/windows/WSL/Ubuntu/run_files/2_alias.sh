@@ -48,17 +48,16 @@ fi
 # using --network host while work to figure the bridge config out
 
 if [ $(grep -ic "alias aws=" "${user_home}/.bashrc_alias" ) -lt 1  ]; then
-  mkdir -p "${user_home}/.docker_containers/aws"
-  mkdir -p "${user_home}/.docker_containers//aws/.aws"
-  mkdir -p "${user_home}/.docker_containers/aws/root"
+  mkdir -p "${user_home}/.aws"
   # https://hub.docker.com/r/amazon/aws-cli
-  echo "alias aws='docker run --network host --rm -it -v ~/.docker_containers/aws/.aws:/root/.aws -v ~/.docker_containers/aws/root:/aws amazon/aws-cli:latest'" >> "${user_home}/.bashrc_alias"
+
+  ls -s "${user_home}/.docker_containers/aws/aws" "${user_home}/.aws"
+  echo "alias aws='docker run --network host --rm -it -v ~/.aws:/root/.aws amazon/aws-cli'" >> "${user_home}/.bashrc_alias"
   echo "" >> "${user_home}/.bashrc_alias"
 fi
 
 if [ ! -f "${user_home}/.local/bin/az" ]; then
-  mkdir -p "${user_home}/.docker_containers/azure/azure"
-  mkdir -p "${user_home}/.docker_containers/Azure"
+  mkdir -p "${user_home}/.azure"
 
   echo "alias az_update='docker pull mcr.microsoft.com/azure-cli && az config set extension.use_dynamic_install=yes_prompt'" >> "${user_home}/.bashrc_alias"
 
@@ -69,7 +68,7 @@ while (( "$#" )); do
   shift
 done
 
-docker run --network host --rm -it -v ~/.ssh:/root/.ssh -v ~/.docker_containers/azure/azure:/root/.azure -v ~/.docker_containers/azure/Azure:/root/.Azure tiki/azure_cli /usr/local/bin/az $args
+docker run --network host --rm -it -v ~/.ssh:/root/.ssh -v ~/.azure:/root/.azure tiki/azure_cli /usr/local/bin/az $args
 EOF
 chmod 755 "${user_home}/.local/bin/az"
 fi

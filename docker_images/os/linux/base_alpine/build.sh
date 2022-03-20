@@ -80,4 +80,5 @@ rm -Rf custom
 
 popd
 
-docker build --network host -t tiki/azure_cli $base_dir
+#  --network host is needed for my setup until I get the bridge done.
+docker build --network host -t tiki/base_alpine $base_dir
