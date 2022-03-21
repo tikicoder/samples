@@ -35,6 +35,27 @@ sudo mkdir -p "$apt_keyrings"
 sudo apt update
 sudo apt upgrade -y
 
+wget https://go.dev/dl/go1.18.linux-amd64.tar.gz
+tar -C "${user_home}/.local/bin" -xzf go1.18.linux-amd64.tar.gz
+
+if [ $(grep -ic "\"\$HOME/.local/bin\"" "${user_home}/.profile") -lt 1 ]; then
+  cat >> "${user_home}/.profile" << EOF
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/.local/bin" ]; then
+    PATH="$HOME/.local/bin:$PATH"
+fi
+EOF
+fi
+
+if [ $(grep -ic "\"\$HOME/.local/bin/go/bin\"" "${user_home}/.profile") -lt 1 ]; then
+  cat >> "${user_home}/.profile" << EOF
+# set PATH so it includes user's private golang bin if it exists
+if [ -d "$HOME/.local/bin/go/bin" ]; then
+    PATH="$HOME/.local/bin/go/bin:$PATH"
+fi
+EOF
+fi
+
 if [ $(sudo ls /etc/ | grep -ic '^wsl.conf$') -gt 0  ]; then
   sudo rm -f /etc/wsl.conf
 fi
