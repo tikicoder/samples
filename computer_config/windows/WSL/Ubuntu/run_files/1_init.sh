@@ -34,6 +34,7 @@ sudo mkdir -p "$apt_keyrings"
 
 sudo apt update
 sudo apt upgrade -y
+sudo apt install make
 
 wget https://go.dev/dl/go1.18.linux-amd64.tar.gz
 tar -C "${user_home}/.local/bin" -xzf go1.18.linux-amd64.tar.gz
