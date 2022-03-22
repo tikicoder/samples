@@ -51,7 +51,6 @@ if [ $(grep -ic "alias aws=" "${user_home}/.bashrc_alias" ) -lt 1  ]; then
   mkdir -p "${user_home}/.aws"
   # https://hub.docker.com/r/amazon/aws-cli
 
-  ls -s "${user_home}/.docker_containers/aws/aws" "${user_home}/.aws"
   echo "alias aws='docker run --network host --rm -it -v ~/.aws:/root/.aws amazon/aws-cli'" >> "${user_home}/.bashrc_alias"
   echo "" >> "${user_home}/.bashrc_alias"
 fi
@@ -73,11 +72,20 @@ EOF
 chmod 755 "${user_home}/.local/bin/az"
 fi
 
+if [ $(grep -ic "alias pwsh=" "${user_home}/.bashrc_alias" ) -lt 1  ]; then
+  mkdir -p "${user_home}/.aws"
+  # https://hub.docker.com/_/microsoft-powershell
+
+  echo "alias aws='docker run --network host --rm -it -v ~/*:/root/ -v ~/mnt/c:/mnt/c  mcr.microsoft.com/powershell'" >> "${user_home}/.bashrc_alias"
+  echo "" >> "${user_home}/.bashrc_alias"
+fi
+
 . "$user_home/.bashrc"
 . "$user_home/.bashrc_alias"
 
 az --version
 aws --version
+
 
 popd
 
