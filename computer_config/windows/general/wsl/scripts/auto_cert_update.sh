@@ -55,4 +55,10 @@ fi
 popd
 rm -Rf /tmp/custom_certs_add
 
-cat "${pem_path}/*" >> $(python -m certifi)
+if [ ! -z "$(command -v python)" ]; then
+  cat "${pem_path}/*" >> $(python -m certifi)
+fi
+
+if [ ! -z "$(command -v python3)" ]; then
+  cat "${pem_path}/*" >> $(python3 -m certifi)
+fi

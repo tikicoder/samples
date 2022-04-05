@@ -36,6 +36,7 @@ sudo apt update
 sudo apt upgrade -y
 sudo apt install make
 
+# Installing GOLANG to local BIN
 wget https://go.dev/dl/go1.18.linux-amd64.tar.gz
 tar -C "${user_home}/.local/bin" -xzf go1.18.linux-amd64.tar.gz
 
@@ -91,6 +92,13 @@ sudo apt install -y genisoimage
 # https://graphviz.gitlab.io/download/
 sudo apt install graphviz
 
+# This is designed to have Node use the Same CA as python so if something custom is there you should be good
+if [ $(grep -ic "export NODE_EXTRA_CA_CERTS=" "${user_home}/.bashrc" ) -lt 1  ]; then
+  echo "" >> "${user_home}/.bashrc"
+  echo "export NODE_EXTRA_CA_CERTS=$(python3 -m certifi)'" >> "${user_home}/.bashrc"
+  echo "" >> "${user_home}/.bashrc"
+fi
+
 # Docker Requirments
 # https://docs.docker.com/engine/install/ubuntu/
 # https://dev.to/bowmanjd/install-docker-on-windows-wsl-without-docker-desktop-34m9
@@ -137,24 +145,28 @@ sudo apt install -y gh
 # Git Install
 sudo apt install -y git
 
-# # Azure CLI
-# # https://docs.microsoft.com/en-us/cli/azure/run-azure-cli-docker
-# # https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt
-# curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-# # Enables Auto Upgrade w/Prompt
-# # https://docs.microsoft.com/en-us/cli/azure/update-azure-cli
-# az config set auto-upgrade.enable=yes
+# Azure CLI
+# https://docs.microsoft.com/en-us/cli/azure/run-azure-cli-docker
+# https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+# Enables Auto Upgrade w/Prompt
+# https://docs.microsoft.com/en-us/cli/azure/update-azure-cli
+az config set auto-upgrade.enable=yes
 
-# # Install extensions automatically w/Prompt
-# # https://docs.microsoft.com/en-us/cli/azure/azure-cli-extensions-overview
-# az config set extension.use_dynamic_install=yes_prompt
+# Install extensions automatically w/Prompt
+# https://docs.microsoft.com/en-us/cli/azure/azure-cli-extensions-overview
+az config set extension.use_dynamic_install=yes_prompt
 
-# # AWS CLI
-# # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-# # https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-docker.html
-# curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-# unzip awscliv2.zip
-# sudo ./aws/install
+# AWS CLI
+# https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+# https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-docker.html
+mkdir -p /tmp/aws
+pushd /tmp/aws
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+popd
+rm -Rf /tmp/aws
 
 # # GCP CLI
 # # https://cloud.google.com/sdk/docs/downloads-docker
