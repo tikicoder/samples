@@ -70,4 +70,3 @@ wsl -d $($general_defaults.docker_distro) sudo adduser -G wheel --gid $local_use
 wsl -d $($general_defaults.docker_distro) sudo ln -s "/mnt/wsl/instances/$($general_defaults.main_distro)/home/$($local_user)/" "/home/$($local_user)/"
 
 wsl -d $($general_defaults.main_distro) rm -Rf $($general_defaults.tmp_directory)
-wsl -d $($general_defaults.main_distro) sudo rm /etc/sudoers.d/``whoami``
