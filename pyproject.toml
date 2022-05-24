@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "samples"
+version = "0.1.0"
+description = ""
+authors = ["Ron Truex <tikicoder@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = ">=3.8,<4.0"
+asyncio = "^3.4.3"
+tqdm = "^4.63.0"
+python-dateutil = "^2.8.2"
+polling = "^0.3.2"
+diagrams = "^0.21.1"
+openpyxl = "^3.0.9"
+pycryptodomex = "^3.14.1"
+requests = "^2.27.1"
+azure-cli-core = "^2.34.1"
+azure-identity = "^1.8.0"
+azure-mgmt-subscription = "^3.0.0"
+azure-mgmt-managementgroups = "^1.0.0"
+azure-cli = "^2.34.1"
+azure-core = "^1.23.0"
+azure-common = "^1.1.28"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
