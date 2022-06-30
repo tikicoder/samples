@@ -1,0 +1,82 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "westus2"
+        },
+        "networkInterfaceName": {
+            "value": ""
+        },
+        "networkSecurityGroupName": {
+            "value": ""
+        },
+        "subnetName": {
+            "value": ""
+        },
+        "virtualNetworkId": {
+            "value": ""
+        },
+        "privateIPAddress": {
+            "value": ["", ""]
+        },
+        "virtualMachineName": {
+            "value": "hub-adds"
+        },
+        "virtualMachineRG": {
+            "value": ""
+        },
+        "osDiskType": {
+            "value": "StandardSSD_LRS"
+        },
+        "dataDisks": {
+            "value": [
+                {
+                    "lun": 0,
+                    "createOption": "attach",
+                    "caching": "None",
+                    "writeAcceleratorEnabled": false,
+                    "id": null,
+                    "name": "Hub-ADDS-VM_DataDisk_0",
+                    "storageAccountType": null,
+                    "diskSizeGB": null,
+                    "diskEncryptionSet": {
+                        "id": null
+                    }
+                }
+            ]
+        },
+        "dataDiskResources": {
+            "value": [
+                {
+                    "name": "Hub-ADDS-VM_DataDisk_0",
+                    "sku": "StandardSSD_LRS",
+                    "properties": {
+                        "diskSizeGB": 128,
+                        "creationData": {
+                            "createOption": "empty"
+                        }
+                    }
+                }
+            ]
+        },
+        "virtualMachineSize": {
+            "value": "Standard_D2s_v3"
+        },
+        "adminUsername": {
+            "value": "adminusername"
+        },
+        "adminPassword": {
+            "value": ""
+        },
+        "diagnosticsStorageAccountName": {
+            "value": ""
+        },
+        "diagnosticsStorageAccountId": {
+            "value": ""
+        },
+        "zones": {
+            "value": ["1", "2"]
+        }
+    }
+}

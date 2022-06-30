@@ -1,0 +1,255 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountSasToken": {
+            "type": "string"
+        },
+        "iisDSCSetupArchiveFileName": {
+            "type": "string"
+        },
+        "storageAccountName": {
+            "type": "string"
+        },
+        "setupScriptContainerName": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        },
+        "networkInterfaceName": {
+            "type": "string"
+        },
+        "networkSecurityGroupName": {
+            "type": "string"
+        },
+        "subnetName": {
+            "type": "string"
+        },
+        "virtualNetworkId": {
+            "type": "string"
+        },        
+        "privateIPAddress": {
+            "type": "array",
+            "metadata": {
+                "description": "Static Private IP will be assigned to the machine"
+            }
+        },
+        "virtualMachineName": {
+            "type": "string"
+        },
+        "virtualMachineRG": {
+            "type": "string"
+        },
+        "osDiskType": {
+            "type": "string"
+        },
+        "dataDisks": {
+            "type": "array"
+        },
+        "dataDiskResources": {
+            "type": "array"
+        },
+        "virtualMachineSize": {
+            "type": "string"
+        },
+        "adminUsername": {
+            "type": "string"
+        },
+        "adminPassword": {
+            "type": "secureString"
+        },
+        "diagnosticsStorageAccountName": {
+            "type": "string"
+        },
+        "diagnosticsStorageAccountId": {
+            "type": "string"
+        },
+        "zones": {
+            "type": "array"
+        },
+        "dcAdminUserName": {
+            "type": "string"
+        },
+        "dcADminPassword": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
+        "vnetId": "[parameters('virtualNetworkId')]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('networkInterfaceName'), '-zone-', parameters('zones')[copyIndex('interfaceCopy')], '-nic')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-07-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [ ],
+            "copy": {
+                "name": "interfaceCopy",
+                "count": "[length(parameters('privateIPAddress'))]"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "[concat(parameters('networkInterfaceName'), copyIndex('interfaceCopy'),'-NetworkInterface')]",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[parameters('privateIPAddress')[copyIndex('interfaceCopy')]]"
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                }
+            }
+        },
+        {
+            "name": "[concat(parameters('dataDiskResources')[0].name, '-zone-', parameters('zones')[copyIndex('managedDiskResources')],'-Disk')]",
+            "type": "Microsoft.Compute/disks",
+            "apiVersion": "2019-07-01",
+            "location": "[parameters('location')]",
+            "properties": "[parameters('dataDiskResources')[0].properties]",
+            "sku": {
+                "name": "[parameters('dataDiskResources')[0].sku]"
+            },
+            "copy": {
+                "name": "managedDiskResources",
+                "count": "[length(parameters('zones'))]"
+            },
+            "zones": [
+                "[parameters('zones')[copyIndex('managedDiskResources')]]"
+            ]
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2019-12-01",
+            "name": "[concat(parameters('virtualMachineName'), '-zone-', parameters('zones')[copyIndex('virtualMachinesCopy')], '-vm','/', 'InstallActiveDirectory')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat(parameters('virtualMachineName'), '-zone-', parameters('zones')[copyIndex('virtualMachinesCopy')], '-vm')]"
+            ],
+            "copy": {
+                "name": "virtualMachinesCopy",
+                "count": "[length(parameters('privateIPAddress'))]"
+            },
+            "properties": {
+                "publisher": "Microsoft.Powershell",
+                "type": "DSC",
+                "typeHandlerVersion": "2.9",
+                "autoUpgradeMinorVersion": true,
+                "forceUpdateTag": "3",
+                "settings": {
+                    "configuration": {
+                        "url": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',parameters('setupScriptContainerName'),'/',parameters('iisDSCSetupArchiveFileName'))]",
+                        "script": "azure.ps1",
+                        "function": "CreateDomainController"
+                    }
+                },
+                "protectedSettings": {
+                    "configurationUrlSasToken": "[parameters('storageAccountSasToken')]",
+                    "configurationArguments": {
+                      "DomainName": "med-board.org",
+                    //   "SiteName": "",
+                      "PrimaryDcIpAddress": "10.187.2.199",
+                      "AdminCreds": {
+                            "UserName": "[parameters('dcAdminUserName')]",
+                            "Password": "[parameters('dcADminPassword')]"
+                      },
+                      "SafeModeAdminCreds": {
+                            "UserName": "[parameters('dcAdminUserName')]",
+                            "Password": "[parameters('dcADminPassword')]"
+                      }
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat(parameters('virtualMachineName'), '-zone-', parameters('zones')[copyIndex('virtualMachinesCopy')], '-vm')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-07-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "managedDiskResources",
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'), '-zone-', parameters('zones')[copyIndex('virtualMachinesCopy')], '-nic')]"
+            ],
+            "copy": {
+                "name": "virtualMachinesCopy",
+                "count": "[length(parameters('privateIPAddress'))]"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[parameters('osDiskType')]"
+                        }
+                    },
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2019-Datacenter",
+                        "version": "latest"
+                    },
+                    /*Validate Windows license*/
+                    "copy": [
+                        {
+                            "name": "dataDisks",
+                            "count": "[length(parameters('dataDisks'))]",
+                            "input": {
+                                "lun": "[parameters('dataDisks')[copyIndex('dataDisks')].lun]",
+                                "createOption": "[parameters('dataDisks')[copyIndex('dataDisks')].createOption]",
+                                "caching": "[parameters('dataDisks')[copyIndex('dataDisks')].caching]",
+                                "writeAcceleratorEnabled": "[parameters('dataDisks')[copyIndex('dataDisks')].writeAcceleratorEnabled]",
+                                "diskSizeGB": "[parameters('dataDisks')[copyIndex('dataDisks')].diskSizeGB]",
+                                "managedDisk": {
+                                    "id": "[coalesce(parameters('dataDisks')[copyIndex('dataDisks')].id, if(equals(parameters('dataDisks')[copyIndex('dataDisks')].name, json('null')), json('null'), resourceId('Microsoft.Compute/disks', concat(parameters('dataDisks')[copyIndex('dataDisks')].name, '-zone-', parameters('zones')[copyIndex('virtualMachinesCopy')],'-Disk'))))]",
+                                    "storageAccountType": "[parameters('dataDisks')[copyIndex('dataDisks')].storageAccountType]"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('networkInterfaceName'), '-zone-', parameters('zones')[copyIndex('virtualMachinesCopy')], '-nic'))]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[concat(parameters('virtualMachineName'), '-zone-', parameters('zones')[copyIndex('virtualMachinesCopy')])]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "windowsConfiguration": {
+                        "enableAutomaticUpdates": true,
+                        "provisionVmAgent": true
+                    }
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[concat('https://', parameters('diagnosticsStorageAccountName'), '.blob.core.windows.net/')]"
+                    }
+                }
+            },
+            "zones": [
+                "[parameters('zones')[copyIndex('virtualMachinesCopy')]]"
+            ]
+        }
+    ],
+    "outputs": {
+        "adminUsername": {
+            "type": "string",
+            "value": "[parameters('adminUsername')]"
+        }
+    }
+}
