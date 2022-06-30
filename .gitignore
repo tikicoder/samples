@@ -3,7 +3,7 @@
 *:Zone.Identifier
 **/python/**/__pycache__/*
 **/config_override/*
-.cache
+**/.cache
 **/*_override.sh
 
 **/ca_certs/private/*
