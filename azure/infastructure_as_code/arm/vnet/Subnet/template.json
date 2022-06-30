@@ -1,0 +1,64 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualNetworkName": {
+            "type": "String"
+        },
+        "resourceLocation": {
+            "type": "String"
+        },
+        "subnets": {
+            "type": "array"
+        }
+    },
+    "variables": { 
+        "subnetsProcess": {
+            "copy":[
+                {
+                    "name": "subnetData",
+                    "count": "[length(parameters('subnets'))]",
+                    "input": "[if(
+                            and(
+                            contains(parameters('subnets')[copyIndex('subnetData')], 'properties'), 
+                            contains(parameters('subnets')[copyIndex('subnetData')].properties, 'networkSecurityGroup'),
+                            contains(parameters('subnets')[copyIndex('subnetData')].properties.networkSecurityGroup, 'id'),
+                            not(startsWith(parameters('subnets')[copyIndex('subnetData')].properties.networkSecurityGroup.id, '/'))
+                            ),
+                            union(parameters('subnets')[copyIndex('subnetData')], JSON(
+                                concat('{\"properties\": {', '\"networkSecurityGroup\": {', '\"id\":', 
+                                concat('\"/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name,
+                                '/providers/Microsoft.Network/networkSecurityGroups/', parameters('subnets')[copyIndex('subnetData')].properties.networkSecurityGroup.id,  
+                                '\"'),
+                                '}', '}', '}')
+                                )),
+                            parameters('subnets')[copyIndex('subnetData')]
+                        ) 
+                    ]"
+                }
+            ]
+        },
+        "subnets":"[variables('subnetsProcess').subnetData]"
+    },
+    "outputs":{
+        "objectResult": {
+            "type": "array",
+            "value": "[variables('subnets')]"
+        }
+    },
+    "resources": [ 
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2020-04-01",
+            "name": "[concat(parameters('virtualNetworkName'), '/', parameters('subnets')[copyIndex('subnetResource')].name)]",
+            "location": "[parameters('resourceLocation')]",
+            "dependsOn": [
+            ],
+            "copy": {
+                "name": "subnetResource",
+                "count": "[length(variables('subnets'))]"
+            },
+            "properties": "[variables('subnets')[copyIndex('subnetResource')].properties]"
+        }
+    ]
+}

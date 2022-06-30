@@ -1,0 +1,147 @@
+trigger:
+  branches:
+    include: ["*"]
+stages:
+  - stage: Build
+    variables:
+      disable.coverage.autogenerate: 'true'
+      ProjectsToBuild: "**/*.csproj"
+      ProjectsToTest: "**/*.Tests.csproj"
+      BuildConfiguration: Release
+    jobs:
+      - job:
+        steps:
+          - task: NuGetAuthenticate@0
+            displayName: 'Authenticate NuGet'
+          - task: DotNetCoreCLI@2
+            displayName: Restore
+            inputs:
+              command: restore
+              projects: '$(ProjectsToBuild)'
+              feedsToUse: 'select'
+              vstsFeed: 'Sample'
+              includeNuGetOrg: true
+          - task: DotNetCoreCLI@2
+            displayName: Build
+            inputs:
+              projects: '$(ProjectsToBuild)'
+              arguments: '--configuration $(BuildConfiguration) --no-restore'
+          - task: DotNetCoreCLI@2
+            displayName: Test
+            inputs:
+              command: test
+              projects: $(ProjectsToTest)
+              arguments: '--configuration $(BuildConfiguration) --collect:"XPlat Code Coverage" --settings $(Build.SourcesDirectory)/src/coverlet.runsettings.xml --no-restore --no-build'
+              publishTestResults: true
+          - script: 'dotnet tool install dotnet-reportgenerator-globaltool --tool-path $(Agent.TempDirectory)/tools'  
+            displayName: 'Install ReportGenerator tool'  
+          - script: '$(Agent.TempDirectory)/tools/reportgenerator -reports:$(Agent.TempDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/coverlet/reports -reporttypes:"HtmlInline_AzurePipelines;Cobertura"'  
+            displayName: 'Create reports' 
+          - task: PublishCodeCoverageResults@1  
+            displayName: 'Publish code coverage'  
+            inputs:  
+              codeCoverageTool: Cobertura  
+              summaryFileLocation: '$(Build.SourcesDirectory)/coverlet/reports/Cobertura.xml'
+              reportDirectory: '$(Build.SourcesDirectory)/coverlet/reports'
+          - task: DotNetCoreCLI@2
+            displayName: Publish API
+            inputs:
+              command: publish
+              publishWebProjects: false
+              projects: '**/*.Api.csproj'
+              arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory) --no-build --no-restore'
+              zipAfterPublish: True
+          - task: DotNetCoreCLI@2
+            displayName: Publish Functions
+            inputs:
+              command: publish
+              publishWebProjects: false
+              projects: '**/*.Functions.csproj'
+              arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory) --no-build --no-restore'
+              zipAfterPublish: True
+          - task: DotNetCoreCLI@2
+            displayName: Publish Migrations
+            inputs:
+              command: publish
+              publishWebProjects: false
+              projects: '**/*.Migrations.csproj'
+              arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory) --self-contained true -p:PublishSingleFile=true --runtime linux-x64 --no-restore'
+              zipAfterPublish: false
+          - task: CopyFiles@2
+            displayName: Copy Infrastructure
+            inputs:
+              Contents: infrastructure/**
+              TargetFolder: "$(Build.ArtifactStagingDirectory)"
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Artifact'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+  - stage: Development
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+    jobs:
+      - template: templates/deploy-infrastructure-job.yaml
+        parameters:
+          environmentName: Development
+          environmentAlias: dev
+      - template: templates/deploy-service.yaml
+        parameters:
+          environmentName: Development
+          environmentAlias: dev
+          resourcePrefix: PRIMARY
+          jobName: Primary Region
+  - stage: QA
+    dependsOn: Build #depends on build, not Development, because release branches don't deploy to develop
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/develop'),  startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')))
+    jobs:
+      - template: templates/deploy-infrastructure-job.yaml
+        parameters:
+          environmentName: QA
+          environmentAlias: qa
+      - template: templates/deploy-service.yaml
+        parameters:
+          environmentName: QA
+          environmentAlias: qa
+          resourcePrefix: PRIMARY
+          jobName: Primary Region
+  - stage: Staging
+    dependsOn: Build
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/master'),  startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'),  startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
+    jobs:
+      - template: templates/deploy-infrastructure-job.yaml
+        parameters:
+          environmentName: Staging
+          environmentAlias: staging
+      - template: templates/deploy-service.yaml
+        parameters:
+          environmentName: Staging
+          environmentAlias: staging
+          resourcePrefix: PRIMARY
+          jobName: Primary Region
+      - template: templates/deploy-service.yaml
+        parameters:
+          environmentName: Staging
+          environmentAlias: staging
+          resourcePrefix: SECONDARY
+          jobName: Secondary Region
+  - stage: Production
+    dependsOn: Staging
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/master'),  startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')))
+    jobs:
+      - template: templates/deploy-infrastructure-job.yaml
+        parameters:
+          environmentName: Production
+          environmentAlias: prod
+      - template: templates/deploy-service.yaml
+        parameters:
+          environmentName: Production
+          environmentAlias: prod
+          resourcePrefix: PRIMARY
+          jobName: Primary Region
+      - ${{ if eq(true, false) }}: 
+        - template: templates/deploy-service.yaml
+          parameters:
+            environmentName: Production
+            environmentAlias: prod
+            resourcePrefix: SECONDARY
+            jobName: Secondary Region

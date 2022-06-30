@@ -1,0 +1,44 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.1",
+    "parameters": {
+        "utcValue": {
+            "type": "string",
+            "defaultValue": "[utcNow()]"
+        },
+        "apiVersion": {
+            "type": "string",
+            "defaultValue": "2019-09-01"
+        },
+        "rgBaseName": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        }
+    },
+    "variables": { 
+        "uniqueId": "[substring(uniqueString(parameters('utcValue')),0,5)]",
+        "rgName": "[concat(parameters('rgBaseName'), variables('uniqueId'))]",
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "[parameters('apiVersion')]",
+            "location": "[parameters('location')]",
+            "name": "[variables('rgName')]",
+            "properties": {}
+        }
+        
+    ],
+    "outputs": {
+        "rgName": {
+            "type": "string",
+            "value": "[variables('rgName')]"
+        },
+        "uniqueId": {
+            "type": "string",
+            "value": "[variables('uniqueId')]"
+        },
+    }
+}

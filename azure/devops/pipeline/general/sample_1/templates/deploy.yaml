@@ -1,0 +1,75 @@
+parameters:
+  - name: environment
+    type: string
+    default: false
+  - name: certificate
+    type: string
+    default: false
+
+steps:
+  - task: Bash@3
+    displayName: Create Resource Group
+    inputs:
+      filePath: "$(Pipeline.Workspace)/drop/scripts/create_resource_group.sh"
+      arguments: ''
+    env:
+      SERVICE_ACCOUNT_ID: $(SERVICE_ACCOUNT_ID)
+      SERVICE_ACCOUNT_PASSWORD: $(SERVICE_ACCOUNT_PASSWORD)
+      SHARED_KEY: $(SHARED_KEY)
+      TERRAFORMENVIRONMENT: $(Terraform_Deployment)
+  - task: Bash@3
+    displayName: Create State Bucket
+    inputs:
+      filePath: "$(Pipeline.Workspace)/drop/scripts/create_state_bucket.sh"
+      arguments: '${{ parameters.environment }}'
+    env:
+      SERVICE_ACCOUNT_ID: $(SERVICE_ACCOUNT_ID)
+      SERVICE_ACCOUNT_PASSWORD: $(SERVICE_ACCOUNT_PASSWORD)
+      SHARED_KEY: $(SHARED_KEY)
+      TERRAFORMENVIRONMENT: $(Terraform_Deployment)  
+  - task: TerraformInstaller@0
+    displayName: Install Terraform
+    inputs:
+      terraformVersion: "$(TerraformVersion)"
+  - task: Bash@3
+    displayName: Deploy Infrastructure (Primary)
+    inputs:
+      workingDirectory: "$(Pipeline.Workspace)/drop/scripts"
+      filePath: "$(Pipeline.Workspace)/drop/scripts/deploy_terraform_infrastructure.sh"
+      arguments: "${{ parameters.environment }} ${{ parameters.certificate}} 0" # Environment Name (match to .tfvars file name)
+    env:
+      TERRAFORM_DEPLOYMENT: $(Terraform_Deployment)
+      SERVICE_ACCOUNT_ID: $(SERVICE_ACCOUNT_ID)
+      SERVICE_ACCOUNT_PASSWORD: $(SERVICE_ACCOUNT_PASSWORD)
+      SHARED_KEY: $(SHARED_KEY)
+      SQL_SERVER_PASSWORD: $(SQL_SERVER_PASSWORD)
+      TERRAFORM_KEYVAULT_OBJECTID: $(Terraform_KeyVault_ObjectID)
+  - task: Bash@3
+    displayName: Deploy Infrastructure (Secondary)
+    inputs:
+      workingDirectory: "$(Pipeline.Workspace)/drop/scripts"
+      filePath: "$(Pipeline.Workspace)/drop/scripts/deploy_terraform_infrastructure.sh"
+      arguments: "${{ parameters.environment }} ${{ parameters.certificate}} 1" # Environment Name (match to .tfvars file name)
+    env:
+      TERRAFORM_DEPLOYMENT: $(Terraform_Deployment)
+      SERVICE_ACCOUNT_ID: $(SERVICE_ACCOUNT_ID)
+      SERVICE_ACCOUNT_PASSWORD: $(SERVICE_ACCOUNT_PASSWORD)
+      SHARED_KEY: $(SHARED_KEY)
+      SQL_SERVER_PASSWORD: $(SQL_SERVER_PASSWORD)
+      TERRAFORM_KEYVAULT_OBJECTID: $(Terraform_KeyVault_ObjectID)
+  - task: AzurePowerShell@4
+    displayName: "Sync APIM Subscription Keys"
+    inputs:
+      azureSubscription: "Sample-${{ parameters.environment }}"
+      scriptType: FilePath
+      scriptPath: "$(Pipeline.Workspace)/drop/scripts/configure_secondary_apim.ps1"
+      scriptArguments: "\"$(AZ_SKIP_DEPLOYMENT_PRIMARY)\" \"$(AZ_NO_DEPLOYMENT_SECONDARY)\" \"$(AZ_SKIP_DEPLOYMENT_SECONDARY)\" \"$(AZ_APIM_NAME_RESOURCE_GROUP_PRIMARY)\" \"$(AZ_APIM_NAME_PRIMARY)\" \"unlimited\" \"$(AZ_APIM_NAME_SECONDARY)\""
+      azurePowerShellVersion: latestVersion
+  # - template: destroy.yaml
+  #   parameters:
+  #     environment: ${{ parameters.environment }}
+#- task: ShellScript@2
+#  inputs:
+#    scriptPath: 'scripts/smoke_tests.sh'
+#    args: ''
+

@@ -1,0 +1,97 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/subscriptionDeploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": { 
+        "location": {
+            "value": "northcentralus"
+        },
+        "adminUsername": {
+            "value": "cloudendineeringnat"
+        },
+        "customData": {
+            "value": "sudo apt-get -y update;sudo apt-get -y install nginx;sudo /etc/init.d/nginx start;"
+        },
+        "networkInterfaceNameBase": {
+            "value": "ni-cloudendineeringnat-"
+        },
+        "networkSecurityGroupNameBase": {
+            "value": "nsg-vm-cloudendineeringnat-"
+        },
+        "subnetName": {
+            "value": "default"
+        },
+        "virtualNetworkNameBase": {
+            "value": "vnet-cloudengineer-rg-"
+        },
+        "addressPrefixes": {
+            "value": [
+                "10.0.0.0/24"
+            ]
+        },
+        "subnets": {
+            "value": [
+                {
+                    "name": "default",
+                    "properties": {
+                        "addressPrefix": "10.0.0.0/24"
+                    }
+                }
+            ]
+        },
+        "publicIpAddressNameBase": {
+            "value": "ip-vm-cloudendineeringnat-"
+        },
+        "publicIpAddressType": {
+            "value": "Static"
+        },
+        "publicIpAddressSku": {
+            "value": "Basic"
+        },
+        "virtualMachineNameBase": {
+            "value": "vm-cloudendineeringnat-"
+        },
+        "osDiskType": {
+            "value": "Premium_LRS"
+        },
+        "dataDisks": {
+            "value": [
+                {
+                    "lun": 0,
+                    "createOption": "attach",
+                    "caching": "None",
+                    "writeAcceleratorEnabled": false,
+                    "id": null,
+                    "name": "vm-cloudendineeringnat_DataDisk",
+                    "storageAccountType": null,
+                    "diskSizeGB": null
+                }
+            ]
+        },
+        "dataDiskResources": {
+            "value": [
+                {
+                    "name": "vm-cloudendineeringnat_DataDisk",
+                    "sku": "Premium_LRS",
+                    "properties": {
+                        "diskSizeGB": 1,
+                        "creationData": {
+                            "createOption": "empty"
+                        }
+                    }
+                }
+            ]
+        },
+        "virtualMachineSize": {
+            "value": "Standard_B1s"
+        },
+        "diagnosticsStorageAccountNameBase": {
+            "value": "cloudengineerrgdiag"
+        },
+        "diagnosticsStorageAccountType": {
+            "value": "Standard_LRS"
+        },
+        "diagnosticsStorageAccountKind": {
+            "value": "Storage"
+        }
+    }
+}

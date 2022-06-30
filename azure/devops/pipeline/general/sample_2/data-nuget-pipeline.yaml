@@ -1,0 +1,67 @@
+trigger:
+  branches:
+    include: ["*"]
+  paths:
+    include: [ 'src/Services.Auth.Data']
+stages:
+  - stage: Build
+    variables:
+      ProjectsToBuild: "**/Services.Auth.Data.csproj"
+      ProjectsToTest: "**/*.Tests.csproj"
+      BuildConfiguration: Release
+    jobs:
+      - job:
+        steps:
+          - task: NuGetAuthenticate@0
+            displayName: 'Authenticate NuGet'
+          - task: DotNetCoreCLI@2
+            displayName: Restore
+            inputs:
+              command: restore
+              projects: '$(ProjectsToBuild)'
+              feedsToUse: 'select'
+              vstsFeed: 'Sample'
+              includeNuGetOrg: true
+          - task: DotNetCoreCLI@2
+            displayName: Build
+            inputs:
+              projects: '$(ProjectsToBuild)'
+              arguments: '--configuration $(BuildConfiguration) --no-restore'
+          - task: DotNetCoreCLI@2
+            displayName: Test
+            inputs:
+              command: test
+              projects: $(ProjectsToTest)
+              arguments: '--configuration $(BuildConfiguration) --collect "Code coverage" --no-restore --no-build'
+              publishTestResults: true
+          - task: DotNetCoreCLI@2
+            displayName: Package
+            inputs:
+              command: pack
+              packagesToPack: $(projectsToBuild);!$(testProjects)
+              configuration: $(BuildConfiguration)
+              packDirectory: $(Build.ArtifactStagingDirectory)
+              nobuild: true
+              includesymbols: true
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Artifact'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+  - stage: NuGet
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - deployment:
+        environment: NuGet
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: NuGetCommand@2
+                  displayName: 'Publish Package'
+                  inputs:
+                    command: push
+                    packagesToPush: '$(Pipeline.Workspace)/drop/**/*.nupkg;!$(Pipeline.Workspace)/drop/**/*.symbols.nupkg'
+                    publishVstsFeed: '1cc15167-c16d-4251-b1fc-105b8843509e'
+                    allowPackageConflicts: true
+  

@@ -1,0 +1,18 @@
+parameters:
+  - name: environment
+    type: string
+    default: false
+
+steps:
+  - task: ShellScript@2
+    displayName: Destroy Infrastructure
+    inputs:
+      scriptPath: '$(Pipeline.Workspace)/drop/scripts/destroy_terraform_infrastructure.sh'
+      args: '${{ parameters.environment }}' # Environment Name (match to .tfvars file name)
+    env:
+      TERRAFORM_DEPLOYMENT: $(Terraform_Deployment)
+      SERVICE_ACCOUNT_ID: $(SERVICE_ACCOUNT_ID)
+      SERVICE_ACCOUNT_PASSWORD: $(SERVICE_ACCOUNT_PASSWORD)
+      SHARED_KEY: $(SHARED_KEY)
+      SQL_SERVER_PASSWORD: $(SQL_SERVER_PASSWORD)
+      TERRAFORM_KEYVAULT_OBJECTID: $(Terraform_KeyVault_ObjectID)

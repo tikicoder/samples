@@ -1,0 +1,35 @@
+requests
+| where cloud_RoleName contains "app-service"
+| where operation_Name != "GET Brands/GetReloadableProduct [id]" and operation_Name != "GET Brands/Get"
+| summarize avg(duration) by cloud_RoleName, bin(timestamp, 12h)
+| render timechart;
+
+
+// average request duration by name
+
+requests
+| where url != ''
+| where client_Type != "Browser" 
+| summarize avg(duration) by cloud_RoleName, bin(timestamp, 5m), name
+| extend request='Overall'
+| render timechart
+
+
+
+
+
+
+/*
+// average request duration by name
+let timeGrain=5m;
+let dataset=requests
+// additional filters can be applied here
+| where url != ''
+| where client_Type != "Browser" ;
+// calculate average request duration for all requests
+dataset
+| summarize avg(duration) by tostring(split(url, '/')[2]), name, bin(timestamp, timeGrain)
+| extend request='Overall'
+// render result in a chart
+| render timechart
+*/

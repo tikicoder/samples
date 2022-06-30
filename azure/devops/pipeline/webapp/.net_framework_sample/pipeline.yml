@@ -1,0 +1,88 @@
+# ASP.NET
+# Build and test ASP.NET projects.
+# Add steps that publish symbols, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/apps/aspnet/build-aspnet-4
+
+trigger:
+- master
+- stage
+- develop
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:  
+  solution: 'src/website/ProjectSolution.sln'
+  buildPlatform: 'Any CPU'
+  ${{ if not(or(eq(variables['Build.SourceBranch'], 'refs/heads/develop'), eq(variables['Build.SourceBranch'], 'refs/heads/stage'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))) }}:
+    deployBranch: false
+  ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/develop'), eq(variables['Build.SourceBranch'], 'refs/heads/stage'), eq(variables['Build.SourceBranch'], 'refs/heads/master')) }}:
+    deployBranch: true
+  ${{ if not(or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['Build.SourceBranch'], 'refs/heads/stage'))) }}:
+    variablegroup: dev
+    deploymentDisplay: Dev    
+    environment: Test
+    buildConfiguration: Test
+    serviceConnection: test
+  ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/stage') }}:
+    variablegroup: stage
+    deploymentDisplay: Stage
+    environment: Stage
+    buildConfiguration: Stage
+    serviceConnection: stage
+  ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
+    variablegroup: prod
+    deploymentDisplay: Prod
+    environment: Prod
+    buildConfiguration: Release
+    serviceConnection: prod
+
+# for performance you could look to make the VSBuild/Deployment run in parallel
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/process/phases?view=azure-devops&tabs=yaml
+stages:
+  - stage: Build
+    jobs:
+      - job:
+        variables:
+          - group: app-api-${{ variables['variablegroup'] }}
+        steps:
+        - task: NuGetToolInstaller@1
+        - task: NuGetCommand@2
+          inputs:
+            restoreSolution: '$(solution)'
+        - task: VSBuild@1
+          inputs:
+            solution: '$(solution)'
+            msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)/App_Solution_Zip.zip" /t:AppStartSolutionNamespace:Rebuild'
+            platform: '$(buildPlatform)'
+            configuration: '$(buildConfiguration)'
+        # - task: VSTest@2
+        #   inputs:
+        #     platform: '$(buildPlatform)'
+        #  	configuration: '$(buildConfiguration)'
+        - ${{ if eq(variables['deployBranch'], true) }}:
+          - task: PublishBuildArtifacts@1
+            displayName: "Publish Artifact"
+            inputs:
+              PathtoPublish: "$(Build.ArtifactStagingDirectory)"  
+  - ${{ if eq(variables['deployBranch'], true) }}:
+    - stage: Deploy_${{ variables['deploymentDisplay'] }}
+      dependsOn: Build
+      condition: succeeded()
+      jobs: 
+        - deployment:
+          environment: ${{ variables['environment'] }}
+          variables:
+            - group: app-api-${{ variables['variablegroup'] }}
+          strategy:
+            runOnce:
+              deploy:
+                steps:
+                - task: AzureRmWebAppDeployment@4
+                  displayName: Web Add Deployment
+                  inputs:
+                    ConnectionType: 'AzureRM'
+                    azureSubscription: rg-web-app-${{ variables['serviceConnection'] }}
+                    appType: 'webApp'
+                    WebAppName: as-biz-app-${{ lower(variables['environment']) }}
+                    packageForLinux: '$(Pipeline.Workspace)/drop/App_Solution_Zip.zip'

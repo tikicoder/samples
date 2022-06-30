@@ -1,0 +1,54 @@
+parameters:
+  - name: environmentName
+    type: string
+    default: false
+  - name: environmentAlias
+    type: string
+    default: false
+
+jobs:
+  - deployment: deployInfrastructure
+    displayName: "Deploy Infrastructure"
+    environment: ${{ parameters.environmentName }}
+    variables:
+      - template: variables.yaml
+        parameters:
+          environmentAlias: ${{ parameters.environmentAlias }}
+    strategy:
+      runOnce:
+        deploy:
+          steps: 
+            # This should look to be deployed at some point to ensure you are in control of what TF version is being used.
+            # - task: TerraformInstaller@0
+            #   displayName: Install Terraform
+            #   inputs:
+            #     terraformVersion: "$(TerraformVersion)"
+            - task: Bash@3
+              name: runTerraformPRIMARY
+              displayName: "Run Terraform - Primary"
+              inputs:
+                workingDirectory: "$(Pipeline.Workspace)/drop/infrastructure/scripts"
+                filePath: "$(Pipeline.Workspace)/drop/infrastructure/scripts/deploy_terraform_infrastructure.sh"
+                arguments: "${{ parameters.environmentAlias }} auth 0"
+              env:
+                SERVICE_ACCOUNT_ID: $(SERVICE_ACCOUNT_ID)
+                SERVICE_ACCOUNT_PASSWORD: $(SERVICE_ACCOUNT_PASSWORD)
+                SHARED_KEY: $(SHARED_KEY)
+                SQL_SERVER_PASSWORD: $(SQL_SERVER_PASSWORD)
+            - task: Bash@3
+              name: runTerraformSECONDARY
+              displayName: "Run Terraform - Secondary"
+              inputs:
+                workingDirectory: "$(Pipeline.Workspace)/drop/infrastructure/scripts"
+                filePath: "$(Pipeline.Workspace)/drop/infrastructure/scripts/deploy_terraform_infrastructure.sh"
+                arguments: "${{ parameters.environmentAlias }} auth 1"
+              env:
+                SERVICE_ACCOUNT_ID: $(SERVICE_ACCOUNT_ID)
+                SERVICE_ACCOUNT_PASSWORD: $(SERVICE_ACCOUNT_PASSWORD)
+                SHARED_KEY: $(SHARED_KEY)
+                SQL_SERVER_PASSWORD: $(SQL_SERVER_PASSWORD)
+            - script: |
+                  cd $(Pipeline.Workspace)/drop/Services.Auth.Migrations
+                  chmod 777 ./Services.Auth.Migrations
+                  ./Services.Auth.Migrations $(AZ_SQL_SERVER_NAME_PRIMARY) sample-${{ parameters.environmentAlias }}-auth-db $(SQL_SERVER_USERNAME) $(SQL_SERVER_PASSWORD)
+              displayName: Run Migrations

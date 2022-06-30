@@ -1,0 +1,75 @@
+trigger:
+  branches:
+    include: ["*"]
+
+pool:
+  vmImage: "ubuntu-16.04"
+
+parameters:
+- name: DeploymentStages
+  type: object
+  default:
+    - stage: 'Development'
+      dependsOn: 'Build'
+      jobsEnvironmentName: 'Development'
+      variablesGroupName: 'dev'
+      parametersDeployEnvironment: 'dev'
+    - stage: 'QA'
+      dependsOn: 'Build'
+      jobsEnvironmentName: 'QA'
+      variablesGroupName: 'qa'
+      parametersDeployEnvironment: 'qa'
+    - stage: 'Staging'
+      dependsOn: 'Build'
+      jobsEnvironmentName: 'Staging'
+      variablesGroupName: 'staging'
+      parametersDeployEnvironment: 'staging'
+    - stage: 'Production'
+      dependsOn: 'Staging'
+      jobsEnvironmentName: 'Production'
+      variablesGroupName: 'prod'
+      parametersDeployEnvironment: 'prod'
+
+variables:
+  Development_condition: ${{eq(variables['Build.SourceBranch'], 'refs/heads/develop')}}
+  QA_condition: ${{or(eq(variables['Build.SourceBranch'], 'refs/heads/develop'),  startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))}}
+  Staging_condition: ${{or(eq(variables['Build.SourceBranch'], 'refs/heads/master'),  startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'),  startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/'))}}
+  Production_condition: ${{or(eq(variables['Build.SourceBranch'], 'refs/heads/master'),  startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))}}
+  
+stages:
+  - stage: Build
+    jobs:
+      - job:
+        steps:
+          - task: CopyFiles@2
+            displayName: Copy Release Scripts
+            inputs:
+              Contents: |
+                terraform/**
+                scripts/**
+              TargetFolder: "$(Build.ArtifactStagingDirectory)"
+          - task: PublishBuildArtifacts@1
+            displayName: "Publish Artifact"
+            inputs:
+              PathtoPublish: "$(Build.ArtifactStagingDirectory)"  
+  - ${{ each stage in parameters.DeploymentStages }}:
+    - ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['Build.SourceBranch'], 'refs/heads/develop'),startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'),  startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')) }}:
+      - stage: ${{ stage.stage }}
+        ${{ if ne(parameters.ForceDeployment, stage.stage) }}:
+          dependsOn: ${{ stage.dependsOn }}
+        ${{ if eq(parameters.ForceDeployment, stage.stage) }}:
+          dependsOn: Build
+        condition: and(succeeded(), variables.${{ stage.stage }}_condition )
+        jobs:
+          - deployment:
+            environment: ${{ stage.jobsEnvironmentName }}
+            variables:
+              - group: ${{ stage.variablesGroupName }}
+            strategy:
+              runOnce:
+                deploy:
+                  steps:
+                    - template: templates/deploy.yaml
+                      parameters:
+                        environment: ${{ stage.parametersDeployEnvironment }}
+                        certificate: $(BASE64_CERTIFICATE)

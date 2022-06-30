@@ -1,0 +1,27 @@
+az login --use-device-code
+
+//ubuntu
+echo `curl -s https://ipinfo.io/ip 2>&1`/32;\
+az group deployment create \
+ --name devenvironment \
+--resource-group rg-cloudengineeringnat-`az deployment create -l northcentralus --subscription fd1cf82f-1b22-43da-9998-54e236746269 --template-file ~/NerderyProjects/JobApplications/CloudEngineer/template/templateCreateSubscription.json --parameters @/mnt/c/NerderyProjects/JobApplications/CloudEngineer/template/templateCreateSubscription.parameters.json --query properties.outputs.uniqueId.value | awk -F'"' '{ print $2}'`\
+ --subscription fd1cf82f-1b22-43da-9998-54e236746269 \
+ --template-file ~/NerderyProjects/JobApplications/CloudEngineer/template/template.json \
+ --parameters @/mnt/c/NerderyProjects/JobApplications/CloudEngineer/template/template.parameters.json \
+ --query properties.outputs.vmURI.value 
+ 
+
+
+
+az group deployment create \
+ --name devenvironment \
+--resource-group rg-cloudengineeringnat-`az deployment create -l northcentralus --subscription fd1cf82f-1b22-43da-9998-54e236746269 --template-file ~/NerderyProjects/JobApplications/CloudEngineer/template/templateCreateSubscription.json --parameters @/mnt/c/NerderyProjects/JobApplications/CloudEngineer/template/templateCreateSubscription.parameters.json --query properties.outputs.uniqueId.value | awk -F'"' '{ print $2}'`\
+ --subscription fd1cf82f-1b22-43da-9998-54e236746269 \
+ --template-file ~/NerderyProjects/JobApplications/CloudEngineer/template/template.json \
+ --parameters @/mnt/c/NerderyProjects/JobApplications/CloudEngineer/template/template.parameters.json \
+  localIP=`echo \`curl -s https://ipinfo.io/ip 2>&1\`/32` \
+ --query properties.outputs.vmURI.value 
+ 
+az deployment create -l northcentralus --subscription fd1cf82f-1b22-43da-9998-54e236746269 --template-file ~/NerderyProjects/JobApplications/CloudEngineer/template/templateCombined.json --parameters @/mnt/c/NerderyProjects/JobApplications/CloudEngineer/template/templateCombined.parameters.json \
+localIP=`echo \`curl -s https://ipinfo.io/ip 2>&1\`/32` \
+ --query properties.outputs.vmURI.value 

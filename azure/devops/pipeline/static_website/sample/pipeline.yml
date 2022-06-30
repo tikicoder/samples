@@ -1,0 +1,89 @@
+# Node.js with React
+# Build a Node.js project that uses React.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+  - master
+  - stage
+  - develop
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  ? ${{ if not(or(eq(variables['Build.SourceBranch'], 'refs/heads/develop'), eq(variables['Build.SourceBranch'], 'refs/heads/stage'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))) }}
+  : deployBranch: false
+  ? ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/develop'), eq(variables['Build.SourceBranch'], 'refs/heads/stage'), eq(variables['Build.SourceBranch'], 'refs/heads/master')) }}
+  : deployBranch: true
+  ${{ if not(or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['Build.SourceBranch'], 'refs/heads/stage'))) }}:
+    variablegroup: dev
+    deploymentDisplay: Dev
+    environment: Test
+  ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/stage') }}:
+    variablegroup: stage
+    deploymentDisplay: Stage
+    environment: Stage
+  ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
+    variablegroup: prod
+    deploymentDisplay: Prod
+    environment: Prod
+
+stages:
+  - stage: Build
+    jobs:
+      - job:
+        variables:
+          - group: webapp-${{ variables['variablegroup'] }}
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '10.x'
+              # checkLatest: true
+            displayName: 'Install Node.js'
+          - script: |
+              echo "NPM Install"
+              npm install
+              echo ""
+              echo "NPM build: $(NPMDeploy)"
+              ENV=$(NPMDeploy) npm run ci-build
+            displayName: 'npm install and build'
+          - ${{ if eq(variables['deployBranch'], true) }}: # only copies and publishes files if its on a deploy branch
+              - task: CopyFiles@2
+                displayName: Copy Release Scripts
+                inputs:
+                  Contents: |
+                    build/**
+                    pipeline/**
+                  TargetFolder: '$(Build.ArtifactStagingDirectory)'
+              - task: PublishBuildArtifacts@1
+                displayName: 'Publish Artifact'
+                inputs:
+                  PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+  - ${{ if eq(variables['deployBranch'], true) }}:
+      - stage: Deploy_${{ variables['deploymentDisplay'] }}
+        dependsOn: Build
+        condition: succeeded()
+        jobs:
+          - deployment:
+            environment: ${{ variables['environment'] }}
+            variables:
+              - group: webapp-${{ variables['variablegroup'] }}
+            strategy:
+              runOnce:
+                deploy:
+                  steps:
+                    - task: Bash@3
+                      displayName: Deploy Files Via AZCopy
+                      inputs:
+                        filePath: '$(Pipeline.Workspace)/drop/pipeline/deployFiles.sh'
+                      env:
+                        AZURE_CDN_RG: $(AZURE_CDN_RG)
+                        AZURE_CDN_PROFILE: $(AZURE_CDN_PROFILE)
+                        AZURE_CDN_ENDPOINT: $(AZURE_CDN_ENDPOINT)
+                        AZURE_STORAGE_RG: $(AZURE_STORAGE_RG)
+                        AZURE_STORAGE_NAME: $(AZURE_STORAGE_NAME)
+                        AZURE_APP_ID: $(AZURE_APP_ID)
+                        AZURE_PASSWORD: $(AZURE_PASSWORD)
+                        AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+                        AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)

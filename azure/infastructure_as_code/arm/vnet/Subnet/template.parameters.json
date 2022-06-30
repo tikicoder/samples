@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "subnets": {
+            "value": [
+                {
+                    "name": "AppService",
+                    "properties": {
+                        "addressPrefix": "10.10.10.0/24",
+                        "networkSecurityGroup": {
+                            
+                        },
+                        "serviceEndpoints": [],
+                        "delegations": [],
+                        "privateEndpointNetworkPolicies": "Enabled",
+                        "privateLinkServiceNetworkPolicies": "Enabled"
+
+                    }
+                }
+            ]
+        }
+    }
+}

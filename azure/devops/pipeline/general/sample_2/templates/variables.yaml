@@ -1,0 +1,8 @@
+parameters:
+  - name: environmentAlias
+    type: string
+    default: false
+
+variables:
+  - group: ${{ parameters.environmentAlias }}
+  - group: ${{ parameters.environmentAlias }}-test

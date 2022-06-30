@@ -1,0 +1,514 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.1",
+    "parameters": {
+        "utcValue": {
+            "type": "string",
+            "defaultValue": "[utcNow()]"
+        },
+        "apiVersion": {
+            "type": "string",
+            "defaultValue": "2019-09-01"
+        },
+        "rgBaseName": {
+            "type": "string"
+        },
+        "location": {
+			"type": "string"
+		},
+		"localIP": {
+			"type": "string"
+		},
+		"networkInterfaceNameBase": {
+			"type": "string"
+		},
+		"networkSecurityGroupNameBase": {
+			"type": "string"
+		},
+		"virtualNetworkNameBase": {
+			"type": "string"
+		},
+		"publicIpAddressNameBase": {
+			"type": "string"
+		},
+		"virtualMachineNameBase": {
+			"type": "string"
+		},
+		"diagnosticsStorageAccountNameBase": {
+			"type": "string"
+		},
+		"subnetName": {
+			"type": "string"
+		},
+		"addressPrefixes": {
+			"type": "array"
+		},
+		"subnets": {
+			"type": "array"
+		},
+		"publicIpAddressType": {
+			"type": "string"
+		},
+		"publicIpAddressSku": {
+			"type": "string"
+		},
+		"osDiskType": {
+			"type": "string"
+		},
+		"dataDisks": {
+			"type": "array"
+		},
+		"dataDiskResources": {
+			"type": "array"
+		},
+		"virtualMachineSize": {
+			"type": "string"
+		},
+		"adminUsername": {
+			"type": "string"
+		},
+		"adminPassword": {
+			"type": "secureString"
+		},
+		"customData": {
+			"type": "secureString"
+		},
+		"diagnosticsStorageAccountType": {
+			"type": "string"
+		},
+		"diagnosticsStorageAccountKind": {
+			"type": "string"
+		}
+        
+    },
+    "variables": { 
+        "uniqueId": "[substring(uniqueString(parameters('utcValue')),0,5)]",
+        "rgName": "[concat(parameters('rgBaseName'), variables('uniqueId'))]",
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "[parameters('apiVersion')]",
+            "location": "[parameters('location')]",
+            "name": "[variables('rgName')]",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-09-01",
+            "name": "InfrastructureTemplate",
+            "resourceGroup": "[variables('rgName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+				"expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+						"location": {
+							"type": "string"
+						},
+						"localIP": {
+							"type": "string"
+						},
+						"networkInterfaceNameBase": {
+							"type": "string"
+						},
+						"networkSecurityGroupNameBase": {
+							"type": "string"
+						},
+						"virtualNetworkNameBase": {
+							"type": "string"
+						},
+						"publicIpAddressNameBase": {
+							"type": "string"
+						},
+						"virtualMachineNameBase": {
+							"type": "string"
+						},
+						"diagnosticsStorageAccountNameBase": {
+							"type": "string"
+						},
+						"subnetName": {
+							"type": "string"
+						},
+						"addressPrefixes": {
+							"type": "array"
+						},
+						"subnets": {
+							"type": "array"
+						},
+						"publicIpAddressType": {
+							"type": "string"
+						},
+						"publicIpAddressSku": {
+							"type": "string"
+						},
+						"osDiskType": {
+							"type": "string"
+						},
+						"dataDisks": {
+							"type": "array"
+						},
+						"dataDiskResources": {
+							"type": "array"
+						},
+						"virtualMachineSize": {
+							"type": "string"
+						},
+						"adminUsername": {
+							"type": "string"
+						},
+						"adminPassword": {
+							"type": "secureString"
+						},
+						"customData": {
+							"type": "secureString"
+						},
+						"diagnosticsStorageAccountType": {
+							"type": "string"
+						},
+						"diagnosticsStorageAccountKind": {
+							"type": "string"
+						}
+					},
+                    "variables": {
+						"uniqueID": "[last(split(resourceGroup().name, '-'))]",
+						"rgName": "[resourceGroup().name]",
+						"networkInterfaceName": "[concat(parameters('networkInterfaceNameBase'), variables('uniqueID'))]",
+						"networkSecurityGroupName": "[concat(parameters('networkSecurityGroupNameBase'), variables('uniqueID'))]",
+						"virtualNetworkName": "[concat(parameters('virtualNetworkNameBase'), variables('uniqueID'))]",
+						"publicIpAddressName": "[concat(parameters('publicIpAddressNameBase'), variables('uniqueID'))]",
+						"virtualMachineName": "[concat(parameters('virtualMachineNameBase'), variables('uniqueID'))]",
+						"nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
+						"vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+						"subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
+						"diagnosticsStorageAccountName": "[concat(parameters('diagnosticsStorageAccountNameBase'), variables('uniqueID'))]",
+						"diagnosticsStorageAccountId": "Microsoft.Storage/storageAccounts/[variables('diagnosticsStorageAccountName')]",
+						"vmPIPDnsName": "[concat(parameters('adminUsername'), variables('uniqueID'))]",
+						"networkSecurityGroupRules": [
+								{
+									"name": "default-allow-ssh",
+									"properties": {
+										"priority": 1000,
+										"protocol": "TCP",
+										"access": "Allow",
+										"direction": "Inbound",
+										"sourceApplicationSecurityGroups": [],
+										"destinationApplicationSecurityGroups": [],
+										"sourceAddressPrefix": "[parameters('localIP')]",
+										"sourcePortRange": "*",
+										"destinationAddressPrefix": "*",
+										"destinationPortRange": "22"
+									}
+								},
+								{
+									"name": "default-allow-http",
+									"properties": {
+										"priority": 999,
+										"protocol": "TCP",
+										"access": "Allow",
+										"direction": "Inbound",
+										"sourceApplicationSecurityGroups": [],
+										"destinationApplicationSecurityGroups": [],
+										"sourceAddressPrefix": "*",
+										"sourcePortRange": "*",
+										"destinationAddressPrefix": "*",
+										"destinationPortRange": "80"
+									}
+								},
+								{
+									"name": "default-allow-https",
+									"properties": {
+										"priority": 998,
+										"protocol": "TCP",
+										"access": "Allow",
+										"direction": "Inbound",
+										"sourceApplicationSecurityGroups": [],
+										"destinationApplicationSecurityGroups": [],
+										"sourceAddressPrefix": "*",
+										"sourcePortRange": "*",
+										"destinationAddressPrefix": "*",
+										"destinationPortRange": "443"
+									}
+								}
+							]
+						},
+                    "resources": [
+                        {
+							"name": "[variables('networkInterfaceName')]",
+							"type": "Microsoft.Network/networkInterfaces",
+							"apiVersion": "2019-07-01",
+							"location": "[parameters('location')]",
+							"dependsOn": [
+								"[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]",
+								"[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+								"[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
+							],
+							"properties": {
+								"ipConfigurations": [
+									{
+										"name": "ipconfig1",
+										"properties": {
+											"subnet": {
+												"id": "[variables('subnetRef')]"
+											},
+											"privateIPAllocationMethod": "Dynamic",
+											"publicIpAddress": {
+												"id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
+											}
+										}
+									}
+								],
+								"networkSecurityGroup": {
+									"id": "[variables('nsgId')]"
+								}
+							}
+						},
+						{
+							"name": "[variables('networkSecurityGroupName')]",
+							"type": "Microsoft.Network/networkSecurityGroups",
+							"apiVersion": "2019-02-01",
+							"location": "[parameters('location')]",
+							"properties": {
+								"securityRules": "[variables('networkSecurityGroupRules')]"
+							}
+						},
+						{
+							"name": "[variables('virtualNetworkName')]",
+							"type": "Microsoft.Network/virtualNetworks",
+							"apiVersion": "2019-04-01",
+							"location": "[parameters('location')]",
+							"properties": {
+								"addressSpace": {
+									"addressPrefixes": "[parameters('addressPrefixes')]"
+								},
+								"subnets": "[parameters('subnets')]"
+							}
+						},
+						{
+							"name": "[variables('publicIpAddressName')]",
+							"type": "Microsoft.Network/publicIpAddresses",
+							"apiVersion": "2019-02-01",
+							"location": "[parameters('location')]",
+							"properties": {
+								"publicIpAllocationMethod": "[parameters('publicIpAddressType')]",
+								"dnsSettings": {
+									"domainNameLabel": "[variables('vmPIPDnsName')]"
+								}
+							},
+							"sku": {
+								"name": "[parameters('publicIpAddressSku')]"
+							}
+						},
+						{
+							"name": "[parameters('dataDiskResources')[copyIndex()].name]",
+							"type": "Microsoft.Compute/disks",
+							"apiVersion": "2019-07-01",
+							"location": "[parameters('location')]",
+							"properties": "[parameters('dataDiskResources')[copyIndex()].properties]",
+							"sku": {
+								"name": "[parameters('dataDiskResources')[copyIndex()].sku]"
+							},
+							"copy": {
+								"name": "managedDiskResources",
+								"count": "[length(parameters('dataDiskResources'))]"
+							}
+						},
+						{
+							"name": "[variables('diagnosticsStorageAccountName')]",
+							"type": "Microsoft.Storage/storageAccounts",
+							"apiVersion": "2019-06-01",
+							"location": "[parameters('location')]",
+							"properties": {},
+							"kind": "[parameters('diagnosticsStorageAccountKind')]",
+							"sku": {
+								"name": "[parameters('diagnosticsStorageAccountType')]"
+							}
+						},
+						{
+							"type": "Microsoft.Compute/virtualMachines/extensions",
+							"name": "[concat(variables('virtualMachineName'),'/newuserscript')]",
+							"apiVersion": "2019-03-01",
+							"location": "[parameters('location')]",
+							"dependsOn": [
+								"[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachineName'))]"
+							],
+							"properties": {
+								"publisher": "Microsoft.Azure.Extensions",
+								"type": "CustomScript",
+								"typeHandlerVersion": "2.0",
+								"autoUpgradeMinorVersion": "true",
+								"settings": {
+									"commandToExecute": "apt-get -y update;apt-get -y install apache2;cat /var/www/html/index.html > /var/www/html/index.bak.html;echo Hello Azure World > /var/www/html/index.html;apachectl restart;echo 'n p ' | fdisk /dev/`sudo lsblk -o NAME,FSTYPE,SIZE,MOUNTPOINT,LABEL | grep 1G | awk -F' ' '{print $1}'`;mkfs -t ext4 /dev/`sudo lsblk -o NAME,FSTYPE,SIZE,MOUNTPOINT,LABEL | grep 1G | awk -F' ' '{print $1}'`;mkdir /datadrive;mount /dev/`sudo lsblk -o NAME,FSTYPE,SIZE,MOUNTPOINT,LABEL | grep 1G | awk -F' ' '{print $1}'` /datadrive;echo UUID=`sudo -i blkid | grep \\`sudo lsblk -o NAME,FSTYPE,SIZE,MOUNTPOINT,LABEL | grep 1G | awk -F' ' '{print $1}'\\` | awk -F'\"' '{print $2}'`   /datadrive   ext4   defaults,nofail   1   2 >> /etc/fstab"
+								}
+							}
+						},
+						{
+							"name": "[variables('virtualMachineName')]",
+							"type": "Microsoft.Compute/virtualMachines",
+							"apiVersion": "2019-07-01",
+							"location": "[parameters('location')]",
+							"dependsOn": [
+								"managedDiskResources",
+								"[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
+								"[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]"
+							],
+							"properties": {
+								"hardwareProfile": {
+									"vmSize": "[parameters('virtualMachineSize')]"
+								},
+								"storageProfile": {
+									"osDisk": {
+										"createOption": "fromImage",
+										"managedDisk": {
+											"storageAccountType": "[parameters('osDiskType')]"
+										}
+									},
+									"imageReference": {
+										"publisher": "Canonical",
+										"offer": "UbuntuServer",
+										"sku": "18.04-LTS",
+										"version": "latest"
+									},
+									"copy": [
+										{
+											"name": "dataDisks",
+											"count": "[length(parameters('dataDisks'))]",
+											"input": {
+												"lun": "[parameters('dataDisks')[copyIndex('dataDisks')].lun]",
+												"createOption": "[parameters('dataDisks')[copyIndex('dataDisks')].createOption]",
+												"caching": "[parameters('dataDisks')[copyIndex('dataDisks')].caching]",
+												"writeAcceleratorEnabled": "[parameters('dataDisks')[copyIndex('dataDisks')].writeAcceleratorEnabled]",
+												"diskSizeGB": "[parameters('dataDisks')[copyIndex('dataDisks')].diskSizeGB]",
+												"managedDisk": {
+													"id": "[coalesce(parameters('dataDisks')[copyIndex('dataDisks')].id, if(equals(parameters('dataDisks')[copyIndex('dataDisks')].name, json('null')), json('null'), resourceId('Microsoft.Compute/disks', parameters('dataDisks')[copyIndex('dataDisks')].name)))]",
+													"storageAccountType": "[parameters('dataDisks')[copyIndex('dataDisks')].storageAccountType]"
+												}
+											}
+										}
+									]
+								},
+								"networkProfile": {
+									"networkInterfaces": [
+										{
+											"id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+										}
+									]
+								},
+								"osProfile": {
+									"computerName": "[variables('virtualMachineName')]",
+									"adminUsername": "[parameters('adminUsername')]",
+									"adminPassword": "[parameters('adminPassword')]",
+									"customData": "[base64(parameters('customData'))]"
+								},
+								"diagnosticsProfile": {
+									"bootDiagnostics": {
+										"enabled": "true",
+										"storageUri": "[concat('https://', variables('diagnosticsStorageAccountName'), '.blob.core.windows.net/')]"
+									}
+								}
+							}
+						}
+                    ],
+                    "outputs": {
+						"adminUsername": {
+							"type": "string",
+							"value": "[parameters('adminUsername')]"
+						},
+						"vmURI": {
+							"type": "string",
+							"value": "[reference(variables('publicIpAddressName')).dnsSettings.fqdn]"
+						}
+					
+					}
+                },
+				"parameters": {
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"localIP": {
+						"value": "[parameters('localIP')]"
+					},
+					"networkInterfaceNameBase": {
+						"value": "[parameters('networkInterfaceNameBase')]"
+					},
+					"networkSecurityGroupNameBase": {
+						"value": "[parameters('networkSecurityGroupNameBase')]"
+					},
+					"virtualNetworkNameBase": {
+						"value": "[parameters('virtualNetworkNameBase')]"
+					},
+					"publicIpAddressNameBase": {
+						"value": "[parameters('publicIpAddressNameBase')]"
+					},
+					"virtualMachineNameBase": {
+						"value": "[parameters('virtualMachineNameBase')]"
+					},
+					"diagnosticsStorageAccountNameBase": {
+						"value": "[parameters('diagnosticsStorageAccountNameBase')]"
+					},
+					"subnetName": {
+						"value": "[parameters('subnetName')]"
+					},
+					"addressPrefixes": {
+						"value": "[parameters('addressPrefixes')]"
+					},
+					"subnets": {
+						"value": "[parameters('subnets')]"
+					},
+					"publicIpAddressType": {
+						"value": "[parameters('publicIpAddressType')]"
+					},
+					"publicIpAddressSku": {
+						"value": "[parameters('publicIpAddressSku')]"
+					},
+					"osDiskType": {
+						"value": "[parameters('osDiskType')]"
+					},
+					"dataDisks": {
+						"value": "[parameters('dataDisks')]"
+					},
+					"dataDiskResources": {
+						"value": "[parameters('dataDiskResources')]"
+					},
+					"virtualMachineSize": {
+						"value": "[parameters('virtualMachineSize')]"
+					},
+					"adminUsername": {
+						"value": "[parameters('adminUsername')]"
+					},
+					"adminPassword": {
+						"value": "[parameters('adminPassword')]"
+					},
+					"customData": {
+						"value": "[parameters('customData')]"
+					},
+					"diagnosticsStorageAccountType": {
+						"value": "[parameters('diagnosticsStorageAccountType')]"
+					},
+					"diagnosticsStorageAccountKind": {
+						"value": "[parameters('diagnosticsStorageAccountKind')]"
+					}
+				}
+            }
+        }
+        
+    ],
+    "outputs": {
+        "rgName": {
+            "type": "string",
+            "value": "[variables('rgName')]"
+        },
+        "uniqueId": {
+            "type": "string",
+            "value": "[variables('uniqueId')]"
+        },
+		
+    }
+}

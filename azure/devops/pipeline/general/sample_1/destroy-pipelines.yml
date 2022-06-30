@@ -1,0 +1,36 @@
+trigger: none
+
+pool:
+  vmImage: "ubuntu-16.04"
+
+stages:
+  - stage: Build
+    jobs:
+      - job:
+        steps:
+          - task: CopyFiles@2
+            displayName: Copy Release Scripts
+            inputs:
+              Contents: |
+                terraform/**
+                scripts/**
+              TargetFolder: "$(Build.ArtifactStagingDirectory)"
+          - task: PublishBuildArtifacts@1
+            displayName: "Publish Artifact"
+            inputs:
+              PathtoPublish: "$(Build.ArtifactStagingDirectory)"
+  - stage: Development
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    jobs:
+      - deployment:
+        environment: Development
+        variables:
+          - group: dev
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - template: templates/destroy.yaml
+                  parameters:
+                    environment: dev

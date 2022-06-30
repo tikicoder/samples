@@ -92,7 +92,7 @@ foreach ($version in $VERSIONS) {
     $url = "https://$($stagingSite.DefaultHostName)/swagger/v$version/swagger.json"
 
     # Other API's use the empty version to default to 1, but since 1 is maintained throuugh the
-    # ShopWithScrip.ApiManagement Repo for Auth and CRM, we don't do that here.
+    # ApiManagement Repo for Auth and CRM, we don't do that here.
 
     # if ($version -eq "1" -or $version -eq "1.0") {
     #     UploadApi $versionSet "" $context $url $serviceUrl

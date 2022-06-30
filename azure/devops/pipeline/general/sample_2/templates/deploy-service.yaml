@@ -1,0 +1,132 @@
+parameters:
+  - name: environmentName
+    type: string
+  - name: environmentAlias
+    type: string
+  - name: resourcePrefix
+    type: string
+  - name: jobName
+    type: string
+
+jobs:
+  - deployment:
+    displayName: ${{ parameters.jobName }}
+    dependsOn: deployInfrastructure
+    environment: ${{ parameters.environmentName }}
+    variables:
+      - template: variables.yaml
+        parameters:
+          environmentAlias: ${{ parameters.environmentAlias }}
+      - name: RESOURCE_PREFIX
+        value: ${{ parameters.resourcePrefix }}
+      - name: ENVIRONMENT
+        value: ${{ parameters.environmentAlias }}
+      - name: NO_DEPLOYMENT
+        value: $[ dependencies.deployInfrastructure.outputs['deployInfrastructure.runTerraform${{ parameters.resourcePrefix }}.AZ_NO_DEPLOYMENT_${{ parameters.resourcePrefix }}'] ]
+      - name: SKIP_DEPLOYMENT
+        value: $[ dependencies.deployInfrastructure.outputs['deployInfrastructure.runTerraform${{ parameters.resourcePrefix }}.AZ_SKIP_DEPLOYMENT_${{ parameters.resourcePrefix }}'] ]
+      - name: RESOURCE_GROUP
+        value: $[ dependencies.deployInfrastructure.outputs['deployInfrastructure.runTerraform${{ parameters.resourcePrefix }}.RESOURCE_GROUP_${{ parameters.resourcePrefix }}'] ]
+      - name: AZ_APP_NAME
+        value: $[ dependencies.deployInfrastructure.outputs['deployInfrastructure.runTerraform${{ parameters.resourcePrefix }}.AZ_APP_NAME_${{ parameters.resourcePrefix }}'] ]
+      - name: AZ_FUNCS_NAME
+        value: $[ dependencies.deployInfrastructure.outputs['deployInfrastructure.runTerraform${{ parameters.resourcePrefix }}.AZ_FUNCS_NAME_${{ parameters.resourcePrefix }}'] ]
+      - name: AZ_VNET_APP
+        value: $[ dependencies.deployInfrastructure.outputs['deployInfrastructure.runTerraform${{ parameters.resourcePrefix }}.AZ_VNET_APP_${{ parameters.resourcePrefix }}'] ]
+      - name: AZ_SUBNET_APP
+        value: $[ dependencies.deployInfrastructure.outputs['deployInfrastructure.runTerraform${{ parameters.resourcePrefix }}.AZ_SUBNET_APP_${{ parameters.resourcePrefix }}'] ]
+      - name: AZ_SUBNET_APP_ECOMM
+        value: $[ dependencies.deployInfrastructure.outputs['deployInfrastructure.runTerraform${{ parameters.resourcePrefix }}.AZ_SUBNET_APP_ECOMM_${{ parameters.resourcePrefix }}'] ]
+      - name: AZ_SUBNET_FUNC
+        value: $[ dependencies.deployInfrastructure.outputs['deployInfrastructure.runTerraform${{ parameters.resourcePrefix }}.AZ_SUBNET_FUNC_${{ parameters.resourcePrefix }}'] ]
+      - name: AZ_APIM_IP
+        value: $[ dependencies.deployInfrastructure.outputs['deployInfrastructure.runTerraform${{ parameters.resourcePrefix }}.AZ_APIM_IP_${{ parameters.resourcePrefix }}'] ]
+      - name: AZ_APIM_NAME
+        value: $[ dependencies.deployInfrastructure.outputs['deployInfrastructure.runTerraform${{ parameters.resourcePrefix }}.AZ_APIM_NAME_${{ parameters.resourcePrefix }}'] ]
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - ${{ if ne(variables.SKIP_DEPLOYMENT, 'true') }}:
+              - powershell: |
+                  $IP_ADDRESS=(Invoke-WebRequest -uri "http://ifconfig.me/ip").Content
+                  Write-Host "##vso[task.setvariable variable=IP_ADDRESS]$IP_ADDRESS"
+                displayName: Get IP Address
+              - task: FileTransform@2
+                displayName: Transform Function App Settings
+                inputs:
+                  folderPath: '$(Pipeline.Workspace)/drop/**/*.Functions.zip'
+                  xmlTransformationRules: ''
+                  jsonTargetFiles: '**/appsettings.json'
+              - task: AzureCLI@2
+                displayName: Initialize Deployment Slots
+                inputs:
+                  azureSubscription: 'Sample-${{ parameters.environmentAlias }}'
+                  scriptType: 'bash'
+                  scriptLocation: 'scriptPath'
+                  scriptPath: '$(Pipeline.Workspace)/drop/infrastructure/scripts/init_deployment_slots.sh'
+                  arguments: "$(AZ_APP_NAME) $(AZ_FUNCS_NAME) $(IP_ADDRESS) $(RESOURCE_GROUP)"
+              - task: AzureCLI@2
+                displayName: "App Service Availability Test"
+                inputs:
+                  azureSubscription: 'Sample-${{ parameters.environmentAlias }}'
+                  scriptType: 'bash'
+                  scriptLocation: 'scriptPath'
+                  scriptPath: '$(Pipeline.Workspace)/drop/infrastructure/scripts/add_app_insight_availability.sh'
+                  arguments: "$(AZ_APP_NAME)"
+              - task: AzureCLI@2
+                displayName: "Integrate Virtual Network"
+                inputs:
+                  azureSubscription: 'Sample-${{ parameters.environmentAlias }}'
+                  scriptType: 'bash'
+                  scriptLocation: 'scriptPath'
+                  scriptPath: '$(Pipeline.Workspace)/drop/infrastructure/scripts/add_vnet_integration.sh'
+                  arguments: "$(AZ_APP_NAME) $(AZ_FUNCS_NAME) $(AZ_VNET_APP) $(AZ_SUBNET_APP) $(AZ_SUBNET_FUNC) $(RESOURCE_GROUP)"
+              - task: AzureRmWebAppDeployment@4
+                displayName: "Deploy API"
+                inputs:
+                  ConnectionType: "AzureRM"
+                  azureSubscription: "Sample-${{ parameters.environmentAlias }}"
+                  appType: "webApp"
+                  WebAppName: "$(AZ_APP_NAME)"
+                  packageForLinux: "$(Pipeline.Workspace)/drop/**/*Api.zip"
+                  JSONFiles: "**/appsettings.json"
+                  deployToSlotOrASE: true
+                  ResourceGroupName: '$(RESOURCE_GROUP)'
+                  SlotName: 'staging'
+              - task: AzureFunctionApp@1
+                displayName: "Deploy Functions"
+                inputs:
+                  azureSubscription: "Sample-${{ parameters.environmentAlias }}"
+                  appType: "functionApp"
+                  appName: "$(AZ_FUNCS_NAME)"
+                  package: "$(Pipeline.Workspace)/drop/**/*.Functions.zip"
+                  deploymentMethod: "auto"
+                  resourceGroupName: '$(RESOURCE_GROUP)'
+                  deployToSlotOrASE: true
+                  slotName: 'staging'
+              - task: AzurePowerShell@4
+                displayName: "Check API Health"
+                inputs:
+                  azureSubscription: "Sample-${{ parameters.environmentAlias }}"
+                  scriptType: FilePath
+                  scriptPath: "$(Pipeline.Workspace)/drop/infrastructure/scripts/check_health.ps1"
+                  scriptArguments: "$(RESOURCE_GROUP) $(AZ_APP_NAME) $(IP_ADDRESS)"
+                  azurePowerShellVersion: latestVersion
+              - task: AzurePowerShell@4
+                displayName: "Add API's to APIM"
+                condition: and(succeeded(), ne(variables['AZ_APIM_NAME'], '')) #This will skip this step all together if the name is empty.
+                inputs:
+                  azureSubscription: "Sample-${{ parameters.environmentAlias }}"
+                  scriptType: FilePath
+                  scriptPath: "$(Pipeline.Workspace)/drop/infrastructure/scripts/add_appservice_to_apim.ps1"
+                  scriptArguments: '$(RESOURCE_GROUP) $(AZ_APP_NAME) Sample-${{ parameters.environmentAlias }}-apim-rg "$(AZ_APIM_NAME)" users 1'
+                  azurePowerShellVersion: latestVersion
+              - task: AzureCLI@2
+                displayName: Swap Deployment Slots
+                inputs:
+                  azureSubscription: 'Sample-${{ parameters.environmentAlias }}'
+                  scriptType: 'bash'
+                  scriptLocation: 'scriptPath'
+                  scriptPath: '$(Pipeline.Workspace)/drop/infrastructure/scripts/swap_slots.sh'
+                  arguments: "$(AZ_APP_NAME) $(AZ_FUNCS_NAME) $(RESOURCE_GROUP)"

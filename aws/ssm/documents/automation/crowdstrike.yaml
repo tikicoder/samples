@@ -1,0 +1,902 @@
+description: Install Crowdstrike on EC2 Instance
+schemaVersion: '0.3'
+parameters:
+  instanceids:
+    type: StringList
+    default: []
+    description: The instanceids to run the script against (max 45)
+  oslimit:
+    type: StringList
+    default: []
+    description: limit the install to specific OSes
+  delaystart:
+    type: Boolean
+    default: false
+    description: If true will delay the service from starting (used for making an image)
+  baseapiurl:
+    type: String
+    default: ''
+    description: The base url for the API calls to ensure we are getting the latest version
+  cid:
+    type: String
+    default: ''
+    description: The CID to configure the Crowdstrike agent to use
+  clientid:
+    type: String
+    default: ''
+    description: The Client ID is needed to make the API calls
+  secret:
+    type: String
+    default: ''
+    description: The secret is needed to make the API calls
+mainSteps:
+  - name: GetInstance
+    action: 'aws:executeAwsApi'
+    onFailure: Abort
+    inputs:
+      Service: ssm
+      Api: DescribeInstanceInformation
+      Filters:
+        - Key: InstanceIds
+          Values:
+            - '{{ instanceids }}'
+    outputs:
+      - Name: instanceInformationList
+        Selector: $.InstanceInformationList
+        Type: MapList
+  - name: setupData
+    action: 'aws:executeScript'
+    onFailure: Abort
+    inputs:
+      Runtime: PowerShell Core 6.0
+      InputPayload:
+        instances_data: '{{ GetInstance.instanceInformationList }}'
+        instanceids: '{{ instanceids }}'
+        oslimit: '{{ oslimit }}'
+        delaystart: '{{ delaystart }}'
+        baseapiurl: '{{ baseapiurl }}'
+        cid: '{{ cid }}'
+        clientid: '{{ clientid }}'
+        secret: '{{ secret }}'
+      Script: |
+        function main {
+          $inputPayload = $($env:InputPayload | ConvertFrom-Json)
+          $all_instanceids = $inputPayload.instanceids
+          $oslimit = $inputPayload.oslimit
+          $delaystart = $inputPayload.delaystart
+
+          $baseapiurl = $inputPayload.baseapiurl
+          $clientid = $inputPayload.clientid
+          $secret = $inputPayload.secret
+          $cid = $inputPayload.cid
+          
+          
+          $processed_instances_data =  $(get_instances -instances_data $inputPayload.instances_data -oslimit $oslimit -all_instanceids $all_instanceids ) 
+          $crowdstrike_data = $(get_crowdstrike_data -baseapiur $baseapiurl -clientid $clientid -secret $secret -cid $cid)
+
+          return @{
+            delaystart = ($delaystart -eq $True).ToString().ToLower()
+            processed_instances_data =  $processed_instances_data      
+            crowdstrike = $crowdstrike_data.crowdstrike
+            token = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($crowdstrike_data.token.Trim()))
+            baseapiurl = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($baseapiurl.Trim()))
+            clientid = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($clientid.Trim()))
+            secret = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($secret.Trim()))
+            cid = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($cid.Trim()))
+          }
+            
+        }
+
+        function get_crowdstrike_data($baseapiurl, $clientid, $secret, $cid) {
+          
+          $apiRequestHeaders = @{ 
+            "accept" = 'application/json'
+          }
+
+          $apiTokenRequestData = @{ 
+            client_id = $clientid
+            client_secret =  $secret
+          }
+
+          try
+          {
+
+            $apiTokenResponse = Invoke-WebRequest -Uri "$($baseapiurl)/oauth2/token" `
+              -UseBasicParsing `
+              -Method Post `
+              -ContentType 'application/x-www-form-urlencoded'  `
+              -Headers  $apiRequestHeaders `
+              -Body $apiTokenRequestData
+          }
+          catch
+          {
+            Write-Host $_.Exception.Message
+            set_tls_version
+            try
+            {
+              $apiTokenResponse = Invoke-WebRequest -Uri "$($baseapiurl)/oauth2/token" `
+                -UseBasicParsing `
+                -Method Post `
+                -ContentType 'application/x-www-form-urlencoded'  `
+                -Headers  $apiRequestHeaders `
+                -Body $apiTokenRequestData
+            }
+            catch 
+            {
+              Write-Host $_.Exception.Message
+              return @{
+                crowdstrike = ""
+                token = ""
+              }
+            }
+          }
+
+          $apiToken = ConvertFrom-Json $apiTokenResponse.Content
+
+          $apiRequestHeaders.Add("Authorization", "Bearer $($apiToken.access_token)")
+
+          $agentDownloadOptionsResponse = Invoke-WebRequest -Uri "$($baseapiurl)/sensors/combined/installers/v1" `
+              -Method Get `
+              -ContentType 'application/json'  `
+              -Headers  $apiRequestHeaders 
+
+          $agentDownloadOptionData = ConvertFrom-Json  $agentDownloadOptionsResponse.Content
+          $agentDownloadOptionDataResources = $agentDownloadOptionData.resources        
+
+          $os_list = [System.Collections.ArrayList]$($agentDownloadOptionDataResources | Select-Object -Property os, os_version, @{label="version";expression={""}}, @{label="url";expression={""}}, @{label="name";expression={""}}`
+              | sort-object -Property os, os_version, version -Unique `
+              | Where-Object {-not $_.os -eq ""} `
+          )
+
+          foreach($os in $os_list){
+              $latest_version = $($agentDownloadOptionDataResources `
+                  | Where-Object {($os.os -eq $_.os -and $os.os_version -eq $_.os_version)} `
+                  | Select-Object -Property name, sha256, @{label="version";expression={[System.Version]::Parse("$($_.version).0.0.0".split('.')[0..3] -join '.')}} `
+                  | Sort-Object | Select-Object -First 1)[0]
+              
+              $os.version = $latest_version.version
+              $os.name = $latest_version.name
+              $os.url = "$($baseapiurl)/sensors/entities/download-installer/v1?id=$($latest_version.sha256)"
+          }
+
+          $remove_objects = [System.Collections.ArrayList]@()
+
+          foreach($os in $os_list){
+              $version_count = $($os_list | Where-Object {($_.os_version -Match "$($os.os_version)" -and $_.os -eq $os.os )}).Length
+              if ( $version_count -gt 1){
+                  $remove_objects.Add($os)
+              }
+          }
+
+          foreach($os in $remove_objects){
+              if($os.os -eq "Amazon Linux" -and $os.os_version -eq "2"){
+                  continue
+              }
+
+              $os_list.Remove($os)
+          }
+
+          return @{
+            crowdstrike = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($($os_list | Select-Object -Property os, os_version, url, name | ConvertTo-Json -compress)))
+            token = $apiToken.access_token
+          }
+        }
+
+        function is_windows($str){
+          if([string]::isNullorWhitespace($str)){
+            return $false
+          }
+          
+          $str = $str.trim()
+          return ($str -ieq "Windows" -or $str -ieq "Window" -or $str -ieq "Win")
+          
+        }
+
+        function is_inx($str){
+          if([string]::isNullorWhitespace($str)){
+            return $false
+          }
+          
+          $str = $str.trim()
+          return ($str -ieq "Linux" -or $str -ieq "Unix" -or $str -ieq "inx")
+          
+        }
+
+        function set_tls_version {
+          # https://docs.microsoft.com/en-us/dotnet/api/system.net.securityprotocoltype?view=net-5.0
+          $Tls12 = 3072
+          $Tls13 = 12288
+
+          if ($([enum]::getvalues([Net.SecurityProtocolType]) | Select-String -Pattern Tls13).Matches.Count -gt 0){
+            [Net.ServicePointManager]::SecurityProtocol = $($Tls12 -bor $Tls13)
+            return
+          }
+
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          
+        }        
+
+        function get_instances($instances_data, $oslimit, $all_instanceids) {
+
+          $windows_instances = New-Object 'System.Collections.Generic.List[String]'
+          $linux_instances = New-Object 'System.Collections.Generic.List[String]'          
+
+          $processed_instances_data = New-Object 'System.Collections.Generic.Dictionary[[string],[string]]'
+          foreach ($instance in $instances_data){
+            $processed_instances_data.Add($instance.InstanceId, $instance.PlatformType )          
+          }
+
+          $get_windows_instances = ($oslimit.Count -lt 1 -or ($oslimit | `
+            Where-Object {(is_windows -str $_) } `
+          ).Count -gt 0)
+
+          $get_linux_instances = ($oslimit.Count -lt 1 -or ($oslimit | `
+            Where-Object {(is_inx -str $_) } `
+          ).Count -gt 0)
+          
+          foreach ($instance_id in $processed_instances_data.keys)
+          {
+            if ($processed_instances_data[$instance_id] -eq "Windows"){
+              $windows_instances.Add($instance_id)
+              continue
+            }
+
+            if ($processed_instances_data[$instance_id] -eq "Linux"){
+              $linux_instances.Add($instance_id)
+              continue
+            }
+            
+          }
+
+          $unknown_instances = ($all_instanceids | Where-Object { -not ($processed_instances_data.keys -icontains $_) })   
+          if ($unknown_instances -eq $null){
+            $unknown_instances = New-Object 'System.Collections.Generic.List[String]' 
+          }
+          else {
+             $unknown_instances = [System.Collections.Generic.List[String]]$unknown_instances
+          }
+          
+          $return_data = @{ 
+            windows_instances = $windows_instances
+            windows_instances_count = 0
+            linux_instances =  $linux_instances
+            linux_instances_count = 0
+            unknown_instances =  $unknown_instances
+            unknown_instances_count = $unknown_instances.Count
+          }
+
+          if ($get_windows_instances){
+            $return_data["windows_instances_count"] = $windows_instances.Count
+          }
+
+          if ($get_linux_instances){
+            $return_data["linux_instances_count"] = $linux_instances.Count
+          }
+
+          return $return_data
+        }
+
+        main
+    outputs:
+      - Name: delaystart
+        Selector: $.Payload.delaystart
+        Type: String 
+      - Name: windows_instances
+        Selector: $.Payload.processed_instances_data.windows_instances
+        Type: StringList
+      - Name: windows_instances_count
+        Selector: $.Payload.processed_instances_data.windows_instances_count
+        Type: Integer
+      - Name: linux_instances
+        Selector: $.Payload.processed_instances_data.linux_instances
+        Type: StringList
+      - Name: linux_instances_count
+        Selector: $.Payload.processed_instances_data.linux_instances_count
+        Type: Integer
+      - Name: unknown_instances
+        Selector: $.Payload.processed_instances_data.unknown_instances
+        Type: StringList
+      - Name: unknown_instances_count
+        Selector: $.Payload.processed_instances_data.unknown_instances_count
+        Type: Integer
+      - Name: crowdstrike
+        Selector: $.Payload.crowdstrike
+        Type: String
+      - Name: baseapiurl
+        Selector: $.Payload.baseapiurl
+        Type: String
+      - Name: cid
+        Selector: $.Payload.cid
+        Type: String
+      - Name: clientid
+        Selector: $.Payload.clientid
+        Type: String
+      - Name: secret
+        Selector: $.Payload.secret
+        Type: String
+      - Name: token
+        Selector: $.Payload.token
+        Type: String  
+  - name: installLinuxCheck
+    action: aws:branch
+    inputs:
+      Choices:
+      - NextStep: installLinux
+        Variable: "{{ setupData.linux_instances_count }}"
+        NumericGreater: 0    
+      Default: installWindowsCheck          
+  - name: installLinux
+    action: 'aws:runCommand' 
+    onFailure: Continue 
+    isCritical: true
+    nextStep: installLinuxDelayedCheck
+    inputs:
+      DocumentName: AWS-RunShellScript
+      InstanceIds:
+        - '{{ setupData.linux_instances }}'
+      Parameters:
+        commands: |-
+          #!/bin/bash
+
+          delaystart="{{ setupData.delaystart }}"
+          instanceid=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+          platform=""
+          full_version=""
+          version_id=""
+          processor_arch=""
+          installer="yum"
+          service_name="falcon-sensor"
+          process_name="falcon-sensor"
+
+          error_installing () {
+            echo "${platform} ${version_id} Not Supported - $1"
+            exit 1
+          }
+
+          delay_start_notsupported () {   
+            error_installing "Delay Start is not supported on ${platform} ${full_version} - ${instanceid}"
+            exit 1
+          }
+
+          set_platform_info () {      
+            platform=$(cat /etc/os-release | grep "^NAME=" | head -n1 | awk -F= '{print $2}' | sed -e 's/^"//' -e 's/"$//')
+            full_version=$(cat /etc/os-release | grep "^VERSION_ID=" | head -n1 | awk -F= '{print $2}' | sed -e 's/^"//' -e 's/"$//')
+            version_id=$full_version
+            
+            if [ -f "/etc/system-release" ]; then
+              systemRelease=$(cat /etc/system-release | awk '{print tolower($0)}')
+              if [[ "${systemRelease}" == amazon\ linux\ ami\ release\ * ]]; then
+                platform="Amazon Linux"  
+                version_id="1"
+
+                if [ "${delaystart}" == "true" ]; then
+                  delay_start_notsupported
+                  exit 1
+                fi
+              fi
+            fi
+
+            processor_arch="64"
+            if [[ "$(uname -m)" != x86_* ]]; then
+              processor_arch="arm"
+            fi
+
+            if [ "${platform}" == "Amazon Linux"  ]; then
+              if [ "${version_id}" == "2" ]; then
+                if [ "${processor_arch}" == "arm" ]; then
+                  version_id="${version_id} - arm64"
+                fi
+              else
+                version_id="1"
+              fi
+            
+            elif [ "${platform}" == "Ubuntu" ]; then
+              version_id=$(echo $version_id | awk -F. '{print $1}')
+              if [ $version_id -lt 14 ]; then
+                error_installing "Not Supported - error"
+                exit 1
+              elif [  $version_id -lt 16  ]; then
+                # there is a bug in dpkg and ensuring it is the latest helps to fix that
+                sudo apt-get clean
+                sudo apt-get update
+                sudo apt-get install dpkg
+              fi
+
+              if [ "${delaystart}" == "true" ] && [ $version_id -lt 16 ]; then                
+                  delay_start_notsupported
+                  exit 1
+              fi
+
+              installer="apt"
+
+            fi
+
+            echo "platform: ${platform}"
+            echo "version_id: ${version_id}"
+            echo "processor_arch: ${processor_arch}"
+            echo "installer: ${installer}"
+          }
+
+          if [ -f "/opt/CrowdStrike/falconctl" ]; then
+            if [ $(sudo ps -e | grep -c "falcon-sensor") -gt 0 ]; then
+              if [ "${delaystart}" == "true" ]; then
+                error_installing "Set to delay start and Crowdstrike is running instance ${instanceid}"
+                exit 1
+              fi
+              echo "Crowdstrike already installed"
+              exit
+            fi
+            if [ "${delaystart}" == "true" ]; then
+              echo "Crowdstrike installed but not running. Will not try to start because delay flag was set"
+              exit
+            fi
+
+            
+            
+            if [ -n "$(command -v systemctl)" ]; then
+              sudo systemctl start "$service_name"
+            else
+              sudo service "${service_name}" start 
+            fi
+            
+            if [ $(sudo ps -e | grep -c "$process_name") -gt 0 ]; then
+             echo "Crowdstrike already installed"
+             exit
+            fi
+            
+            error_installing "Crowdstrike installed but not running"
+            exit 1
+
+          fi
+
+          echo "pending install"
+
+          crowdstrike_data=$(echo "{{ setupData.crowdstrike }}" | base64 --decode)
+          crowdstrike_data=$(echo $crowdstrike_data | sed -e 's/^\[\s*\s*//' -e 's/\]\s*$//')
+          cid=$(echo "{{ setupData.cid }}" | base64 --decode)
+          api_token=$(echo "{{ setupData.token }}" | base64 --decode)
+
+          
+          set_platform_info
+          agent_download_url=""          
+
+          platform_count=$(echo $crowdstrike_data | awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i~/'os'\042/){print $(i+1) $(i+3)}}}' | grep -ic "${platform}")
+          
+          echo "platform_count: ${platform_count}"
+          
+          if [ $platform_count -eq 0 ]; then            
+            error_installing "Not Supported - could not find platform in download data"
+            exit 1
+          fi
+          if [ $platform_count -eq 1 ]; then
+            agentDownloadOption=$(echo $crowdstrike_data | awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i~/'os'\042/){print $(i+1) $(i+3) $(i+5)":"$(i+6) $(i+8)}}}' | grep -i "${platform}" | head -n1)
+          else
+            agentDownloadOption=$(echo $crowdstrike_data | awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i~/'os'\042/){print $(i+1) $(i+3) $(i+5)":"$(i+6) $(i+8)}}}' | grep -i "\"${platform}\"\(\\s\)*\"${version_id}\"" | head -n1)
+          fi
+          echo "agentDownloadOption: ${agentDownloadOption}"
+
+          if [ -z "${agentDownloadOption}" ]; then
+            echo $crowdstrike_data
+            error_installing "Not Supported - could not find platform & version in download data"
+            exit 1
+          fi
+
+          agentDownloadOption="$(echo $agentDownloadOption | sed -e 's/^\s//' -e 's/\s$//')"
+          agentDownloadOptionFeilds=$(echo $agentDownloadOption | awk -F'"' '{print NF}')
+
+          agent_download_url=$(echo $agentDownloadOption | awk -F'"' -v maxfeild=$agentDownloadOptionFeilds '{print $(maxfeild-3)}' | sed -e 's/^"//' -e 's/"$//')
+          agent_name=$(echo $agentDownloadOption | awk -F'"' -v maxfeild=$agentDownloadOptionFeilds '{print $(maxfeild-1)}' | sed -e 's/^"//' -e 's/"$//')
+          if [ -z "${agent_download_url}" ]; then
+            error_installing "Not Supported - unknown download"
+            exit 1
+          fi
+          
+          tmp_download_dir="/tmp/$(date | base64 | sed -e 's/\(=\)*$//')" 
+          mkdir -p $tmp_download_dir
+
+          tmp_installer_path="${tmp_download_dir}/${agent_name}"
+
+          echo "download: ${agent_download_url}"
+          echo "tmp_download_dir: ${tmp_download_dir}"
+          echo "agent_name: ${agent_name}"
+
+
+          curl -s -X GET \
+                "${agent_download_url}" \
+                -H "Authorization: Bearer ${api_token}" \
+                -o "${tmp_installer_path}"
+          
+          if [ $? -gt 0 ]; then 
+            error_installing "Not Supported - unknown error ${$?}"
+            exit 1
+          fi
+
+          if [ ! -f "${tmp_installer_path}" ]; then            
+            error_installing "Not Supported - could not download installer"
+            exit 1
+          fi
+          
+          if [ "${installer}" == "yum" ]; then
+            sudo yum install -y "${tmp_installer_path}"
+          
+          elif [ "${installer}" == "apt" ]; then
+            sudo apt-get install -y libnl-3-200 libnl-genl-3-200
+            yes | sudo dpkg -i "${tmp_installer_path}"
+          else
+            rm -Rf $tmp_download_dir
+            error_installing "Not Supported - unknown installer"
+            exit 1
+          fi
+
+          
+          if [ ! -f "/opt/CrowdStrike/falconctl" ]; then            
+            error_installing "Not Supported - could not find service"
+            exit 1
+          fi
+
+          rm -Rf $tmp_download_dir
+
+          if [ "${delaystart}" == "true" ]; then
+            sudo /opt/CrowdStrike/falconctl -d -f --aid
+            sudo systemctl disable $service_name
+            if [ $? -gt 0 ]; then 
+              error_installing "Could not delay start"
+              exit 1
+            fi
+            echo "Delaying Start"
+            exit
+          fi
+
+
+          sudo /opt/CrowdStrike/falconctl -s --cid="${cid}"
+
+          if [ $? -gt 0 ]; then 
+            error_installing "Not Supported - could not find service - err"
+            exit 1
+          fi
+
+          if [ $(sudo ps -e | grep -c "$process_name") -lt 1 ]; then
+
+            if [ -n "$(command -v systemctl)" ]; then
+              sudo systemctl start "$service_name"
+            else
+              sudo service "$service_name" start
+            fi
+     
+
+            if [ $? -gt 0 ]; then 
+              error_installing "Could not start service"
+              exit 1
+            fi
+          fi
+
+          if [ $(sudo ps -e | grep -c "$process_name") -lt 1 ]; then
+            error_installing "Service not starting"
+            exit 1
+          fi
+          echo "Crowdstrike installed"
+          exit 0
+  - name: installLinuxDelayedCheck
+    action: aws:branch
+    inputs:
+      Choices:
+      - NextStep: installLinuxDelayed
+        Variable: "{{ setupData.delaystart }}"
+        StringEquals: "true"
+      Default: installWindowsCheck         
+  - name: installLinuxDelayed
+    action: 'aws:runCommand' 
+    onFailure: Continue 
+    isCritical: true
+    inputs:
+      DocumentName: AWS-RunShellScript
+      InstanceIds:
+        - '{{ setupData.linux_instances }}'
+      Parameters:
+        commands: |-
+          #!/bin/bash
+          
+          componentname="Crowdstrike"
+          scriptname="Custom${componentname}Init"
+          
+          service_name="falcon-sensor"
+
+
+          cid=$(echo "{{ setupData.cid }}" | base64 --decode)
+
+          cat > "/usr/bin/${scriptname}.service" << EOF
+          [Unit]
+          Description=Init $componentname on new system
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/bin/${scriptname}
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+          cat > "/usr/bin/${scriptname}" << EOF
+          #!/bin/bash
+
+          /opt/CrowdStrike/falconctl -d -f --aid
+          sudo /opt/CrowdStrike/falconctl -s -f --cid="$cid"
+          
+          sudo systemctl enable $service_name
+          sudo systemctl start $service_name
+
+          sudo systemctl disable $scriptname
+          sudo rm -- "$0"
+          sudo rm -f /etc/systemd/system/${scriptname}.service
+
+          EOF
+
+          sudo chmod 755 "/usr/bin/${scriptname}"
+          sudo chown root:root "/usr/bin/${scriptname}"
+          sudo chown root:root "/etc/systemd/system/${scriptname}.service"
+
+          sudo systemctl enable $scriptname
+
+  - name: installWindowsCheck
+    action: aws:branch
+    inputs:
+      Choices:
+      - NextStep: installWindows
+        Variable: "{{ setupData.windows_instances_count }}"
+        NumericGreater: 0    
+      Default: revokeToken
+  - name: installWindows
+    action: 'aws:runCommand'    
+    onFailure: Continue 
+    isCritical: true
+    nextStep: revokeToken
+    inputs:
+      DocumentName: AWS-RunPowerShellScript
+      InstanceIds:
+        - '{{ setupData.windows_instances }}'
+      Parameters:
+        commands: |-
+          $ErrorActionPreference = "Stop" # This is to ensure the script stops on first error
+
+          $delaystart=$("{{ setupData.delaystart }}" -ieq "true")
+          function set_tls_version {
+            # https://docs.microsoft.com/en-us/dotnet/api/system.net.securityprotocoltype?view=net-5.0
+            $Tls12 = 3072
+            $Tls13 = 12288
+
+            if ($([enum]::getvalues([Net.SecurityProtocolType]) | Select-String -Pattern Tls13).Matches.Count -gt 0){
+              [Net.ServicePointManager]::SecurityProtocol = $($Tls12 -bor $Tls13)
+              return
+            }
+
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            
+          }
+          $agentMissing = $true
+
+          $service_name = "CSFalconService"
+          $agentMissing = ((Get-Service | Where-Object {$_.Name -eq $service_name}).Count -lt 1)
+
+          if ( -not $agentMissing ) {
+            if( (Get-Service -Name $service_name).Status -ieq "running" ){
+              Write-Host "Crowdstrike already installed"
+              if ($delaystart -eq $True){
+                throw "Crowdstrike is running. If this is for a base image need to remove the AID manuall or uninstall the service: https://falcon.us-2.crowdstrike.com/documentation/23/falcon-sensor-for-windows"
+                exit 1
+              }
+              exit
+            }
+
+            if ($delaystart -eq $True){
+              Write-Host "Crowdstrike already installed. The service is stopped, once the service is started it will attempt to register."
+              exit
+            }
+
+            Write-Host "Starting Service"
+            Start-Service -Name $service_name
+            if( (Get-Service -Name $service_name).Status -ieq "running" ){
+              Write-Host "Crowdstrike already installed"
+              exit
+            }
+
+            throw "Crowdstrike already installed but not started"
+            exit 1
+
+          }
+
+          Write-Host "pending install"
+
+          $baseapiurl = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{{ setupData.baseapiurl }}"))
+          $clientid = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{{ setupData.clientid }}"))
+          $secret = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{{ setupData.secret }}"))
+          $cid = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{{ setupData.cid }}"))
+          $access_token = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{{ setupData.token }}"))
+
+          $apiRequestHeaders = @{ 
+            "accept" = 'application/json'
+            "Authorization" = "Bearer $($access_token)"
+          }
+
+          $agentDownloadOptionData = $([System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String("{{ setupData.crowdstrike }}")) | ConvertFrom-JSON)
+
+          $agentDownloadOption = $($agentDownloadOptionData | Where-Object {$_.os -eq "Windows"})[0]
+
+          $agent_name = "$($agentDownloadOption.name)"
+          $agent_download_url = "$($agentDownloadOption.url)"
+
+          $tmp_download_dir = New-Item -ItemType Directory -Path (Join-Path "$([System.IO.Path]::GetTempPath())" "$([System.Guid]::NewGuid())")
+
+          $tmp_installer_path = $(Join-Path "$($tmp_download_dir.FullName)" $agent_name)
+
+          try {
+            Invoke-WebRequest -Uri "$($agent_download_url)" `
+              -UseBasicParsing `
+              -OutFile $tmp_installer_path `
+              -Method Get `
+              -ContentType 'application/json'  `
+              -Headers  $apiRequestHeaders 
+            }
+            catch {
+              set_tls_version
+              Invoke-WebRequest -Uri "$($agent_download_url)" `
+                -UseBasicParsing `
+                -OutFile $tmp_installer_path `
+                -Method Get `
+                -ContentType 'application/json'  `
+                -Headers  $apiRequestHeaders 
+            }
+
+           $start_process_argumentlist = @("/install", "/quiet", "/norestart" `
+           "CID=`"$($cid)`""
+          )
+
+          if ($delaystart -eq $True){
+            $start_process_argumentlist = $start_process_argumentlist + "NO_START=1"
+          }
+
+          Start-Process -FilePath $tmp_installer_path -Verb RunAs `
+            -ArgumentList $start_process_argumentlist `
+            -Wait            
+
+          $agentMissing = ((Get-Service | Where-Object {$_.Name -eq $service_name}).Count -lt 1)
+
+          if ( $agentMissing ) {
+            Write-Host "Agent not listed in services please check install log"
+
+            Write-Host "tmp_download_dir: $($tmp_download_dir)"
+            Write-Host "tmp_installer_path: $($tmp_installer_path)"
+
+            throw "Agent not listed in services please check install log"
+            exit 1
+
+          }
+
+          Remove-Item $tmp_download_dir.FullName -Recurse
+          
+          if ($delaystart -eq $True){
+            Write-Host "Instance is configured for delayed start. First Reboot should get ID"
+            exit
+          }
+
+          Write-Host "Installed"
+  - name: revokeToken
+    action: 'aws:executeScript'
+    onFailure: Continue
+    inputs:
+      Runtime: PowerShell Core 6.0
+      InputPayload:
+        baseapiurl: '{{ setupData.baseapiurl }}'
+        cid: '{{ setupData.cid }}'
+        clientid: '{{ setupData.clientid }}'
+        secret: '{{ setupData.secret }}'
+        token: '{{ setupData.token }}'
+      Script: |
+        function set_tls_version {
+          # https://docs.microsoft.com/en-us/dotnet/api/system.net.securityprotocoltype?view=net-5.0
+          $Tls12 = 3072
+          $Tls13 = 12288
+
+          if ($([enum]::getvalues([Net.SecurityProtocolType]) | Select-String -Pattern Tls13).Matches.Count -gt 0){
+            [Net.ServicePointManager]::SecurityProtocol = $($Tls12 -bor $Tls13)
+            return
+          }
+
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          
+        }
+
+        $inputPayload = $($env:InputPayload | ConvertFrom-Json)
+        $baseapiurl = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($inputPayload.baseapiurl)) 
+        $clientid = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($inputPayload.clientid)) 
+        $secret = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($inputPayload.secret)) 
+        $access_token = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($inputPayload.token))
+        
+        $revokeAuthKey = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes("$($clientid):$($secret)"))
+        
+        $apiRequestHeaders = @{ 
+          "accept" = 'application/json'
+          "Authorization" = "Basic $($revokeAuthKey)"
+        }
+        try{
+
+          Invoke-WebRequest -Uri "$($baseapiurl)/oauth2/revoke" `
+            -UseBasicParsing `
+            -Method Post `
+            -ContentType 'application/x-www-form-urlencoded'  `
+            -Headers  $apiRequestHeaders `
+            -Body @{ token = "$($access_token)" }
+        } catch {
+          set_tls_version
+          Invoke-WebRequest -Uri "$($baseapiurl)/oauth2/revoke" `
+            -UseBasicParsing `
+            -Method Post `
+            -ContentType 'application/x-www-form-urlencoded'  `
+            -Headers  $apiRequestHeaders `
+            -Body @{ token = "$($access_token)" }
+
+        }
+  - name: instanceCheckPreProcess
+    action: 'aws:executeScript'
+    onFailure: Abort
+    inputs:
+      Runtime: PowerShell Core 6.0
+      InputPayload:
+        unknown_instances: '{{ setupData.unknown_instances }}'        
+        linux_instances: '{{ setupData.linux_instances }}'
+        windows_instances: '{{ setupData.windows_instances }}'
+        all_instance_ids: '{{ instanceids }}'
+
+      Script: |
+        $inputPayload = $($env:InputPayload | ConvertFrom-Json)
+        $unknown_instances = [System.Collections.Generic.List[String]]$inputPayload.unknown_instances
+        $linux_instances = $inputPayload.linux_instances
+        $windows_instances = $inputPayload.windows_instances
+        $all_instance_ids = $inputPayload.all_instance_ids
+
+        foreach ($instance_id in $all_instance_ids){
+          if ( $linux_instances -icontains $instance_id -or $windows_instances -icontains $instance_id ){
+            continue
+          }
+
+          if ( $unknown_instances -icontains $instance_id ){
+            continue
+          }
+
+          $unknown_instances.Add($instance_id)
+
+        }
+        
+        return @{
+          unknown_instances = $unknown_instances
+        }
+    outputs:
+      - Name: unknown_instances
+        Selector: $.Payload.unknown_instances
+        Type: StringList
+  - name: instanceCheck
+    action: 'aws:executeScript'
+    onFailure: Abort
+    inputs:
+      Runtime: PowerShell Core 6.0
+      InputPayload:
+        unknown_instances: '{{ instanceCheckPreProcess.unknown_instances }}'        
+
+      Script: |
+        $inputPayload = $($env:InputPayload | ConvertFrom-Json)
+        $unknown_instances = $inputPayload.unknown_instances
+
+        if ($unknown_instances.Count -lt 1){
+          Write-Host "All instances processed"
+          exit
+        }
+
+        $unknown_instances
+        throw "Not all instances processed `r`nNot Processed Count: $($unknown_instances.Count) `r`n `r`n$($unknown_instances | Select-Object @{label="Instance ID";expression={"$_"}} | Out-String)"
+        
+        return @{
+          unknown_instances = $unknown_instances
+        }
+    outputs:
+      - Name: unknown_instances
+        Selector: $.setupData.unknown_instances
+        Type: StringList

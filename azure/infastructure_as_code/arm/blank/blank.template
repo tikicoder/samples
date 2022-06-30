@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+  },
+  "variables": {
+                "locationCodeList": [
+                  {
+                    "southcentralus": "ussc",
+                    "northcentralus": "usnc",
+                    "westcentralus": "uswc",
+                    "centralus": "usce",
+                    "westus": "uswe",
+                    "westus2": "usw2"
+                  }
+                ],
+                "locCode": "[variables('locationCodeList')[0][resourceGroup().location]]"
+},
+  "resources": [
+  ],
+  "outputs": {
+	"locCodeOutput": {
+      "type": "string",
+      "value": "[variables('locCode')]"
+    }
+  }
+}
