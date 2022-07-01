@@ -60,7 +60,7 @@ wsl -d $($general_defaults.main_distro) bash "$($general_defaults.tmp_directory)
 
 
 Write-Host "Running VS Code restore"
-$vsbackup = $(Join-Path -Path $scriptPath_init_mainset -ChildPath "..\..\..\..\general_programming_scripting\powershell\vsCode\vsCodeManuallBackup.ps1" | Resolve-Path)
+$vsbackup = $(Join-Path -Path $scriptPath_init_mainset -ChildPath "..\..\..\..\general_programming_scripting\powershell\vsCode\main.ps1" | Resolve-Path)
 if ( Test-Path $vsbackup ){
   & $vsbackup -isRestore $true -wsl_command $($general_defaults.main_distro) -skip_win $true
 }

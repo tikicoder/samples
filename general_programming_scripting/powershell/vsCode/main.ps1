@@ -1,6 +1,6 @@
 
 
-# vsCodeManuallBackup.ps1 -isRestore $true/$false
+# main.ps1 -isRestore $true/$false
 # code based on info from
 # https://superuser.com/questions/1080682/how-do-i-back-up-my-vs-code-settings-and-list-of-installed-extensions
 # There is a new sync setting tool, but this was done so I could easily sync settings from work and personal
