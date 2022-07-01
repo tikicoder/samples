@@ -13,6 +13,7 @@ winget install -e --id PuTTY.PuTTY
 
 write-host "VisualStudioCode installing"
 winget install -e --id Microsoft.VisualStudioCode
+& "$(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\general_programming_scripting\powershell\vsCode\vsCodeManuallBackup.ps1")" -isRestore $true -skip_wsl $true 
 
 write-host "PowerShell installing"
 winget install -e --id Microsoft.PowerShell
