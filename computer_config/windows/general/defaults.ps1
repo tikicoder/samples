@@ -25,28 +25,33 @@ function Copy-Missing-Certs(){
   $missing_root_certs = $(Get-Childitem -Path $missing_root_certs_path -File | Where-Object {$_.Name.ToLower().EndsWith(".crt")})
 
   foreach ( $file in $missing_root_certs){
-    Copy-item -Path $file.FullName -Destination $(Join-Path -Path "\\wsl$\$($Distro)$($DestinationFolderInDistro)" -ChildPath $file.Name)
-    wsl -d $Distro -e openssl x509 -in "$($DestinationFolderInDistro)/$($file.Name)" -out "$($DestinationFolderInDistro)/$($file.Name).pem" -outform PEM
-    Remove-Item -Force -Path $(Join-Path -Path "\\wsl$\$($Distro)$($DestinationFolderInDistro)" -ChildPath $file.Name)
+    Copy-item -Path $file.FullName -Destination $(Join-Path -Path "\\wsl$\$($Distro)$($DestinationTempFolderInDistro)" -ChildPath $file.Name)
+    wsl -d $Distro -e openssl x509 -in "$($DestinationTempFolderInDistro)/$($file.Name)" -out "$($DestinationTempFolderInDistro)/$($file.Name).pem" -outform PEM
+    Remove-Item -Force -Path $(Join-Path -Path "\\wsl$\$($Distro)$($DestinationTempFolderInDistro)" -ChildPath $file.Name)
   }
 
   if ( $missing_root_certs.Length -gt 0 ){
-    wsl -d $Distro -e sudo cp "$($DestinationFolderInDistro)/*.pem" $DestinationSSLFolderInDistro
+    wsl -d $Distro -e sudo cp "$($DestinationTempFolderInDistro)/*.pem" $DestinationSSLFolderInDistro
   }
 }
+
 function Remove-Folder()
 {
     param (
       [string]$path_to_delete,
       [bool] $Recurse  = $false
     )
+
+    if ( [string]::IsNullorWhitespace($path_to_delete) ){
+      return
+    }
     
-    if ( $Recurse -and (Test-Path $path_to_delete ) ){
+    if ( $Recurse -and (Test-Path $path_to_delete ) -and (Get-Item $path_to_delete) -is [System.IO.DirectoryInfo]){
       Get-ChildItem "$($path_to_delete)/*" -File -Recurse | Remove-Item -Force -Confirm:$False
       Remove-Item -Force -Confirm:$False -Recurse $path_to_delete
     }
 
-    if ((Test-Path $path_to_delete )) { Remove-Item -Path $path_to_delete -Recurse -Force -Confirm:$False  }
+    if ((Test-Path $path_to_delete )) { Remove-Item -Path $path_to_delete -Recurse -Force -Confirm:$false  }
 }
 
 function Convert-GeneralPsObjectHashTable(){
