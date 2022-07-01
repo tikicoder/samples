@@ -19,7 +19,7 @@ if ( $isRestore ) {
     $vsCodeCustomStoreSettings = $(Get-Content $pathToVSSettingsBak | ConvertFrom-Json )
 
     if (-not $skip_win){
-        $vsCodeCustomStoreSettings.extensions | ForEach-Object { code --install-extension $_  }
+        $vsCodeCustomStoreSettings.extensions | ForEach-Object { if( -not [string]::isNullorWhitespace($_)){code --install-extension $_}  }
         $vsCodeCustomStoreSettings.settings | ConvertTo-Json > "${pathToVSSettingsBak}.json"
         Write-Host "Restored to ${pathToVSSettings}"
     }
