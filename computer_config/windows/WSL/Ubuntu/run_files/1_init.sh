@@ -34,7 +34,7 @@ sudo mkdir -p "$apt_keyrings"
 
 sudo apt update
 sudo apt upgrade -y
-sudo apt install make
+sudo apt install -y make
 
 # Installing GOLANG to local BIN
 wget https://go.dev/dl/go1.18.linux-amd64.tar.gz
@@ -68,7 +68,7 @@ sudo sh -c "echo \"/ /mnt/wsl/instances/Ubuntu none defaults,bind,X-mount.mkdir 
 sudo mount -a
 
 # adding the ability to zip/unzip
-sudo apt-get install zip unzip
+sudo apt-get install -y zip unzip
 
 # Goal run as much as I can via Docker
 # https://blog.jessfraz.com/post/docker-containers-on-the-desktop/
@@ -90,7 +90,7 @@ sudo apt install -y genisoimage
 
 # GraphViz this is a useful tool for graphing and is used for Diagramming as Code.
 # https://graphviz.gitlab.io/download/
-sudo apt install graphviz
+sudo apt install -y graphviz
 
 # This is designed to have Node use the Same CA as python so if something custom is there you should be good
 if [ $(grep -ic "export NODE_EXTRA_CA_CERTS=" "${user_home}/.bashrc" ) -lt 1  ]; then
