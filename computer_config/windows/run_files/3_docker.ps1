@@ -162,7 +162,7 @@ wsl --terminate $($general_defaults.docker_distro)
 Wait-Distro-Start -Distro $general_defaults.docker_distro
 
 
-wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_init.sh"
+wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_init.sh" "$($general_defaults.tmp_directory)"
 
 wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_Install.sh" "$newUsername" "$($general_defaults.docker_sock)" "$($general_defaults.docker_host_sock)"
 wsl --terminate $($general_defaults.docker_distro)
