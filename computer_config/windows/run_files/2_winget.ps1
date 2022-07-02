@@ -9,7 +9,7 @@ function install-app-winget(){
 
   write-host "Installing - $($app_name)"
 
-  if([string]::IsNullOrWhiteSpace($($(winget upgrade -e --id $app_name).trim().tolower() -match "No installed package found2"))) {
+  if([string]::IsNullOrWhiteSpace($($(winget upgrade -e --id $app_name).trim().tolower() -match "no installed package found"))) {
     write-host "$app_name already installed"
     return
   }
