@@ -1,6 +1,17 @@
 $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 . "$(Join-Path -Path $scriptPath_init -ChildPath "..\general\defaults.ps1")"
 
+function Update-FolderView() {
+
+  $Path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
+  Set-ItemProperty -Path $Path -Name "Hidden" -Value 1  
+  Set-ItemProperty -Path $Path -Name "HideFileExt" -Value 0
+
+}
+
+write-host "Set folder view settings"
+Update-FolderView()
+
 write-host "Enable IIS"
 dism /online /enable-feature /all `
   /featurename:WCF-Services45 `
