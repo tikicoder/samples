@@ -70,6 +70,6 @@ if ( Test-Path $vsbackup ){
   & $vsbackup -isRestore $true -wsl_command $($general_defaults.main_distro) -skip_win $true
 }
 
-wsl -d $($general_defaults.docker_distro) "`${HOME}/.local/bin/3_docker_adduser.sh" "$local_user" $local_user_groupid "/mnt/wsl/instances/$($general_defaults.main_distro)/home/$local_user"
+wsl -d $($general_defaults.docker_distro) "`${HOME}/.local/bin/docker_adduser.sh" "$local_user" $local_user_groupid "/mnt/wsl/instances/$($general_defaults.main_distro)/home/$local_user"
 
 wsl -d $($general_defaults.main_distro) rm -Rf $($general_defaults.tmp_directory)
