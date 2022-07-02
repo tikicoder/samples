@@ -14,6 +14,7 @@ function install-app-winget(){
     return
   }
 
+  write-host "$app_name Installing"
   winget install -e --id $app_name
 }
 
