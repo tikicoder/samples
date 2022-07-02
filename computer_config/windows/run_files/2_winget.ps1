@@ -26,7 +26,6 @@ install-app-winget -app_name "WiresharkFoundation.Wireshark"
 install-app-winget -app_name "PuTTY.PuTTY"
 
 install-app-winget -app_name "Microsoft.VisualStudioCode"
-& "$(Join-Path -Path $root_path_samples -ChildPath "general_programming_scripting\powershell\vsCode\main.ps1")" -isRestore $true -skip_wsl $true 
 
 install-app-winget -app_name "Microsoft.PowerShell"
 
@@ -47,3 +46,10 @@ install-app-winget -app_name "OBSProject.OBSStudio"
 install-app-winget -app_name "Google.Chrome"
 
 install-app-winget -app_name "SlackTechnologies.Slack"
+
+
+#refresh Env Path
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User") 
+
+# Import base Widgets (This include the one for WSL)
+& "$(Join-Path -Path $root_path_samples -ChildPath "general_programming_scripting\powershell\vsCode\main.ps1")" -isRestore $true -skip_wsl $true 
