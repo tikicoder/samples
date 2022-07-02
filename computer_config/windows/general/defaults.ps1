@@ -1,5 +1,8 @@
 $scriptPath_init_generalmain = split-path -parent $MyInvocation.MyCommand.Definition
 
+$root_path_computer_config = Resolve-Path -Path $(Join-Path -Path $scriptPath_init_generalmain -ChildPath "../../")
+$root_path_samples =  Resolve-Path -Path $(Join-Path -Path $root_path_computer_config -ChildPath "../")
+
 function Wait-Distro-Start()
 {
   param (

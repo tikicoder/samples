@@ -62,16 +62,14 @@ wsl -d $($general_defaults.main_distro) bash "$($general_defaults.tmp_directory)
 Write-Host "Running VS Code restore"
 
 #ensures wslvs code is initialized
-$scriptBlock_wsl = [Scriptblock]::Create("wsl -d $($wsl_command) code")
+$scriptBlock_wsl = [Scriptblock]::Create("wsl -d $($general_defaults.main_distro) code")
 Invoke-Command -ScriptBlock $scriptBlock_wsl
 
-$vsbackup = $(Join-Path -Path $scriptPath_init_mainset -ChildPath "..\..\..\..\general_programming_scripting\powershell\vsCode\main.ps1" | Resolve-Path)
+$vsbackup = $(Join-Path -Path $root_path_samples -ChildPath "general_programming_scripting\powershell\vsCode\main.ps1" | Resolve-Path)
 if ( Test-Path $vsbackup ){
   & $vsbackup -isRestore $true -wsl_command $($general_defaults.main_distro) -skip_win $true
 }
 
-wsl -d $($general_defaults.docker_distro) sudo groupadd --gid $local_user_groupid $local_user
-wsl -d $($general_defaults.docker_distro) sudo adduser -G wheel --gid $local_user_groupid --uid $local_user_id $local_user --home "/mnt/wsl/instances/$($general_defaults.main_distro)/home/$local_user"
-wsl -d $($general_defaults.docker_distro) sudo ln -s "/mnt/wsl/instances/$($general_defaults.main_distro)/home/$($local_user)/" "/home/$($local_user)/"
+wsl -d $($general_defaults.docker_distro) "${HOME}/.local/bin/3_docker_adduser.sh" "$local_user" $local_user_groupid "/mnt/wsl/instances/$($general_defaults.main_distro)/home/$local_user"
 
 wsl -d $($general_defaults.main_distro) rm -Rf $($general_defaults.tmp_directory)

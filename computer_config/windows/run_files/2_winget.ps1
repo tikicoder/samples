@@ -1,46 +1,59 @@
 $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 . "$(Join-Path -Path $scriptPath_init -ChildPath "..\general\defaults.ps1")"
 
-write-host "7zip installing"
-winget install -e --id 7zip.7zip
 
+function install-app-winget(){
+  param(
+    [string]$app_name
+  )
+
+  if([string]::IsNullOrWhiteSpace($($(winget upgrade -e --id $app_name).trim().tolower() -match "No installed package found2"))) {
+    write-host "$app_name already installed"
+    return
+  }
+
+  winget install -e --id $app_name
+}
+
+write-host "7zip installing"
+install-app-winget -app_name "7zip.7zip"
 
 write-host "Wireshark installing"
-winget install -e --id WiresharkFoundation.Wireshark
+install-app-winget -app_name "WiresharkFoundation.Wireshark"
 
 write-host "PuTTY installing"
-winget install -e --id PuTTY.PuTTY
+install-app-winget -app_name "PuTTY.PuTTY"
 
 write-host "VisualStudioCode installing"
-winget install -e --id Microsoft.VisualStudioCode
-& "$(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\general_programming_scripting\powershell\vsCode\main.ps1")" -isRestore $true -skip_wsl $true 
+install-app-winget -app_name "Microsoft.VisualStudioCode"
+& "$(Join-Path -Path $root_path_samples -ChildPath "general_programming_scripting\powershell\vsCode\main.ps1")" -isRestore $true -skip_wsl $true 
 
 write-host "PowerShell installing"
-winget install -e --id Microsoft.PowerShell
+install-app-winget -app_name "Microsoft.PowerShell"
 
 write-host "AzureStorageExplorer installing"
-winget install -e --id Microsoft.AzureStorageExplorer
+install-app-winget -app_name "Microsoft.AzureStorageExplorer"
 
 write-host "MS Edge installing"
-winget install -e --id Microsoft.Edge
+install-app-winget -app_name "Microsoft.Edge"
 
 write-host "WindowsTerminal installing"
-winget install -e --id Microsoft.WindowsTerminal
+install-app-winget -app_name "Microsoft.WindowsTerminal"
 
 write-host "IrfanView installing"
-winget install -e --id IrfanSkiljan.IrfanView
+install-app-winget -app_name "IrfanSkiljan.IrfanView"
 
 write-host "Atom installing"
-winget install -e --id GitHub.Atom
+install-app-winget -app_name "GitHub.Atom"
 
 write-host "GIMP installing"
-winget install -e --id GIMP.GIMP
+install-app-winget -app_name "GIMP.GIMP"
 
 write-host "OBSStudio installing"
-winget install -e --id OBSProject.OBSStudio
+install-app-winget -app_name "OBSProject.OBSStudio"
 
 write-host "Chrome installing"
-winget install -e --id Google.Chrome
+install-app-winget -app_name "Google.Chrome"
 
 write-host "Slack installing"
-winget install -e --id SlackTechnologies.Slack
+install-app-winget -app_name "SlackTechnologies.Slack"
