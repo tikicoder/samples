@@ -10,7 +10,7 @@ function Update-FolderView() {
 }
 
 write-host "Set folder view settings"
-Update-FolderView()
+Update-FolderView
 
 write-host "Enable IIS"
 dism /online /enable-feature /all `
