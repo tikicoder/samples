@@ -11,3 +11,5 @@ fi
 cp "${1}/3_docker_adduser.sh" "${HOME}/.local/bin"
 chmod 755 "${HOME}/.local/bin/3_docker_adduser.sh"
 
+sudo dnf check-update
+sudo dnf update -y
