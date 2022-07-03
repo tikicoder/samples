@@ -162,17 +162,17 @@ wsl --terminate $($general_defaults.docker_distro)
 Wait-Distro-Start -Distro $general_defaults.docker_distro
 
 
-wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_init.sh" "$($general_defaults.tmp_directory)"
+wsl -d $($general_defaults.docker_distro) bash "$($general_defaults.tmp_directory)/3_docker_init.sh" "$($general_defaults.tmp_directory)"
 
-wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_Install.sh" "$newUsername" "$($general_defaults.docker_sock)" "$($general_defaults.docker_host_sock)"
+wsl -d $($general_defaults.docker_distro) bash "$($general_defaults.tmp_directory)/3_docker_Install.sh" "$newUsername" "$($general_defaults.docker_sock)" "$($general_defaults.docker_host_sock)"
 wsl --terminate $($general_defaults.docker_distro)
 Wait-Distro-Start -Distro $general_defaults.docker_distro
 
-wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_updategroup.sh"
+wsl -d $($general_defaults.docker_distro) bash "$($general_defaults.tmp_directory)/3_docker_updategroup.sh"
 wsl --terminate $($general_defaults.docker_distro)
 Wait-Distro-Start -Distro $general_defaults.docker_distro
 
-wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_finalize.sh" "$($general_defaults.docker_dir)" "$($general_defaults.docker_host_sock)" "$($general_defaults.docker_host_tcp)"
+wsl -d $($general_defaults.docker_distro) bash "$($general_defaults.tmp_directory)/3_docker_finalize.sh" "$($general_defaults.docker_dir)" "$($general_defaults.docker_host_sock)" "$($general_defaults.docker_host_tcp)"
 wsl --terminate $($general_defaults.docker_distro)
 Wait-Distro-Start -Distro $general_defaults.docker_distro
 
