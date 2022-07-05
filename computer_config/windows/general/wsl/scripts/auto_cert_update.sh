@@ -65,10 +65,11 @@ fi
 popd
 sudo rm -Rf /tmp/missing_certs
 
+adding_ca_path="${pem_path}/*"
 if [ ! -z "$(command -v python)" ]; then
-  cat "${pem_path}/*" | sudo tee -a $(python -m certifi) > /dev/null
+  sudo cat $adding_ca_path | sudo tee -a $(python -m certifi) > /dev/null
 fi
 
 if [ ! -z "$(command -v python3)" ]; then
-  cat "${pem_path}/*" | sudo tee -a $(python3 -m certifi) > /dev/null
+  sudo cat $adding_ca_path | sudo tee -a $(python3 -m certifi) > /dev/null
 fi
