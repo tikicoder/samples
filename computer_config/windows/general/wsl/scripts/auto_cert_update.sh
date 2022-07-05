@@ -1,15 +1,21 @@
 #!/bin/bash
 
-mkdir -p /tmp/custom_certs_add
+mkdir -p /tmp/missing_certs
 
-pushd /tmp/custom_certs_add
+pushd /tmp/missing_certs
 
-openssl s_client -showcerts -verify 5 -connect ip.zscaler.com:443 < /dev/null | awk '/BEGIN/,/END/{ if(/BEGIN/){a++}; out="cert"a".pem"; print >out}'; for cert in *.pem; do newname=$(openssl x509 -noout -subject -in $cert | sed -nE 's/.*CN ?= ?(.*)/\1/; s/[ ,.*]/_/g; s/__/_/g; s/_-_/-/; s/^_//g;p' | tr '[:upper:]' '[:lower:]').pem; echo "${newname}"; mv "${cert}" "${newname}"; done
-openssl s_client -showcerts -verify 5 -connect update.code.visualstudio.com:443 < /dev/null | awk '/BEGIN/,/END/{ if(/BEGIN/){a++}; out="cert"a".pem"; print >out}'; for cert in *.pem; do newname=$(openssl x509 -noout -subject -in $cert | sed -nE 's/.*CN ?= ?(.*)/\1/; s/[ ,.*]/_/g; s/__/_/g; s/_-_/-/; s/^_//g;p' | tr '[:upper:]' '[:lower:]').pem; echo "${newname}"; mv "${cert}" "${newname}"; done
-openssl s_client -showcerts -verify 5 -connect google.com:443 < /dev/null | awk '/BEGIN/,/END/{ if(/BEGIN/){a++}; out="cert"a".pem"; print >out}'; for cert in *.pem; do newname=$(openssl x509 -noout -subject -in $cert | sed -nE 's/.*CN ?= ?(.*)/\1/; s/[ ,.*]/_/g; s/__/_/g; s/_-_/-/; s/^_//g;p' | tr '[:upper:]' '[:lower:]').pem; echo "${newname}"; mv "${cert}" "${newname}"; done
-openssl s_client -showcerts -verify 5 -connect raw.githubusercontent.com:443 < /dev/null | awk '/BEGIN/,/END/{ if(/BEGIN/){a++}; out="cert"a".pem"; print >out}'; for cert in *.pem; do newname=$(openssl x509 -noout -subject -in $cert | sed -nE 's/.*CN ?= ?(.*)/\1/; s/[ ,.*]/_/g; s/__/_/g; s/_-_/-/; s/^_//g;p' | tr '[:upper:]' '[:lower:]').pem; echo "${newname}"; mv "${cert}" "${newname}"; done
+function find_ssl_ca(){
+  cert_domain=$1
+  cert_domain_file= $2
+  openssl s_client -showcerts -verify 5 -connect "${cert_domain}:443" < /dev/null | awk -v awkcert="$cert_domain_file" '/BEGIN/,/END/{ if(/BEGIN/){a++}; out=""awkcert""a".pem"; print >out}'; 
+}
 
-FILES="/tmp/custom_certs_add/*"
+find_ssl_ca "ip.zscaler.com" "ip_zscaler_com"
+find_ssl_ca "update.code.visualstudio.com" "update_code_visualstudio_com"
+find_ssl_ca "google.com" "google_com"
+find_ssl_ca "raw.githubusercontent.com" "raw_githubusercontent_com"
+
+FILES="/tmp/missing_certs/*"
 
 pem_path=""
 os_type=""
@@ -32,20 +38,24 @@ do
   echo "Processing $f file..."
   
   if [ $(openssl x509 -noout -text -in $f | grep --after-context=2 "X509v3 Basic Constraints" | grep -ic "CA:TRUE") -lt 1 ]; then
-    rm -f $f
+    sudo rm -f $f
     continue  
   fi
-
+  
+  echo ""
+  echo ""
   openssl x509 -in $f -out "$f.pem" -outform PEM
   fingerprint=$(openssl x509 -in "$f.pem" -noout -fingerprint | awk -F'=' '{print $2}' | sed -e 's/:/_/g' )
   echo "$f is CA"
   echo "     $fingerprint"
   sudo mv -f "$f.pem" "$pem_path/$fingerprint.pem"
   sudo mv -f "$f" "$pem_path/$fingerprint-$f"
+  echo ""
+  echo ""
 
 done
-chown -R root:root $pem_path
-chmod -R 644 $pem_path
+sudo chown -R root:root $pem_path
+sudo chmod -R 644 $pem_path
 
 if [ $os_type == "rhel" ]; then
   sudo update-ca-trust
@@ -53,12 +63,12 @@ else
   sudo update-ca-certificates --fresh
 fi
 popd
-rm -Rf /tmp/custom_certs_add
+sudo rm -Rf /tmp/missing_certs
 
 if [ ! -z "$(command -v python)" ]; then
-  cat "${pem_path}/*" >> $(python -m certifi)
+  cat "${pem_path}/*" | sudo tee -a $(python -m certifi) > /dev/null
 fi
 
 if [ ! -z "$(command -v python3)" ]; then
-  cat "${pem_path}/*" >> $(python3 -m certifi)
+  cat "${pem_path}/*" | sudo tee -a $(python3 -m certifi) > /dev/null
 fi
