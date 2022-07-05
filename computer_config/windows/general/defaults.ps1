@@ -29,12 +29,12 @@ function Copy-Missing-Certs(){
 
   foreach ( $file in $missing_root_certs){
     Copy-item -Path $file.FullName -Destination $(Join-Path -Path "\\wsl$\$($Distro)$($DestinationTempFolderInDistro)" -ChildPath $file.Name)
-    wsl -d $Distro -e openssl x509 -in "$($DestinationTempFolderInDistro)/$($file.Name)" -out "$($DestinationTempFolderInDistro)/$($file.Name).pem" -outform PEM
+    wsl -d $Distro openssl x509 -in "$($DestinationTempFolderInDistro)/$($file.Name)" -out "$($DestinationTempFolderInDistro)/$($file.Name).pem" -outform PEM
     Remove-Item -Force -Path $(Join-Path -Path "\\wsl$\$($Distro)$($DestinationTempFolderInDistro)" -ChildPath $file.Name)
   }
 
   if ( $missing_root_certs.Length -gt 0 ){
-    wsl -d $Distro -e sudo cp "$($DestinationTempFolderInDistro)/*.pem" $DestinationSSLFolderInDistro
+    wsl -d $Distro sudo cp "$($DestinationTempFolderInDistro)/*.pem" $DestinationSSLFolderInDistro
   }
 }
 
