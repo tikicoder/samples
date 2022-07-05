@@ -95,7 +95,7 @@ sudo apt install -y graphviz
 # This is designed to have Node use the Same CA as python so if something custom is there you should be good
 if [ $(grep -ic "export NODE_EXTRA_CA_CERTS=" "${user_home}/.bashrc" ) -lt 1  ]; then
   echo "" >> "${user_home}/.bashrc"
-  echo "export NODE_EXTRA_CA_CERTS=$(python3 -m certifi)'" >> "${user_home}/.bashrc"
+  echo "export NODE_EXTRA_CA_CERTS='$(python3 -m certifi)'" >> "${user_home}/.bashrc"
   echo "" >> "${user_home}/.bashrc"
 fi
 
