@@ -6,11 +6,12 @@ pushd /tmp/missing_certs
 
 function find_ssl_ca(){
   cert_domain=$1
-  cert_domain_file= $2
+  cert_domain_file=$2
   openssl s_client -showcerts -verify 5 -connect "${cert_domain}:443" < /dev/null | awk -v awkcert="$cert_domain_file" '/BEGIN/,/END/{ if(/BEGIN/){a++}; out=""awkcert""a".pem"; print >out}'; 
 }
 
 find_ssl_ca "ip.zscaler.com" "ip_zscaler_com"
+find_ssl_ca "api.nuget.org" "api_nuget_org"
 find_ssl_ca "update.code.visualstudio.com" "update_code_visualstudio_com"
 find_ssl_ca "google.com" "google_com"
 find_ssl_ca "raw.githubusercontent.com" "raw_githubusercontent_com"
@@ -55,7 +56,7 @@ do
 
 done
 sudo chown -R root:root $pem_path
-sudo chmod -R 644 $pem_path
+sudo chmod -R 755 $pem_path
 
 if [ $os_type == "rhel" ]; then
   sudo update-ca-trust

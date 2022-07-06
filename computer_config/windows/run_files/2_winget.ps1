@@ -52,4 +52,5 @@ install-app-winget -app_name "SlackTechnologies.Slack"
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User") 
 
 # Import base Widgets (This include the one for WSL)
+Write-Host "If widgets fail with `"unable to get local issuer certificate`" please ensure services like zscaler is off"
 & "$(Join-Path -Path $root_path_samples -ChildPath "general_programming_scripting\powershell\vsCode\main.ps1")" -isRestore $true -skip_wsl $true 

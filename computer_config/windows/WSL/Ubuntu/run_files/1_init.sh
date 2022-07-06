@@ -36,15 +36,19 @@ sudo apt update
 sudo apt upgrade -y
 sudo apt install -y make
 
+mkdir -p /tmp/go
+pushd /tmp/go
 # Installing GOLANG to local BIN
 wget https://go.dev/dl/go1.18.linux-amd64.tar.gz
 tar -C "${user_home}/.local/bin" -xzf go1.18.linux-amd64.tar.gz
+popd
+rm -Rf /tmp/go
 
 if [ $(grep -ic "\"\$HOME/.local/bin\"" "${user_home}/.profile") -lt 1 ]; then
   cat >> "${user_home}/.profile" << EOF
 # set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/.local/bin" ]; then
-    PATH="$HOME/.local/bin:$PATH"
+if [ -d "\$HOME/.local/bin" ]; then
+    PATH="\$HOME/.local/bin:\$PATH"
 fi
 EOF
 fi
@@ -52,8 +56,8 @@ fi
 if [ $(grep -ic "\"\$HOME/.local/bin/go/bin\"" "${user_home}/.profile") -lt 1 ]; then
   cat >> "${user_home}/.profile" << EOF
 # set PATH so it includes user's private golang bin if it exists
-if [ -d "$HOME/.local/bin/go/bin" ]; then
-    PATH="$HOME/.local/bin/go/bin:$PATH"
+if [ -d "\$HOME/.local/bin/go/bin" ]; then
+    PATH="\$HOME/.local/bin/go/bin:\$PATH"
 fi
 EOF
 fi
