@@ -35,12 +35,13 @@ if [ ! -f "${user_home}/.bashrc_alias" ]; then
   touch "${user_home}/.bashrc_alias"
 fi
 
-if [ $(grep -ic "\$HOME/.bashrc_alias" "${user_home}/.bashrc" ) -lt 1  ]; then
+if [ $(grep -ic "bashrc_extra_FILES=" "${user_home}/.bashrc" ) -lt 1  ]; then
   echo "" >> "${user_home}/.bashrc"
   cat >> "${user_home}/.bashrc" << EOF
-if [ -f "\$HOME/.bashrc_alias" ] ; then
-   . "\$HOME/.bashrc_alias"
-fi
+bashrc_extra_FILES="\${HOME}/.bashrc_*";
+for bashrc_extra in \$bashrc_extra_FILES; do
+   . "\$bashrc_extra"
+done;
 EOF
 fi
 
