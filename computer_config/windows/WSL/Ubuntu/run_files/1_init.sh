@@ -103,6 +103,12 @@ if [ $(grep -ic "export NODE_EXTRA_CA_CERTS=" "${user_home}/.bashrc" ) -lt 1  ];
   echo "" >> "${user_home}/.bashrc"
 fi
 
+# This is designed to have Node use the Same CA as python so if something custom is there you should be good
+if [ $(grep -ic "source "\${HOME}/.local/python"" "${user_home}/.bashrc" ) -lt 1  ]; then
+  echo "source \"\${HOME}/.local/python/bin/activate\""  >> "${user_home}/.bashrc"
+  echo "" >> "${user_home}/.bashrc"
+fi
+
 # Docker Requirments
 # https://docs.docker.com/engine/install/ubuntu/
 # https://dev.to/bowmanjd/install-docker-on-windows-wsl-without-docker-desktop-34m9
