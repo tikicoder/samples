@@ -105,6 +105,8 @@ fi
 
 # This is designed to have Node use the Same CA as python so if something custom is there you should be good
 if [ $(grep -ic "source "\${HOME}/.local/python"" "${user_home}/.bashrc" ) -lt 1  ]; then
+  echo "" >> "${user_home}/.bashrc"
+  echo "# this is to use my venv for python" >> "${user_home}/.bashrc"
   echo "source \"\${HOME}/.local/python/bin/activate\""  >> "${user_home}/.bashrc"
   echo "" >> "${user_home}/.bashrc"
 fi
