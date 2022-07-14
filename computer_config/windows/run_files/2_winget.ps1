@@ -47,6 +47,8 @@ install-app-winget -app_name "Google.Chrome"
 
 install-app-winget -app_name "SlackTechnologies.Slack"
 
+install-app-winget -app_name "Postman.Postman"
+
 
 #refresh Env Path
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User") 
