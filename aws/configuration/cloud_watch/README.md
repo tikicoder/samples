@@ -1,29 +1,24 @@
-# CloudWatch - Base Sample
+# CloudWatch 
 
-https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Metrics-Explorer.html#CloudWatch-Metrics-Explorer-agent
-Form the AWS Documentation
-To enable metrics explorer to discover EC2 metrics published by the CloudWatch agent, make sure that the CloudWatch agent configuration file contains the following values:
+## Extras
 
-In the metrics section, make sure that the aggregation_dimensions parameter includes [InstanceId"]. It can also contain other dimensions.
+### Grafana Integration
 
-In the metrics section, make sure that the append_dimensions parameter includes a {InstanceId":"${aws:InstanceId}"} line. It can also contain other lines.
+Grafana v6.5.0 and later can be used to contextuallly advance through the CloudWatch console and query a dynamic list of metrics by using wildcards.
+https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Grafana-support.html
 
-In the metrics section,inside the metrics_collected section, check the sections for each resource type that you want metrics explorer to discover, such as the cpu, disk, and memory sections. Make sure that each of these sections has a "resources": [ "*"] line.. aggregation_dimensions parameter includes [InstanceId"]. It can also contain other dimensions.
+## Notes
 
-In the cpu section of the metrics_collected> section, make sure there is a "totalcpu": true line.
+If using something like ansible be aware of filters to ensure proper json formating
+https://docs.ansible.com/ansible/latest/user_guide/playbooks_filters.html
 
-The settings in the previous list cause the CloudWatch agent to publish aggregate metrics for disks, CPUs, and other reousrces that can be plotted in metrics explorer for all the instances that use it.
+## References
 
-These settings will republish the metrics that you had previously set up to be published with multiple dimensions, adding to your metric costs.
-
-To learn more about the settings
-https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html
-
-
-Commands
-sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a fetch-config -c file:/path/to/file.json -s
-
-Other References
-https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/metrics-collected-by-CloudWatch-agent.html
-https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/enhanced-networking-ena.html
-
+* [Collect metrics and logs from Amazon EC2 instances and on-premises servers with the CloudWatch agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Install-CloudWatch-Agent.html)
+* [Basic monitoring and detailed monitoring](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch-metrics-basic-detailed.html)
+* [Metrics collected by the CloudWatch agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/metrics-collected-by-CloudWatch-agent.html)
+* [Enable enhanced networking with the Elastic Network Adapter (ENA) on Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/enhanced-networking-ena.html)
+* [CloudWatch agent configuration for metrics explorer](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Metrics-Explorer.html#CloudWatch-Metrics-Explorer-agent)
+* [Manually create or edit the CloudWatch agent configuration file](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html)
+* [OpenTelemetry support in the CloudWatch agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-open-telemetry.html)
+* [Amazon CloudWatch Prometheus metrics now generally available](https://aws.amazon.com/blogs/containers/amazon-cloudwatch-prometheus-metrics-ga/)

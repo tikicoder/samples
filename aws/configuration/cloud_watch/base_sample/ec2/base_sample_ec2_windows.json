@@ -1,0 +1,170 @@
+{
+	"agent": {
+	  "metrics_collection_interval": 45,
+	  "omit_hostname": false,
+	  "aws_sdk_log_level": "LogDebug",
+	  "logfile": "c:\\ProgramData\\Amazon\\AmazonCloudWatchAgent\\Logs\\amazon-cloudwatch-agent.log"
+	},
+	"metrics": {
+	  "namespace": "CWDetailedMetrics",
+	  "aggregation_dimensions": [
+			["hostname"],
+			["InstanceId"],
+			["InstanceType"],
+			["InstanceId", "InstanceType"],
+			["InstanceId", "hostname"],
+			["InstanceType", "hostname"],
+		  ["AutoScalingGroupName", "ImageId", "InstanceId"],
+		  ["AutoScalingGroupName"],
+		  []
+	  ],
+	  "force_flush_interval": 60,
+	  "metrics_collected": {
+			"Processor": {
+				"resources": [
+					"*"
+				],		
+				"append_dimensions": {
+					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+					"ImageId": "${aws:ImageId}",
+					"InstanceId": "${aws:InstanceId}",
+					"InstanceType": "${aws:InstanceType}"
+				},
+				"measurement": [
+					{"name": "% Idle Time", "rename": "cpu_usage_idle", "unit": "Percent"},
+					{"name": "% Interrupt Time", "rename": "cpu_usage_idle", "unit": "Percent"},
+					{"name": "% User Time", "rename": "cpu_usage_user", "unit": "Percent"},
+					{"name": "% Processor Time", "rename": "cpu_usage_system", "unit": "Percent"}
+				]
+			},
+			"LogicalDisk": {
+				"resources": [
+					"*"
+				],
+				"append_dimensions": {
+					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+					"ImageId": "${aws:ImageId}",
+					"InstanceId": "${aws:InstanceId}",
+					"InstanceType": "${aws:InstanceType}"
+				},
+				"measurement": [
+					{"name": "% Free Space", "rename": "disk_free_percent", "unit": "Percent"},
+					{"name": "% Used Space", "rename": "disk_used_percent", "unit": "Percent"},
+					{"name": "Free Megabytes", "rename": "disk_free", "unit": "Megabytes"},
+					{"name": "% Idle Time", "rename": "disk_usage_idle", "unit": "Percent"},
+					{"name": "% Disk Read Time", "rename": "disk_usage_read", "unit": "Percent"},
+					{"name": "% Disk Write Time", "rename": "disk_usage_write", "unit": "Percent"}
+				]
+			},
+			"Memory": {		  
+				"resources": [
+					"*"
+				],	
+				"append_dimensions": {
+					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+					"ImageId": "${aws:ImageId}",
+					"InstanceId": "${aws:InstanceId}",
+					"InstanceType": "${aws:InstanceType}"
+				},
+				"measurement": [
+					{"name": "% Available Swap Space", "rename": "swap_free_percent", "unit": "Percent"},
+					{"name": "% Used Swap Space", "rename": "swap_used_percent", "unit": "Percent"},
+					{"name": "Available MBytes Swap", "rename": "swap_free", "unit": "Megabytes"},
+					{"name": "% Available Memory", "rename": "mem_available_percent", "unit": "Percent"},
+					{"name": "% Used Memory", "rename": "mem_used_percent", "unit": "Percent"},
+					{"name": "Available MBytes Memory", "rename": "mem_available", "unit": "Megabytes"},
+					{"name": "Pages/sec", "rename": "pages_second"}			
+				]
+			},
+			"Network Interface": {
+				"resources": [
+					"*"
+				],
+				"append_dimensions": {
+					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+					"ImageId": "${aws:ImageId}",
+					"InstanceId": "${aws:InstanceId}",
+					"InstanceType": "${aws:InstanceType}"
+				},
+				"measurement": [
+					{"name": "Total Bytes Transmitted", "rename": "net_bytes_sent", "unit": "Bytes"},
+					{"name": "Total Bytes Received", "rename": "net_bytes_recv", "unit": "Bytes"},
+					{"name": "Total Rx Errors", "rename": "net_err_in"},
+					{"name": "Total Tx Errors", "rename": "net_err_out"},
+					{"name": "Total Packets Transmitted", "rename": "net_packets_sent"},
+					{"name": "Total Packets Received", "rename": "net_packets_recv"}
+				]
+			},
+			"System": {
+				"resources": [
+					"*"
+				],
+				"append_dimensions": {
+					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+					"ImageId": "${aws:ImageId}",
+					"InstanceId": "${aws:InstanceId}",
+					"InstanceType": "${aws:InstanceType}"
+				},
+				"measurement": [
+					{"name": "Free Physical Memory", "rename": "mem_available", "unit": "Gigabytes"},
+					{"name": "Free Virtual Memory", "rename": "vmem_available", "unit": "Gigabytes"},
+					{"name": "Processes", "rename": "system_processes"},
+					{"name": "Uptime", "rename": "system_uptime"}
+				]
+			}
+		}
+	},
+	"logs": {
+		"log_stream_name": "log-CWDetailedMetrics",
+		"force_flush_interval": 90,
+	  "logs_collected": {
+			"files": {
+				"collect_list": [
+					{
+						"file_path": "c:\\ProgramData\\Amazon\\AmazonCloudWatchAgent\\Logs\\amazon-cloudwatch-agent.log",
+						"log_group_name": "amazon-cloudwatch-agent.log",
+						"log_stream_name": "log-CWDetailedMetrics-{instance_id}-{hostname}-cwagent",
+						"timezone": "UTC",
+						"timestamp_format": "%Y-%m-%dT%H:%M:%S.%f%z",
+						"auto_removal": true,
+						"retention_in_days": 180
+					}
+				]
+			},
+			"windows_events": {
+				"collect_list": [
+					{
+						"event_name": "System",
+						"event_levels": [
+							"INFORMATION",
+							"ERROR"
+						],
+						"log_group_name": "SystemEvents",
+						"log_stream_name": "log-CWDetailedMetrics-{instance_id}-{hostname}-SystemEvents",
+						"event_format": "xml"
+					},
+					{
+						"event_name": "Security",
+						"event_levels": [
+							"INFORMATION",
+							"ERROR"
+						],
+						"log_group_name": "SecurityEvents",
+						"log_stream_name": "log-CWDetailedMetrics-{instance_id}-{hostname}-SecurityEvents",
+						"event_format": "xml"
+					},
+					{
+						"event_name": "Application",
+						"event_levels": [
+							"INFORMATION",
+							"ERROR"
+						],
+						"log_group_name": "ApplicationEvents",
+						"log_stream_name": "log-CWDetailedMetrics-{instance_id}-{hostname}-ApplicationEvents",
+						"event_format": "xml"
+					}
+				]
+			}	
+		}
+  }
+}

@@ -1,0 +1,240 @@
+{
+	"agent": {
+		"metrics_collection_interval": 45,
+		"omit_hostname": false,
+		"aws_sdk_log_level": "LogDebug",
+		"logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log",
+		"run_as_user": "root"
+	},
+	"metrics": {
+		"namespace": "CWDetailedMetrics",
+		"aggregation_dimensions": [
+			["hostname"],
+			["InstanceId"],
+			["InstanceType"],
+			["InstanceId", "InstanceType"],
+			["InstanceId", "hostname"],
+			["InstanceType", "hostname"],
+			["AutoScalingGroupName", "ImageId", "InstanceId"],
+			["AutoScalingGroupName"],
+			[]
+		],
+		"force_flush_interval": 60,
+		"metrics_collected": {
+			"cpu": {		
+				"resources": [
+					"*"
+				],				
+				"append_dimensions": {
+					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+					"ImageId": "${aws:ImageId}",
+					"InstanceId": "${aws:InstanceId}",
+					"InstanceType": "${aws:InstanceType}"
+				},					
+				"measurement": [
+					"cpu_usage_idle",
+					"cpu_usage_iowait",
+					"cpu_usage_user",
+					"cpu_usage_system"
+				],				
+				"totalcpu": true
+			},
+			"disk": {
+				"resources": [
+					"*"
+				],
+				"append_dimensions": {
+					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+					"ImageId": "${aws:ImageId}",
+					"InstanceId": "${aws:InstanceId}",
+					"InstanceType": "${aws:InstanceType}"
+				},
+				"measurement": [{
+						"name": "disk_free",
+						"unit": "Gigabytes"
+					},
+					{
+						"name": "disk_total",
+						"unit": "Gigabytes"
+					},
+					{
+						"name": "disk_used",
+						"unit": "Gigabytes"
+					},
+					"disk_used_percent",
+					"disk_inodes_free",
+					"disk_inodes_total"
+				]
+			},
+			"diskio": {
+				"resources": [
+					"*"
+				],
+				"append_dimensions": {
+					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+					"ImageId": "${aws:ImageId}",
+					"InstanceId": "${aws:InstanceId}",
+					"InstanceType": "${aws:InstanceType}"
+				},
+				"measurement": [
+					"diskio_iops_in_progress",
+					"diskio_io_time",
+					"diskio_write_bytes",
+					"diskio_read_bytes",
+					"diskio_writes",
+					"diskio_reads"
+				]
+			},			
+			"swap": {				
+				"resources": [
+					"*"
+				],
+				"append_dimensions": {
+					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+					"ImageId": "${aws:ImageId}",
+					"InstanceId": "${aws:InstanceId}",
+					"InstanceType": "${aws:InstanceType}"
+				},
+				"measurement": [{
+						"name": "swap_used",
+						"unit": "Gigabytes"
+					},
+					{
+						"name": "swap_free",
+						"unit": "Gigabytes"
+					},
+					"swap_used_percent"
+				]
+			},
+			"mem": {
+				"resources": [
+					"*"
+				],	
+				"append_dimensions": {
+					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+					"ImageId": "${aws:ImageId}",
+					"InstanceId": "${aws:InstanceId}",
+					"InstanceType": "${aws:InstanceType}"
+				},
+				"measurement": [{
+						"name": "mem_active",
+						"unit": "Gigabytes"
+					},
+					{
+						"name": "mem_available",
+						"unit": "Gigabytes"
+					},
+					{
+						"name": "mem_buffered",
+						"unit": "Gigabytes"
+					},
+					{
+						"name": "mem_cached",
+						"unit": "Gigabytes"
+					},
+					{
+						"name": "mem_free",
+						"unit": "Gigabytes"
+					},
+					{
+						"name": "mem_total",
+						"unit": "Gigabytes"
+					},
+					{
+						"name": "mem_used",
+						"unit": "Gigabytes"
+					},
+					"mem_available_percent",
+					"mem_used_percent"
+				]
+			},
+			"net": {
+				"resources": [
+					"*"
+				],
+				"append_dimensions": {
+					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+					"ImageId": "${aws:ImageId}",
+					"InstanceId": "${aws:InstanceId}",
+					"InstanceType": "${aws:InstanceType}"
+				},
+				"measurement": [
+					"net_bytes_sent",
+					"net_bytes_recv",
+					"net_drop_in",
+					"net_drop_out",
+					"net_err_in",
+					"net_err_out",
+					"net_packets_sent",
+					"net_packets_recv"
+				]
+			},
+			"netstat": {
+				"resources": [
+					"*"
+				],
+				"append_dimensions": {
+					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+					"ImageId": "${aws:ImageId}",
+					"InstanceId": "${aws:InstanceId}",
+					"InstanceType": "${aws:InstanceType}"
+				},
+				"measurement": [
+					"netstat_tcp_established",
+					"netstat_tcp_time_wait",
+					"netstat_tcp_syn_sent",
+					"netstat_tcp_close",
+					"netstat_tcp_close_wait",
+					"netstat_tcp_closing"
+				]
+			},
+			"processes": {
+				"resources": [
+					"*"
+				],
+				"append_dimensions": {
+					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+					"ImageId": "${aws:ImageId}",
+					"InstanceId": "${aws:InstanceId}",
+					"InstanceType": "${aws:InstanceType}"
+				},
+				"measurement": [
+					"processes_running",
+					"processes_sleeping",
+					"processes_dead",
+					"processes_idle",
+					"processes_total",
+					"processes_total_threads",
+					"processes_zombies"
+				]
+			}
+		}
+	},
+	"logs": {		
+		"log_stream_name": "log-CWDetailedMetrics",
+		"force_flush_interval": 90,
+		"logs_collected": {
+			"files": {
+				"collect_list": [{
+						"file_path": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log",
+						"log_group_name": "amazon-cloudwatch-agent.log",
+						"log_stream_name": "log-CWDetailedMetrics-{instance_id}-{hostname}-cwagent",
+						"timezone": "UTC",
+						"timestamp_format": "%Y-%m-%dT%H:%M:%S.%f%z",
+						"auto_removal": true,
+						"retention_in_days": 180
+					},
+					{
+						"file_path": "/var/log/system.log*",
+						"log_group_name": "system.log",
+						"log_stream_name": "log-CWDetailedMetrics-{instance_id}-{hostname}-system",
+						"timezone": "UTC",
+						"timestamp_format": "%Y-%m-%dT%H:%M:%S.%f%z",
+						"auto_removal": true,
+						"retention_in_days": 180
+					}
+				]
+			}
+		}
+	}
+}
