@@ -1,8 +1,6 @@
-# CloudWatch 
+# EC2 
 
 ## Permissions
-
-### EC2 
 
 Instances need a role with the policy CloudWatchAgentServerPolicy 
 https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/create-iam-roles-for-cloudwatch-agent.html
