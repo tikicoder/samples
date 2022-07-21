@@ -10,13 +10,16 @@ function find_ssl_ca(){
   openssl s_client -showcerts -verify 5 -connect "${cert_domain}:443" < /dev/null | awk -v awkcert="$cert_domain_file" '/BEGIN/,/END/{ if(/BEGIN/){a++}; out=""awkcert""a".pem"; print >out}'; 
 }
 
+find_ssl_ca "dl.k8s.io" "dl_k8s_io"
 find_ssl_ca "ip.zscaler.com" "ip_zscaler_com"
 find_ssl_ca "api.nuget.org" "api_nuget_org"
 find_ssl_ca "update.code.visualstudio.com" "update_code_visualstudio_com"
 find_ssl_ca "google.com" "google_com"
 find_ssl_ca "raw.githubusercontent.com" "raw_githubusercontent_com"
 
-FILES="/tmp/missing_certs/*"
+missingcerts_user="$HOME/.local/missing_certs"
+missingcerts_tmp="/tmp/missing_certs"
+FILES="${missingcerts_tmp}/*"
 
 pem_path=""
 os_type=""
@@ -34,6 +37,16 @@ if [ -z "$pem_path" ]; then
   echo "Could not determin pem save path"
   exit
 fi
+
+if [ -d "${missingcerts_user}" ]; then
+ missingcerts_user_files="${missingcerts_user}/*"
+  for f in $missingcerts_user_files
+  do
+    cp $f "${missingcerts_tmp}/$(basename $f)"
+  done
+fi
+
+
 for f in $FILES
 do
   echo "Processing $f file..."
@@ -50,7 +63,7 @@ do
   echo "$f is CA"
   echo "     $fingerprint"
   sudo mv -f "$f.pem" "$pem_path/$fingerprint.pem"
-  sudo mv -f "$f" "$pem_path/$fingerprint-$f"
+  sudo mv -f "$f" "$pem_path/$fingerprint-$(basename $f)"
   echo ""
   echo ""
 
@@ -67,10 +80,13 @@ popd
 sudo rm -Rf /tmp/missing_certs
 
 adding_ca_path="${pem_path}/*"
+python_ca_path="$(python -m certifi)"
 if [ ! -z "$(command -v python)" ]; then
+  echo "updating python path: $(python -m certifi)"
   sudo cat $adding_ca_path | sudo tee -a $(python -m certifi) > /dev/null
 fi
 
-if [ ! -z "$(command -v python3)" ]; then
+if [ ! -z "$(command -v python3)" ] && [ "$python_ca_path" != "$(python3 -m certifi)" ]; then
+  echo "updating python path: $(python3 -m certifi)"
   sudo cat $adding_ca_path | sudo tee -a $(python3 -m certifi) > /dev/null
 fi

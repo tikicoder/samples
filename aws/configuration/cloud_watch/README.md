@@ -1,5 +1,10 @@
 # CloudWatch 
 
+## Services that publish to CloudWatch
+
+For a full list of services that publish to CloudWatch use this link
+(Services List)[https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/aws-services-cloudwatch-metrics.html]
+
 ## Extras
 
 ### Grafana Integration
