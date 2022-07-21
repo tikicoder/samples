@@ -21,6 +21,7 @@ parent_path=$(realpath "${dir_path}/../")
 
 user_name=$(whoami)
 user_home="/home/${user_name}"
+user_bash_file="${user_home}/.bashrc"
 user_aliases="${user_home}/.bashrc_alias"
 
 mkdir -p "${user_home}/.local/bin"
@@ -34,7 +35,10 @@ sudo mkdir -p "$apt_keyrings"
 
 sudo apt update
 sudo apt upgrade -y
-sudo apt install -y make
+
+# Base Packages Install
+sudo apt install -y make bash-completion git
+
 
 mkdir -p /tmp/go
 pushd /tmp/go
@@ -97,18 +101,18 @@ sudo apt install -y genisoimage
 sudo apt install -y graphviz
 
 # This is designed to have Node use the Same CA as python so if something custom is there you should be good
-if [ $(grep -ic "export NODE_EXTRA_CA_CERTS=" "${user_home}/.bashrc" ) -lt 1  ]; then
-  echo "" >> "${user_home}/.bashrc"
-  echo "export NODE_EXTRA_CA_CERTS='$(python3 -m certifi)'" >> "${user_home}/.bashrc"
-  echo "" >> "${user_home}/.bashrc"
+if [ $(grep -ic "export NODE_EXTRA_CA_CERTS=" "${user_bash_file}" ) -lt 1  ]; then
+  echo "" >> "${user_bash_file}"
+  echo "export NODE_EXTRA_CA_CERTS='$(python3 -m certifi)'" >> "${user_bash_file}"
+  echo "" >> "${user_bash_file}"
 fi
 
 # This is designed to have Node use the Same CA as python so if something custom is there you should be good
-if [ $(grep -ic "source "\${HOME}/.local/python"" "${user_home}/.bashrc" ) -lt 1  ]; then
-  echo "" >> "${user_home}/.bashrc"
-  echo "# this is to use my venv for python" >> "${user_home}/.bashrc"
-  echo "source \"\${HOME}/.local/python/bin/activate\""  >> "${user_home}/.bashrc"
-  echo "" >> "${user_home}/.bashrc"
+if [ $(grep -ic "source "\${HOME}/.local/python"" "${user_bash_file}" ) -lt 1  ]; then
+  echo "" >> "${user_bash_file}"
+  echo "# this is to use my venv for python" >> "${user_bash_file}"
+  echo "source \"\${HOME}/.local/python/bin/activate\""  >> "${user_bash_file}"
+  echo "" >> "${user_bash_file}"
 fi
 
 # Docker Requirments
@@ -140,6 +144,7 @@ sudo apt install -y jq
 
 # mikefarah yaml (JQ but for yaml)
 # https://github.com/mikefarah/yq
+yq_version="v4.26.1"
 wget https://github.com/mikefarah/yq/releases/download/${yq_version}/yq_linux_amd64 -q -O ~/.local/bin/yq
 chmod +x ~/.local/bin/yq
 
@@ -153,9 +158,6 @@ curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo 
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
 sudo apt update -y
 sudo apt install -y gh
-
-# Git Install
-sudo apt install -y git
 
 # Azure CLI
 # https://docs.microsoft.com/en-us/cli/azure/run-azure-cli-docker
@@ -179,6 +181,54 @@ unzip awscliv2.zip
 sudo ./aws/install
 popd
 rm -Rf /tmp/aws
+
+# kubectl install - Manually
+# mkdir -p /tmp/kube
+# pushd /tmp/kube
+# curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+# chmod 755 kubectl
+# mv ./kubectl ~/.local/bin/kubectl
+# popd
+# rm -Rf /tmp/kube
+
+# kubectl install - pkg manager
+sudo apt-get install -y apt-transport-https ca-certificates curl
+sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update
+sudo apt-get install -y kubectl
+
+# This is designed to have Node use the Same CA as python so if something custom is there you should be good
+if [ $(grep -ic "source <(kubectl completion bash)" "${user_bash_file}" ) -lt 1  ]; then
+  echo "" >> "${user_bash_file}"
+  echo "source <(kubectl completion bash)" >> "${user_bash_file}"
+  echo "complete -o default -F __start_kubectl k" >> "${user_bash_file}"
+  echo "" >> "${user_bash_file}"
+fi
+
+# kubectl convert install - Manually
+mkdir -p /tmp/kube
+pushd /tmp/kube
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl-convert"
+chmod 755 kubectl-convert
+mv ./kubectl-convert ~/.local/bin/kubectl-convert
+popd
+rm -Rf /tmp/kube
+
+# krew for kubectl - Plugins Manager
+# https://krew.sigs.k8s.io/docs/user-guide/setup/install/
+(
+  set -x; cd "$(mktemp -d)" &&
+  OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
+  ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
+  KREW="krew-${OS}_${ARCH}" &&
+  curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" &&
+  tar zxvf "${KREW}.tar.gz" &&
+  ./"${KREW}" install krew
+)
+
+echo 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' >> "${user_bash_file}"
+echo "" >> "${user_bash_file}"
 
 # # GCP CLI
 # # https://cloud.google.com/sdk/docs/downloads-docker

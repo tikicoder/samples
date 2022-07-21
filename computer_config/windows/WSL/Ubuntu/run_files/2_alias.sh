@@ -31,8 +31,8 @@ docker_groupid=$
 mkdir -p $tmp_directory
 pushd $tmp_directory
 
-if [ ! -f "${user_home}/.bashrc_alias" ]; then
-  touch "${user_home}/.bashrc_alias"
+if [ ! -f "${user_aliases}" ]; then
+  touch "${user_aliases}"
 fi
 
 if [ $(grep -ic "bashrc_extra_FILES=" "${user_home}/.bashrc" ) -lt 1  ]; then
@@ -45,22 +45,30 @@ done;
 EOF
 fi
 
-# https://docs.docker.com/network/bridge/#differences-between-user-defined-bridges-and-the-default-bridge
-# using --network host while work to figure the bridge config out
-
-if [ $(grep -ic "alias aws=" "${user_home}/.bashrc_alias" ) -lt 1  ]; then
+if [ $(grep -ic "alias k=kubectl" "${user_aliases}" ) -lt 1  ]; then
   mkdir -p "${user_home}/.aws"
   # https://hub.docker.com/r/amazon/aws-cli
 
-  echo "# alias aws='docker run --network host --rm -it -v ~/.aws:/root/.aws amazon/aws-cli'" >> "${user_home}/.bashrc_alias"
-  echo "" >> "${user_home}/.bashrc_alias"
+  echo "alias k=kubectl" >> "${user_aliases}"
+  echo "" >> "${user_aliases}"
+fi
+
+# https://docs.docker.com/network/bridge/#differences-between-user-defined-bridges-and-the-default-bridge
+# using --network host while work to figure the bridge config out
+
+if [ $(grep -ic "alias aws=" "${user_aliases}" ) -lt 1  ]; then
+  mkdir -p "${user_home}/.aws"
+  # https://hub.docker.com/r/amazon/aws-cli
+
+  echo "# alias aws='docker run --network host --rm -it -v ~/.aws:/root/.aws amazon/aws-cli'" >> "${user_aliases}"
+  echo "" >> "${user_aliases}"
 fi
 
 if [ ! -f "${user_home}/.local/bin/az" ]; then
   mkdir -p "${user_home}/.azure"
 
-  echo "# alias az_update='docker pull mcr.microsoft.com/azure-cli && az config set extension.use_dynamic_install=yes_prompt'" >> "${user_home}/.bashrc_alias"
-  echo "# alias az='docker run --network host --rm -it -v ~/.ssh:/root/.ssh -v ~/.azure:/root/.azure tiki/azure_cli /usr/local/bin/az'" >> "${user_home}/.bashrc_alias"
+  echo "# alias az_update='docker pull mcr.microsoft.com/azure-cli && az config set extension.use_dynamic_install=yes_prompt'" >> "${user_aliases}"
+  echo "# alias az='docker run --network host --rm -it -v ~/.ssh:/root/.ssh -v ~/.azure:/root/.azure tiki/azure_cli /usr/local/bin/az'" >> "${user_aliases}"
 
 # If you would rather a script file to load az
 
@@ -76,12 +84,12 @@ if [ ! -f "${user_home}/.local/bin/az" ]; then
 # chmod 755 "${user_home}/.local/bin/az"
 fi
 
-if [ $(grep -ic "alias pwsh=" "${user_home}/.bashrc_alias" ) -lt 1  ]; then
+if [ $(grep -ic "alias pwsh=" "${user_aliases}" ) -lt 1  ]; then
   mkdir -p "${user_home}/.aws"
   # https://hub.docker.com/_/microsoft-powershell
 
-  echo "alias pwsh='docker run --network host --rm -it -v ~/*:/root/ -v ~/mnt/c:/mnt/c  mcr.microsoft.com/powershell'" >> "${user_home}/.bashrc_alias"
-  echo "" >> "${user_home}/.bashrc_alias"
+  echo "alias pwsh='docker run --network host --rm -it -v ~/*:/root/ -v ~/mnt/c:/mnt/c  mcr.microsoft.com/powershell'" >> "${user_aliases}"
+  echo "" >> "${user_aliases}"
 fi
 
 . "$user_home/.bashrc"
