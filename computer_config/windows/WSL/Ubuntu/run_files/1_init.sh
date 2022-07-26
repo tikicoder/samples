@@ -37,8 +37,7 @@ sudo apt update
 sudo apt upgrade -y
 
 # Base Packages Install
-sudo apt install -y make bash-completion git
-
+sudo apt install -y make bash-completion git pylint
 
 mkdir -p /tmp/go
 pushd /tmp/go
