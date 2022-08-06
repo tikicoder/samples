@@ -18,6 +18,30 @@ function install-app-winget(){
   winget install -e --id $app_name
 }
 
+function install-latest-dotnet(){
+
+  write-host "Getting - Latest .NET SDK"
+  try{
+    $latest_version_sdk = $($(winget search --id Microsoft.dotnet) | ForEach-Object {$_.split("  ") | Where-Object {-not [string]::IsNullOrWhiteSpace($_)} | ForEach-Object{$_.trim()}} | Where-Object {$_ -match "microsoft`.dotnet`.sdk(.*)" -and $_ -notmatch "(.*)`.preview"} | Sort-Object -Descending)[0]
+  
+    write-host "Installing - Latest .NET SDK: $($latest_version_sdk)"
+
+    if (-not [string]::IsNullOrWhiteSpace($latest_version_sdk)){
+      install-app-winget $latest_version_sdk
+    }
+    return
+  }
+  catch {
+    
+  }
+
+  write-host "Unable to find latest .net version"
+  
+}
+
+install-app-winget -app_name "Microsoft.dotNetFramework"
+
+install-latest-dotnet
 
 install-app-winget -app_name "7zip.7zip"
 
@@ -28,8 +52,6 @@ install-app-winget -app_name "PuTTY.PuTTY"
 install-app-winget -app_name "Microsoft.VisualStudioCode"
 
 install-app-winget -app_name "Microsoft.PowerShell"
-
-install-app-winget -app_name "Microsoft.AzureStorageExplorer"
 
 install-app-winget -app_name "Microsoft.Edge"
 
@@ -49,6 +71,16 @@ install-app-winget -app_name "SlackTechnologies.Slack"
 
 install-app-winget -app_name "Postman.Postman"
 
+install-app-winget -app_name "Microsoft.AzureCLI"
+
+install-app-winget -app_name "Microsoft.AzureStorageExplorer"
+
+pwsh -Command "Install-Module -Name Az -Scope CurrentUser -Repository PSGallery -Force"
+
+powershell -Command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force"
+powershell -Command "Install-Module -Name Az -Scope CurrentUser -Repository PSGallery -Force"
+
+winget upgrade --all
 
 #refresh Env Path
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User") 
