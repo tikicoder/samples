@@ -12,8 +12,11 @@ skip_all_delete=0
 skip_blueprint_delete=0
 skip_policy_delete=0
 
-skip_blueprint_assignment=0
-
 generate_existing_assignments=0
 
 existing_policies_tmp='[]'
+
+existing_assignments_file=""
+run_assignment_creation=0
+skip_assignment_creation=0
+skip_assignment_file_creation=0

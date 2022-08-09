@@ -20,7 +20,11 @@ function validate_flags(){
         ;;
         --skip-delete-policy) skip_policy_delete=1
         ;;
-        --skip-assignment) skip_blueprint_assignment=1
+        --skip-assignment) skip_assignment_creation=1
+        ;;
+        --skip-assignment-file) skip_assignment_file_creation=1
+        ;;
+        --run-assignment) run_assignment_creation=1
         ;;
 	esac
 
