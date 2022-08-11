@@ -152,20 +152,23 @@ if [ $skip_assignment_creation -eq 0 ]; then
             blueprint_assignment=$(echo "${blueprint_assignment}" | jq --argjson bp_filter "${blueprint_filter}" -rc "[.[] | select(.blueprintName | IN(\$bp_filter[])) ]")
         fi
         
-        # Force Deleted extra policies
-        # Update the existing_policies_tmp with a json array of display names
-        # existing_policies_tmp is defined in the defaults.sh
-        delete_policies=$(az policy assignment list --subscription "$(_jq '.key')" | jq --argjson existing "${existing_policies_tmp}" -r "[.[] | select(.displayName | IN(\$existing[])) | .name]")
-        for row_delete_policy in $(echo "${delete_policies}" | jq -r '. [] | @base64'); do
-            _jq_delete_policy(){
-                echo ${row_delete_policy} | base64 --decode
-            }
 
-            echo "Deleting Policy Old - $(_jq_delete_policy)"
+        if [ $run_force_delete_policies -eq 1 ]; then
+            # Force Deleted extra policies
+            # Update the existing_policies_tmp with a json array of display names
+            # existing_policies_tmp is defined in the defaults.sh
+            delete_policies=$(az policy assignment list --subscription "$(_jq '.key')" | jq --argjson existing "${existing_policies_tmp}" -r "[.[] | select(.displayName | IN(\$existing[])) | .name]")
+            for row_delete_policy in $(echo "${delete_policies}" | jq -r '. [] | @base64'); do
+                _jq_delete_policy(){
+                    echo ${row_delete_policy} | base64 --decode
+                }
 
-            az policy assignment delete --subscription "$(_jq '.key')" --name "$(_jq_delete_policy)" &
-        done
-        az policy assignment list --subscription "$(_jq '.key')" | jq  -r ".[].displayName"
+                echo "Deleting Policy Old - $(_jq_delete_policy)"
+
+                az policy assignment delete --subscription "$(_jq '.key')" --name "$(_jq_delete_policy)" &
+            done
+            az policy assignment list --subscription "$(_jq '.key')" | jq  -r ".[].displayName"
+        fi
         
 
         subscription_policies=$(az policy assignment list --subscription "$(_jq '.key')" --query "[].{id: id, name: name, createdBy: metadata.createdBy, updatedBy: metadata.updatedBy}")
@@ -224,7 +227,7 @@ if [ $skip_assignment_creation -eq 0 ]; then
         fi    
     done
 
-    if [ $skip_assignment_file_creation -eq 0]; then
+    if [ $skip_assignment_file_creation -eq 0 ]; then
         echo "${subscription_blueprint_assignment}" > "${existing_assignments_file}"
         echo "assignment saved to: ${existing_assignments_file}"
     fi

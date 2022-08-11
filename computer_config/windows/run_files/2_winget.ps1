@@ -76,6 +76,7 @@ install-app-winget -app_name "Microsoft.AzureCLI"
 install-app-winget -app_name "Microsoft.AzureStorageExplorer"
 
 pwsh -Command "Install-Module -Name Az -Scope CurrentUser -Repository PSGallery -Force"
+pwsh -Command "Install-Module -Name PowerStig -Scope CurrentUser -Force"
 
 powershell -Command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force"
 powershell -Command "Install-Module -Name Az -Scope CurrentUser -Repository PSGallery -Force"

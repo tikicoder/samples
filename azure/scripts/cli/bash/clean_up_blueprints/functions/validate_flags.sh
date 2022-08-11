@@ -26,6 +26,8 @@ function validate_flags(){
         ;;
         --run-assignment) run_assignment_creation=1
         ;;
+        --run-forcedelete) run_force_delete_policies=1
+        ;;
 	esac
 
 	shift

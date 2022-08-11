@@ -16,6 +16,7 @@ generate_existing_assignments=0
 
 existing_policies_tmp='[]'
 
+run_force_delete_policies=0
 existing_assignments_file=""
 run_assignment_creation=0
 skip_assignment_creation=0
