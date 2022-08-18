@@ -1,3 +1,9 @@
+function output_test_color(){
+  #this can be used to change the output color
+  RED='\033[0;31m'
+  NC='\033[0m' # No Color
+  printf "${1}${NC}"
+}
 function parse_jq_decode(){
   raw_data=$1
   attribute=$2
