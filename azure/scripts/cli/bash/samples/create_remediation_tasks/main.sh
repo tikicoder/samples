@@ -57,7 +57,10 @@ function get_policy_Assignment_ids() {
 
 
 for row in $(echo "${subscription_info}" | jq -r '. [] | @base64'); do
-    subscription_id="54e65ba5-a514-4972-814d-5fc21eba3b95" # "$(parse_jq_decode $row '.key')"
+    subscription_id="$(parse_jq_decode $row '.key')"
+    if [ ! -z "${test_subscription_id}" ]; then
+        subscription_id="${test_subscription_id}"
+    fi
     policy_sumary=$(az policy state summarize -o json --subscription $subscription_id | jq -rc ".policyAssignments" )
     pilicy_assignment_ids=$(get_policy_Assignment_ids $subscription_id)
     
@@ -77,7 +80,10 @@ for row in $(echo "${subscription_info}" | jq -r '. [] | @base64'); do
         fi
         az policy remediation create --subscription $subscription_id -n "${id_only} - Remediation - $(date -u +"%Y%m%dT%H%M$S")Z" --policy-assignment $policy_assignment_id &
     done
-    break
+    if [ ! -z "${test_subscription_id}" ]; then
+        break
+    fi
+    
 
 done
 
