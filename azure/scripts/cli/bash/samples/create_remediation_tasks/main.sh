@@ -48,9 +48,13 @@ fi
 
 function get_policy_Assignment_ids() {
     local pilicy_assignment_ids='[]'
-    for pilicy_regex in $(echo "${create_remedation_tasks}" | jq -r '. []'); do
-        pilicy_assignment_ids=$(echo $policy_sumary | jq --argjson arr "${pilicy_assignment_ids}" -rc "[ .[] | .policyAssignmentId as \$ID | .policyDefinitions[] | . as \$policyDefinition | .results | select(.nonCompliantResources > 0)  | {id: \$ID, value:\$policyDefinition.policyDefinitionId} ] | [.[] | select(.value|test(\"${pilicy_regex}\")) | .id ] | \$arr + . | unique")
-    done
+    if [ $(echo "${create_remedation_tasks}" | jq -r '.[] | length') -gt 0 ]; then
+        for pilicy_regex in $(echo "${create_remedation_tasks}" | jq -r '.[]'); do
+            pilicy_assignment_ids=$(echo $policy_sumary | jq --argjson arr "${pilicy_assignment_ids}" -rc "[ .[] | .policyAssignmentId as \$ID | .policyDefinitions[] | . as \$policyDefinition | .results | select(.nonCompliantResources > 0)  | {id: \$ID, value:\$policyDefinition.policyDefinitionId} ] | [.[] | select(.value|test(\"${pilicy_regex}\")) | .id ] | \$arr + . | unique")
+        done
+    else
+        pilicy_assignment_ids=$(echo $policy_sumary | jq --argjson arr "${pilicy_assignment_ids}" -rc "[ .[] | .policyAssignmentId as \$ID | .policyDefinitions[] | . as \$policyDefinition | .results | select(.nonCompliantResources > 0)  | {id: \$ID, value:\$policyDefinition.policyDefinitionId} ] | unique")
+    fi
 
     echo $pilicy_assignment_ids
 }
