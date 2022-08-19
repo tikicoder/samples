@@ -26,93 +26,62 @@ done
 
 source "${root_path}/common/general.sh"
 
-output_test_color "This is \${RED}Test\${NC}"
-# source "${dir_path}/functions/defaults.sh"
+if [ $dry_run -ne 0 ]; then
+    echo "--dry-run flag set skipping all update actions"
+fi
 
-# # this is done as a way to expand the script incase there is something that shouldn't be in the repo
-# if [ -f "${dir_path}/functions/defaults_variables_override.sh" ]; then
-#     source "${dir_path}/functions/defaults_variables_override.sh"
-# fi
+if [ ! -z "${tenant_id}" ]; then
+    subscription_info=$(az account list --query "[?homeTenantId == '${tenant_id}']" | jq -r -c "[.[] | {(.id):.name}]")
+else
+    subscription_info=$(az account list | jq -r -c "[.[] | {(.id):.name}]")
+fi
 
-# source "${dir_path}/functions/validate_flags.sh"
-# validate_flags $@
+subscription_info=$(echo $subscription_info | jq -r " [.[]  | to_entries | add]")
 
+if [ ! -z "${subscription_filter}" ]; then
+    subscription_info=$(echo "${subscription_info}" | jq --argjson sub_include "$(split_string_jq "${subscription_filter}")" -rc "[.[] | select(.key | IN(\$sub_include[])) ]")
+fi
 
-# if [ -z "${existing_assignments_file}" ]; then
-#     existing_assignments_file="existing_assignments.$(date +"%Y%m%d").txt"
-# fi
+if [ ! -z "${subscription_exclude}" ]; then
+    subscription_info=$(echo "${subscription_info}" | jq --argjson sub_include "$(split_string_jq "${subscription_exclude}")" -rc "[.[] | select(.key | IN(\$sub_include[])) ]")
+fi
 
-# if [ $skip_all_delete -ne 0 ]; then
-#     echo "--skip-delete flag set skipping all delete"
-# fi
+function get_policy_Assignment_ids() {
+    local pilicy_assignment_ids='[]'
+    for pilicy_regex in $(echo "${create_remedation_tasks}" | jq -r '. []'); do
+        pilicy_assignment_ids=$(echo $policy_sumary | jq --argjson arr "${pilicy_assignment_ids}" -rc "[ .[] | .policyAssignmentId as \$ID | .policyDefinitions[] | . as \$policyDefinition | .results | select(.nonCompliantResources > 0)  | {id: \$ID, value:\$policyDefinition.policyDefinitionId} ] | [.[] | select(.value|test(\"${pilicy_regex}\")) | .id ] | \$arr + . | unique")
+    done
 
-# if [ $skip_blueprint_delete -ne 0 ]; then
-#     echo "--skip-delete-bp flag set skipping blueprint delete"
-# fi
-
-# if [ $skip_policy_delete -ne 0 ]; then
-#     echo "--skip-delete-policy flag set skipping policy delete"
-# fi
-
-# if [ $run_assignment_creation -ne 0 ]; then
-#     echo "--run-assignment flag set Will reassign Blueprints based on file: ${existing_assignments_file}"
-# fi
-
-# if [ ! -z "${tenant_id}" ]; then
-#     subscription_info=$(az account list --query "[?homeTenantId == '${tenant_id}']" | jq -r -c "[.[] | {(.id):.name}]")
-# else
-#     subscription_info=$(az account list | jq -r -c "[.[] | {(.id):.name}]")
-# fi
-
-# subscription_info=$(echo $subscription_info | jq -r " [.[]  | to_entries | add]")
-
-# if [ ! -z "${subscription_filter}" ]; then
-#     subscription_filter=$(echo "\"${subscription_filter}\"" | jq -rc "[. | split(\"[,;\\\s]\";\"ig\") | .[] | rtrimstr(\" \") | ltrimstr(\" \") | select(. != \"\")]")
-#     subscription_info=$(echo "${subscription_info}" | jq --argjson sub_include "${subscription_filter}" -rc "[.[] | select(.key | IN(\$sub_include[])) ]")
-# fi
+    echo $pilicy_assignment_ids
+}
 
 
-# if [ ! -z "${subscription_exclude}" ]; then
-#     subscription_exclude=$(echo "\"${subscription_exclude}\"" | jq -rc "[. | split(\"[,;\\\s]\";\"ig\") | .[] | rtrimstr(\" \") | ltrimstr(\" \") | select(. != \"\")]")
-#     subscription_info=$(echo "${subscription_info}" | jq --argjson sub_exclude "${subscription_exclude}" -rc "[.[] | select(.key | IN(\$sub_exclude[]) | not) ]")
-# fi
-
-# if [ ! -z "${blueprint_exclude}" ]; then
-#     blueprint_exclude=$(echo "\"${blueprint_exclude}\"" | jq -rc "[. | split(\"[,;\\\s]\";\"ig\") | .[] | rtrimstr(\" \") | ltrimstr(\" \") | select(. != \"\")]")
-# fi
-
-# if [ ! -z "${blueprint_filter}" ]; then
-#     blueprint_filter=$(echo "\"${blueprint_filter}\"" | jq -rc "[. | split(\"[,;\\\s]\";\"ig\") | .[] | rtrimstr(\" \") | ltrimstr(\" \") | select(. != \"\")]")
-# fi
-
-# subscription_blueprint_assignment="{}"
-
-# echo ""
-# echo "Processing $(echo ${subscription_info} | jq -r ". | length") subscription(s)"
-# echo ""
-
-
-# function check_bp_delete_if_failed(){
-#     subscription=$1
-#     assignment_name=$2
-#     if [ $# -gt 2 ]; then
-#         blueprint_assignment_list=$3
-#     else
-#         blueprint_assignment_list=$(az blueprint assignment list --subscription "${subscription}" | jq -c)
-#     fi
-
-#     blueprint_assignment_count=$(echo $blueprint_assignment_list | jq -r "[.[] | select(.name == \"${assignment_name}\")] | length ")
-
+for row in $(echo "${subscription_info}" | jq -r '. [] | @base64'); do
+    subscription_id="54e65ba5-a514-4972-814d-5fc21eba3b95" # "$(parse_jq_decode $row '.key')"
+    policy_sumary=$(az policy state summarize -o json --subscription $subscription_id | jq -rc ".policyAssignments" )
+    pilicy_assignment_ids=$(get_policy_Assignment_ids $subscription_id)
     
-#     if [ $blueprint_assignment_count -lt 1 ]; then
-#         return;
-#     fi
+    if [ $(echo $pilicy_assignment_ids | jq -r ". | length") -lt 1 ]; then
+        continue
+    fi
 
-#     provisioningState=$(echo $blueprint_assignment_list | jq -r "[.[] | select(.name == \"${assignment_name}\")] | .[0].provisioningState | ascii_downcase")
-#     if [ "${provisioningState}" == "failed" ]; then
-#         az blueprint assignment delete -y --subscription "${subscription}" --name "${assignment_name}"
-#     fi
-# }
+    for policy_assignment_id in $(echo "${pilicy_assignment_ids}" | jq -r '. []'); do
+        id_only=$(echo $(split_string_jq $policy_assignment_id "/") | jq -r ". | last" )
+        if [ $dry_run -eq 1 ]; then
+            echo "dry run: "
+            echo "    az policy remediation create --subscription $subscription_id -n \"${id_only} - Remediation - $(date -u +"%Y%m%dT%H%M$S")Z\" --policy-assignment $policy_assignment_id"
+            echo ""
+            echo "---------------------"
+            echo ""
+            continue
+        fi
+        az policy remediation create --subscription $subscription_id -n "${id_only} - Remediation - $(date -u +"%Y%m%dT%H%M$S")Z" --policy-assignment $policy_assignment_id
+    done
+    break
+
+done
+
+
 
 # function assign_bp_subscription(){
     
