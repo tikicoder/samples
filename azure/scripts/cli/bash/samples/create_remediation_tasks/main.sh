@@ -46,7 +46,7 @@ if [ ! -z "${subscription_exclude}" ]; then
     subscription_info=$(echo "${subscription_info}" | jq --argjson sub_include "$(split_string_jq "${subscription_exclude}")" -rc "[.[] | select(.key | IN(\$sub_include[])) ]")
 fi
 
-function get_policy_Assignment_ids() {
+function get_policy_assignment_ids() {
     local pilicy_assignment_ids='[]'
     if [ $(echo "${create_remedation_tasks}" | jq -r '.[] | length') -gt 0 ]; then
         for pilicy_regex in $(echo "${create_remedation_tasks}" | jq -r '.[]'); do
@@ -66,7 +66,7 @@ for row in $(echo "${subscription_info}" | jq -r '. [] | @base64'); do
         subscription_id="${test_subscription_id}"
     fi
     policy_sumary=$(az policy state summarize -o json --subscription $subscription_id | jq -rc ".policyAssignments" )
-    pilicy_assignment_ids=$(get_policy_Assignment_ids $subscription_id)
+    pilicy_assignment_ids=$(get_policy_assignment_ids $subscription_id)
     
     if [ $(echo $pilicy_assignment_ids | jq -r ". | length") -lt 1 ]; then
         continue
