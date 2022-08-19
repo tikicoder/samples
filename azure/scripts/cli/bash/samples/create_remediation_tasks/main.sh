@@ -75,7 +75,7 @@ for row in $(echo "${subscription_info}" | jq -r '. [] | @base64'); do
             echo ""
             continue
         fi
-        az policy remediation create --subscription $subscription_id -n "${id_only} - Remediation - $(date -u +"%Y%m%dT%H%M$S")Z" --policy-assignment $policy_assignment_id
+        az policy remediation create --subscription $subscription_id -n "${id_only} - Remediation - $(date -u +"%Y%m%dT%H%M$S")Z" --policy-assignment $policy_assignment_id &
     done
     break
 
