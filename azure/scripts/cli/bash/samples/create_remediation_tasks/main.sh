@@ -47,16 +47,17 @@ if [ ! -z "${subscription_exclude}" ]; then
 fi
 
 function get_policy_assignment_ids() {
-    local pilicy_assignment_ids='[]'
-    if [ $(echo "${create_remedation_tasks}" | jq -r '.[] | length') -gt 0 ]; then
-        for pilicy_regex in $(echo "${create_remedation_tasks}" | jq -r '.[]'); do
-            pilicy_assignment_ids=$(echo $policy_sumary | jq --argjson arr "${pilicy_assignment_ids}" -rc "[ .[] | .policyAssignmentId as \$ID | .policyDefinitions[] | . as \$policyDefinition | .results | select(.nonCompliantResources > 0)  | {id: \$ID, value:\$policyDefinition.policyDefinitionId} ] | [.[] | select(.value|test(\"${pilicy_regex}\")) | .id ] | \$arr + . | unique")
+    local local_pilicy_assignment_ids='[]'
+
+    if [ $(echo "${create_remedation_tasks}" | jq -r '. | length') -gt 0 ]; then
+        for policy_regex in $(echo "${create_remedation_tasks}" | jq -r '.[]'); do
+            local_pilicy_assignment_ids=$(echo $policy_sumary | jq --argjson arr "${local_pilicy_assignment_ids}" -rc "[ .[] | .policyAssignmentId as \$ID | .policyDefinitions[] | . as \$policyDefinition | .results | select(.nonCompliantResources > 0)  | {id: \$ID, value:\$policyDefinition.policyDefinitionId} ] | [.[] | select(.value|test(\"${policy_regex}\"; \"i\")) | .id ] | \$arr + . | unique")
         done
     else
-        pilicy_assignment_ids=$(echo $policy_sumary | jq --argjson arr "${pilicy_assignment_ids}" -rc "[ .[] | .policyAssignmentId as \$ID | .policyDefinitions[] | . as \$policyDefinition | .results | select(.nonCompliantResources > 0)  | {id: \$ID, value:\$policyDefinition.policyDefinitionId} ] | unique")
+        local_pilicy_assignment_ids=$(echo $policy_sumary | jq --argjson arr "${local_pilicy_assignment_ids}" -rc "[ .[] | .policyAssignmentId as \$ID | .policyDefinitions[] | . as \$policyDefinition | .results | select(.nonCompliantResources > 0)  | {id: \$ID, value:\$policyDefinition.policyDefinitionId} ] | unique")
     fi
 
-    echo $pilicy_assignment_ids
+    echo $local_pilicy_assignment_ids
 }
 
 
@@ -65,7 +66,8 @@ for row in $(echo "${subscription_info}" | jq -r '. [] | @base64'); do
     if [ ! -z "${test_subscription_id}" ]; then
         subscription_id="${test_subscription_id}"
     fi
-    policy_sumary=$(az policy state summarize -o json --subscription $subscription_id | jq -rc ".policyAssignments" )
+    echo "test"
+    policy_sumary=$(az policy state summarize -o json --subscription $subscription_id | jq -rc ".policyAssignments" )    
     pilicy_assignment_ids=$(get_policy_assignment_ids $subscription_id)
     
     if [ $(echo $pilicy_assignment_ids | jq -r ". | length") -lt 1 ]; then

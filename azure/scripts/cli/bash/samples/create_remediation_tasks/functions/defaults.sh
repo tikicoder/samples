@@ -7,3 +7,5 @@ subscription_exclude=""
 subscription_filter=""
 
 create_remedation_tasks='[]'
+
+test_subscription_id=''

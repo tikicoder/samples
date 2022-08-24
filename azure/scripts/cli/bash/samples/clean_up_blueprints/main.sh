@@ -130,6 +130,25 @@ function assign_bp_subscription(){
         --locks-mode AllResourcesDoNotDelete &
 }
 
+function get_policy_assignment_names() {
+    local local_pilicy_assignment_ids='[]'
+
+    if [ -z "${existing_policies_tmp}" ]; then
+        echo "[]"
+        return
+    fi
+    
+    if [ $(echo "${existing_policies_tmp}" | jq -r '. | length') -gt 0 ]; then
+        for policy_regex in $(echo "${existing_policies_tmp}" | jq -r '.[]'); do
+            local_pilicy_assignment_ids=$(echo $policy_sumary | jq --argjson arr "${local_pilicy_assignment_ids}" -rc "[ .[] | select(.policyDefinitionId|test(\"${policy_regex}\"; \"i\")) | .name ] | \$arr + . | unique")
+        done
+    else
+        local_pilicy_assignment_ids=$(echo $policy_sumary | jq --argjson arr "${local_pilicy_assignment_ids}" -rc "[ .[] | .name ] | \$arr + . | unique")
+    fi
+
+    echo $local_pilicy_assignment_ids
+}
+
 if [ $skip_assignment_creation -eq 0 ]; then
     for row in $(echo "${subscription_info}" | jq -r '. [] | @base64'); do
         _jq(){
@@ -156,18 +175,25 @@ if [ $skip_assignment_creation -eq 0 ]; then
         if [ $run_force_delete_policies -eq 1 ]; then
             # Force Deleted extra policies
             # Update the existing_policies_tmp with a json array of display names
-            # existing_policies_tmp is defined in the defaults.sh
-            delete_policies=$(az policy assignment list --subscription "$(_jq '.key')" | jq --argjson existing "${existing_policies_tmp}" -r "[.[] | select(.displayName | IN(\$existing[])) | .name]")
-            for row_delete_policy in $(echo "${delete_policies}" | jq -r '. [] | @base64'); do
-                _jq_delete_policy(){
-                    echo ${row_delete_policy} | base64 --decode
-                }
+            policy_sumary=$(az policy assignment list --subscription "$(_jq '.key')"  -o json | jq -rc ".")  
+            pilicy_assignment_names=$(get_policy_assignment_names "$(_jq '.key')")
 
-                echo "Deleting Policy Old - $(_jq_delete_policy)"
+            if [ ! -z "${pilicy_assignment_names}" ]; then
+                for assignment_name in $(echo "${pilicy_assignment_names}" | jq -r '. []'); do
 
-                az policy assignment delete --subscription "$(_jq '.key')" --name "$(_jq_delete_policy)" &
-            done
-            az policy assignment list --subscription "$(_jq '.key')" | jq  -r ".[].displayName"
+                    echo "Deleting Policy Old - ${assignment_name}"
+                    az policy assignment delete --subscription "$(_jq '.key')" --name "${assignment_name}" &
+                done
+
+                while [ $(echo "${pilicy_assignment_names}" | jq -r '. | length') -gt 0 ]
+                do
+                    policy_sumary=$(az policy assignment list --subscription "$(_jq '.key')"  -o json | jq -rc ".")  
+                    pilicy_assignment_names=$(get_policy_assignment_names "$(_jq '.key')")
+                    sleep 1
+                done
+
+                az policy assignment list --subscription "$(_jq '.key')" | jq  -r ".[].displayName"
+            fi
         fi
         
 
