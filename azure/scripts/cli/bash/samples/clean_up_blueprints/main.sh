@@ -159,6 +159,7 @@ if [ $skip_assignment_creation -eq 0 ]; then
         echo ""
         echo "Processing $(_jq '.value') - $(_jq '.key')"
         blueprint_assignment=$(az blueprint assignment list --subscription "$(_jq '.key')" | jq -rc ".")
+        
         blueprint_assignment_principal=$(echo "${blueprint_assignment}" | jq -rc "[.[] | [.identity.userAssignedIdentities[].principalId, .identity.userAssignedIdentities[].clientId]] | flatten | unique")
         blueprint_assignment=$(echo "${blueprint_assignment}" | jq -rc "[.[] | {id: .id, name: .name, blueprintId: .blueprintId, blueprintNameId_split: (.blueprintId | split(\"/\")), blueprintName: (.blueprintId | split(\"/\")[-3]), blueprintVersion: (.blueprintId | split(\"/\")[-1]), identity: (.identity.userAssignedIdentities | keys | .[0]), location: .location, parameters: .parameters}]")
         
@@ -202,7 +203,7 @@ if [ $skip_assignment_creation -eq 0 ]; then
         not_delete_policies=$(echo "${subscription_policies}" | jq --argjson principal "${blueprint_assignment_principal}" -rc "[.[] | select((.createdBy | IN(\$principal[]) | not) and select(.updatedBy | IN(\$principal[]) | not))]")
 
         subscription_blueprint_assignment=$(echo "${subscription_blueprint_assignment}" | jq -rc ". | .\"$(_jq '.key')\"={assignment: $blueprint_assignment, delete_policies:$delete_policies, not_delete_policies:$not_delete_policies}")
-        
+
         if [ $skip_all_delete -eq 0 ] && [ $skip_blueprint_delete -eq 0 ]; then
             for row_assignment in $(echo "${blueprint_assignment}" | jq -r '. [] | @base64'); do
                 _jq_assignment(){
@@ -268,7 +269,7 @@ if [ -f "${existing_assignments_file}" ] && [ $run_assignment_creation -eq 1 ]; 
             echo "${subscription_blueprint_assignment}" | jq -rc ".\"${local_subscription_id}\".\"$1\""
         }
         blueprint_assignment_list=$(az blueprint assignment list --subscription "${local_subscription_id}" | jq -c)
-
+        
         for row_assignment in $(echo "$(_jq 'assignment')" | jq -r '. [] | @base64'); do
             _jq_assignment(){
                 echo "${row_assignment}" | base64 --decode | jq -r ${1}
