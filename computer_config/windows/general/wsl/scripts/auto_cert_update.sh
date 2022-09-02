@@ -80,13 +80,16 @@ popd
 sudo rm -Rf /tmp/missing_certs
 
 adding_ca_path="${pem_path}/*"
-python_ca_path="$(python -m certifi)"
+python_ca_path=""
 if [ ! -z "$(command -v python)" ]; then
+  python_ca_path="$(python -m certifi)"
   echo "updating python path: $(python -m certifi)"
   sudo cat $adding_ca_path | sudo tee -a $(python -m certifi) > /dev/null
 fi
 
-if [ ! -z "$(command -v python3)" ] && [ "$python_ca_path" != "$(python3 -m certifi)" ]; then
-  echo "updating python path: $(python3 -m certifi)"
-  sudo cat $adding_ca_path | sudo tee -a $(python3 -m certifi) > /dev/null
+if [ ! -z "$(command -v python3)" ]; then
+  if [ "$python_ca_path" != "$(python3 -m certifi)" ]; then
+    echo "updating python path: $(python3 -m certifi)"
+    sudo cat $adding_ca_path | sudo tee -a $(python3 -m certifi) > /dev/null
+  fi
 fi

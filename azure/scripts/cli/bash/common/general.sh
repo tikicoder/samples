@@ -1,3 +1,6 @@
+#!/bin/bash
+
+
 if [ ! -z "${dir_path}" ]; then
   if [ -f "${dir_path}/functions/defaults.sh" ]; then
       source "${dir_path}/functions/defaults.sh"
