@@ -35,7 +35,7 @@ mainSteps:
   - config_file_path="${tmp_dir}/${config_name}"
   - echo "{{ LinuxCloudWatchConfig_base64 }}" | base64 --decode > $config_file_path
   - cloudwatch_config_filepath="/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.d/file_${config_name}"
-  - "[ -f \"${cloudwatch_config_filepath}\" ] && [ \"$(cat $cloudwatch_config_filepath | base64 -w 0 )\" == \"$(cat $config_file_path | base64 -w 0  )\" ] && rm -Rf \"${tmp_dir}\" && echo \"Config Matches\" && exit 0
+  - "[ -f \"${cloudwatch_config_filepath}\" ] && [ \"$(cat $cloudwatch_config_filepath | base64 -w 0 )\" == \"$(cat $config_file_path | base64 -w 0  )\" ] && rm -Rf \"${tmp_dir}\" && echo \"Config Matches\" && exit 0"
   - "[ \"${reset_config}\" == \"true\"  ] && sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c \"file:${config_file_path}\""
   - "[ \"${reset_config}\" != \"true\"  ] && sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a append-config -m ec2 -s -c \"file:${config_file_path}\""
   - rm -Rf "${tmp_dir}"
