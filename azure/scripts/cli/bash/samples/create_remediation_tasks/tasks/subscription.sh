@@ -7,26 +7,26 @@ function subscription_get_policy_assignment_ids() {
     fi
     
     local subscription_id=$1
-    local local_pilicy_assignment_ids='[]'
+    local local_policy_assignment_ids='[]'
     local policy_sumary=$(az policy state summarize -o json --subscription $subscription_id 2>/dev/null)
 
     if [ -z "${policy_sumary}" ]; then
-        echo $local_pilicy_assignment_ids
+        echo $local_policy_assignment_ids
         return
     fi
 
     policy_sumary=$(echo "${policy_sumary}" | jq -rc ".policyAssignments" ) 
     if [ $(echo "${create_remedation_tasks}" | jq -r '. | length') -lt 1 ]; then
-        local_pilicy_assignment_ids=$(echo $policy_sumary | jq --argjson arr "${local_pilicy_assignment_ids}" -rc "[ .[] | .policyAssignmentId as \$ID | .policyDefinitions[] | . as \$policyDefinition | .results | select(.nonCompliantResources > 0)  | {id: \$ID, value:\$policyDefinition.policyDefinitionId}  | .id ] | unique")
-        echo $local_pilicy_assignment_ids
+        local_policy_assignment_ids=$(echo $policy_sumary | jq --argjson arr "${local_policy_assignment_ids}" -rc "[ .[] | .policyAssignmentId as \$ID | .policyDefinitions[] | . as \$policyDefinition | .results | select(.nonCompliantResources > 0)  | {id: \$ID, value:\$policyDefinition.policyDefinitionId}  | .id ] | unique")
+        echo $local_policy_assignment_ids
         return
     fi
 
     for policy_regex in $(echo "${create_remedation_tasks}" | jq -r '.[]'); do
-        local_pilicy_assignment_ids=$(echo $policy_sumary | jq --argjson arr "${local_pilicy_assignment_ids}" -rc "[ .[] | .policyAssignmentId as \$ID | .policyDefinitions[] | . as \$policyDefinition | .results | select(.nonCompliantResources > 0)  | {id: \$ID, value:\$policyDefinition.policyDefinitionId} ] | [.[] | select(.value|test(\"${policy_regex}\"; \"i\")) | .id ] | \$arr + . | unique")
+        local_policy_assignment_ids=$(echo $policy_sumary | jq --argjson arr "${local_policy_assignment_ids}" -rc "[ .[] | .policyAssignmentId as \$ID | .policyDefinitions[] | . as \$policyDefinition | .results | select(.nonCompliantResources > 0)  | {id: \$ID, value:\$policyDefinition.policyDefinitionId} ] | [.[] | select(.value|test(\"${policy_regex}\"; \"i\")) | .id ] | \$arr + . | unique")
     done
 
-    echo $local_pilicy_assignment_ids
+    echo $local_policy_assignment_ids
 }
 
 for row in $(echo "${subscription_info}" | jq -r '. [] | @base64'); do
@@ -55,13 +55,13 @@ for row in $(echo "${subscription_info}" | jq -r '. [] | @base64'); do
         fi
     fi
 
-    pilicy_assignment_ids=$(subscription_get_policy_assignment_ids $subscription_id)
-    if [ ! -z "${pilicy_assignment_ids}" ]; then
-        if [ $(echo $pilicy_assignment_ids | jq -r ". | length") -lt 1 ]; then
+    policy_assignment_ids=$(subscription_get_policy_assignment_ids $subscription_id)
+    if [ ! -z "${policy_assignment_ids}" ]; then
+        if [ $(echo $policy_assignment_ids | jq -r ". | length") -lt 1 ]; then
             continue
         fi
         
-        for policy_assignment_id in $(echo "${pilicy_assignment_ids}" | jq -r '. []'); do
+        for policy_assignment_id in $(echo "${policy_assignment_ids}" | jq -r '. []'); do
             id_only=$(echo $(split_string_jq $policy_assignment_id "/") | jq -r ". | last" )
             if [ $dry_run -eq 1 ]; then
                 echo "dry run: "

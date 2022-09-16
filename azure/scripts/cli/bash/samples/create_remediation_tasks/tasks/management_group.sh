@@ -6,20 +6,29 @@ function mg_get_policy_assignment_ids() {
     fi
     
     local management_group_id=$1
-    local local_pilicy_assignment_ids='[]'
-
-    if [ $(echo "${create_remedation_tasks}" | jq -r '. | length') -lt 1 ]; then
-        local_pilicy_assignment_ids=$(az policy state summarize -o json --management-group $management_group_id | jq --argjson arr "${local_pilicy_assignment_ids}" -rc "[ .policyAssignments[] | .policyAssignmentId as \$ID | .policyDefinitions[] | . as \$policyDefinition | .results | select(.nonCompliantResources > 0)  | {id: \$ID, value:\$policyDefinition.policyDefinitionId}  | .id ] | unique")
-        echo $local_pilicy_assignment_ids
+    local local_policy_assignment_ids='[]'
+    
+    if [ $(echo "${create_remedation_tasks_odata}" | jq -r '. | length') -lt 1 ]; then
+        local_policy_assignment_ids=$(az policy state summarize -o json --management-group $management_group_id | jq --argjson arr "${local_policy_assignment_ids}" -rc "[ .policyAssignments[] | .policyAssignmentId as \$ID | .policyDefinitions[] | . as \$policyDefinition | .results | select(.nonCompliantResources > 0)  | {id: \$ID, value:\$policyDefinition.policyDefinitionId}  | .id ] | unique")
+        echo $local_policy_assignment_ids
         return
     fi
 
     for policy_startswith in $(echo "${create_remedation_tasks_odata}" | jq -r '.[]'); do
-        local_pilicy_assignment_ids=$(az policy state summarize -o json --management-group $management_group_id --filter "contains(policyDefinitionName, '${policy_startswith}')" | jq --argjson arr "${local_pilicy_assignment_ids}" -rc "[ .policyAssignments[] | .policyAssignmentId as \$ID | .policyDefinitions[] | . as \$policyDefinition | .results | select(.nonCompliantResources > 0)  | {id: \$ID, value:\$policyDefinition.policyDefinitionId}  | .id ] | \$arr + . | unique")    
+        local_policy_assignment_ids=$(az policy state summarize -o json --management-group $management_group_id --filter "contains(policyDefinitionName, '${policy_startswith}')" | jq --argjson arr "${local_policy_assignment_ids}" -rc "[ .policyAssignments[] | .policyAssignmentId as \$ID | .policyDefinitions[] | . as \$policyDefinition | .results | select(.nonCompliantResources > 0)  | {id: \$ID, value:\$policyDefinition.policyDefinitionId}  | .id ] | \$arr + . | unique")    
     done
 
-    echo $local_pilicy_assignment_ids
+    echo $local_policy_assignment_ids
 }
+
+current_tenantid=$(az account show | jq -r ".tenantId")
+current_subscriptionid=$(az account show | jq -r ".id")
+switched_tenant=0
+
+if [ "${current_tenantid}" != "${tenant_id}" ]; then
+    az account set --subscription $(az account list | jq -r "[.[] | select(.tenantId == \"${tenant_id}\") ] | .[0].id ")
+    switched_tenant=1
+fi
 
 if [ ! -z "${management_groups}" ]; then
     for mgid in $(split_string_jq "${management_groups}" | jq -r '. []'); do
@@ -41,25 +50,29 @@ if [ ! -z "${management_groups}" ]; then
                 done
             fi
         fi
-    done
-
-    pilicy_assignment_ids=$(mg_get_policy_assignment_ids $mgid)
-    if [ ! -z "${pilicy_assignment_ids}" ]; then
-        if [ $(echo $pilicy_assignment_ids | jq -r ". | length") -lt 1 ]; then
-            continue
-        fi
         
-        for policy_assignment_id in $(echo "${pilicy_assignment_ids}" | jq -r '. []'); do
-            id_only=$(echo $(split_string_jq $policy_assignment_id "/") | jq -r ". | last" )
-            if [ $dry_run -eq 1 ]; then
-                echo "dry run: "
-                echo "    az policy remediation create --management-group $mgid -n \"${id_only} - Remediation - $(date -u +"%Y%m%dT%H%M$S")Z\" --policy-assignment $policy_assignment_id"
-                echo ""
-                echo "---------------------"
-                echo ""
+        policy_assignment_ids=$(mg_get_policy_assignment_ids $mgid)
+        if [ ! -z "${policy_assignment_ids}" ]; then
+            if [ $(echo $policy_assignment_ids | jq -r ". | length") -lt 1 ]; then
                 continue
             fi
-            az policy remediation create --management-group $mgid -n "${id_only} - Remediation - $(date -u +"%Y%m%dT%H%M$S")Z" --policy-assignment $policy_assignment_id &
-        done
-    fi
+            
+            for policy_assignment_id in $(echo "${policy_assignment_ids}" | jq -r '. []'); do
+                id_only=$(echo $(split_string_jq $policy_assignment_id "/") | jq -r ". | last" )
+                if [ $dry_run -eq 1 ]; then
+                    echo "dry run: "
+                    echo "    az policy remediation create --management-group $mgid -n \"${id_only} - Remediation - $(date -u +"%Y%m%dT%H%M$S")Z\" --policy-assignment $policy_assignment_id"
+                    echo ""
+                    echo "---------------------"
+                    echo ""
+                    continue
+                fi
+                az policy remediation create --management-group $mgid -n "${id_only} - Remediation - $(date -u +"%Y%m%dT%H%M$S")Z" --policy-assignment $policy_assignment_id &
+            done
+        fi
+    done
+fi
+
+if [ $switched_tenant -eq 1 ]; then
+    az account set --subscription $current_subscriptionid
 fi

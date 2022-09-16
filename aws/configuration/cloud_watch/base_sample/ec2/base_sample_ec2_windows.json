@@ -15,28 +15,10 @@
 			["InstanceId", "hostname"],
 			["InstanceType", "hostname"],
 		  ["AutoScalingGroupName", "ImageId", "InstanceId"],
-		  ["AutoScalingGroupName"],
-		  []
+		  ["AutoScalingGroupName"]
 	  ],
 	  "force_flush_interval": 60,
 	  "metrics_collected": {
-			"Processor": {
-				"resources": [
-					"*"
-				],		
-				"append_dimensions": {
-					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
-					"ImageId": "${aws:ImageId}",
-					"InstanceId": "${aws:InstanceId}",
-					"InstanceType": "${aws:InstanceType}"
-				},
-				"measurement": [
-					{"name": "% Idle Time", "rename": "cpu_usage_idle", "unit": "Percent"},
-					{"name": "% Interrupt Time", "rename": "cpu_usage_idle", "unit": "Percent"},
-					{"name": "% User Time", "rename": "cpu_usage_user", "unit": "Percent"},
-					{"name": "% Processor Time", "rename": "cpu_usage_system", "unit": "Percent"}
-				]
-			},
 			"LogicalDisk": {
 				"resources": [
 					"*"
@@ -95,6 +77,45 @@
 					{"name": "Total Packets Received", "rename": "net_packets_recv"}
 				]
 			},
+			"Paging File": {
+				"measurement": [
+					"% Usage"
+				],
+				"metrics_collection_interval": 60,
+				"resources": [
+						"*"
+				]
+			},
+			"PhysicalDisk": {
+				"measurement": [
+					"% Disk Time",
+					"Disk Write Bytes/sec",
+					"Disk Read Bytes/sec",
+					"Disk Writes/sec",
+					"Disk Reads/sec"
+				],
+				"metrics_collection_interval": 60,
+				"resources": [
+					"*"
+				]
+			},
+			"Processor": {
+				"resources": [
+					"*"
+				],		
+				"append_dimensions": {
+					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+					"ImageId": "${aws:ImageId}",
+					"InstanceId": "${aws:InstanceId}",
+					"InstanceType": "${aws:InstanceType}"
+				},
+				"measurement": [
+					{"name": "% Idle Time", "rename": "cpu_usage_idle", "unit": "Percent"},
+					{"name": "% Interrupt Time", "rename": "cpu_usage_idle", "unit": "Percent"},
+					{"name": "% User Time", "rename": "cpu_usage_user", "unit": "Percent"},
+					{"name": "% Processor Time", "rename": "cpu_usage_system", "unit": "Percent"}
+				]
+			},
 			"System": {
 				"resources": [
 					"*"
@@ -111,6 +132,23 @@
 					{"name": "Processes", "rename": "system_processes"},
 					{"name": "Uptime", "rename": "system_uptime"}
 				]
+			},
+			"TCPv4": {
+				"measurement": [
+					"Connections Established"
+				],
+				"metrics_collection_interval": 45
+			},
+			"TCPv6": {
+				"measurement": [
+					"Connections Established"
+				],
+				"metrics_collection_interval": 45
+			},
+			"statsd": {
+				"metrics_aggregation_interval": 45,
+				"metrics_collection_interval": 10,
+				"service_address": ":8125"
 			}
 		}
 	},

@@ -1,5 +1,14 @@
 # EC2 
 
+## Important Callouts
+
+* If you set this value below 60 seconds, each metric is collected as a high-resolution metric. For more information about high-resolution metrics, see [High-resolution metrics.](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/publishingMetrics.html#high-resolution-metrics)
+
+* CloudWatch agent supports multiple configuration files, [more information](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-common-scenarios.html#CloudWatch-Agent-multiple-config-files)
+
+* Cloudwatch Agent can be intalled using SSM also that can be used in a state association. [Download and configure the CloudWatch agent
+](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/download-CloudWatch-Agent-on-EC2-Instance-SSM-first.html)
+
 ## Permissions
 
 Instances need a role with the policy CloudWatchAgentServerPolicy 

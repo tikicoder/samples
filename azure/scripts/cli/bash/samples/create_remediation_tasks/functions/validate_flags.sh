@@ -7,7 +7,7 @@ function validate_flags(){
         case "$1" in    
             --dry-run) dry_run=1
             ;;
-            --tenant-id=*) tenand_id=$(echo $1  | awk -F= '{print $2}')
+            --tenant-id=*) tenant_id=$(echo $1  | awk -F= '{print $2}')
             ;;
             --subscription-exclude=*) subscription_exclude=$(echo $1  | awk -F= '{print $2}')
             ;;        
