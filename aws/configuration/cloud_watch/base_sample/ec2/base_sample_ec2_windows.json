@@ -7,13 +7,16 @@
 	},
 	"metrics": {
 	  "namespace": "CWDetailedMetrics",
+		"append_dimensions": {
+			"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+			"ImageId": "${aws:ImageId}",
+			"InstanceId": "${aws:InstanceId}",
+			"InstanceType": "${aws:InstanceType}"
+		},
 	  "aggregation_dimensions": [
-			["hostname"],
 			["InstanceId"],
 			["InstanceType"],
 			["InstanceId", "InstanceType"],
-			["InstanceId", "hostname"],
-			["InstanceType", "hostname"],
 		  ["AutoScalingGroupName", "ImageId", "InstanceId"],
 		  ["AutoScalingGroupName"]
 	  ],
@@ -23,12 +26,6 @@
 				"resources": [
 					"*"
 				],
-				"append_dimensions": {
-					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
-					"ImageId": "${aws:ImageId}",
-					"InstanceId": "${aws:InstanceId}",
-					"InstanceType": "${aws:InstanceType}"
-				},
 				"measurement": [
 					{"name": "% Free Space", "rename": "disk_free_percent", "unit": "Percent"},
 					{"name": "% Used Space", "rename": "disk_used_percent", "unit": "Percent"},
@@ -42,12 +39,6 @@
 				"resources": [
 					"*"
 				],	
-				"append_dimensions": {
-					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
-					"ImageId": "${aws:ImageId}",
-					"InstanceId": "${aws:InstanceId}",
-					"InstanceType": "${aws:InstanceType}"
-				},
 				"measurement": [
 					{"name": "% Available Swap Space", "rename": "swap_free_percent", "unit": "Percent"},
 					{"name": "% Used Swap Space", "rename": "swap_used_percent", "unit": "Percent"},
@@ -62,12 +53,6 @@
 				"resources": [
 					"*"
 				],
-				"append_dimensions": {
-					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
-					"ImageId": "${aws:ImageId}",
-					"InstanceId": "${aws:InstanceId}",
-					"InstanceType": "${aws:InstanceType}"
-				},
 				"measurement": [
 					{"name": "Total Bytes Transmitted", "rename": "net_bytes_sent", "unit": "Bytes"},
 					{"name": "Total Bytes Received", "rename": "net_bytes_recv", "unit": "Bytes"},
@@ -102,13 +87,7 @@
 			"Processor": {
 				"resources": [
 					"*"
-				],		
-				"append_dimensions": {
-					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
-					"ImageId": "${aws:ImageId}",
-					"InstanceId": "${aws:InstanceId}",
-					"InstanceType": "${aws:InstanceType}"
-				},
+				],	
 				"measurement": [
 					{"name": "% Idle Time", "rename": "cpu_usage_idle", "unit": "Percent"},
 					{"name": "% Interrupt Time", "rename": "cpu_usage_idle", "unit": "Percent"},
@@ -120,12 +99,6 @@
 				"resources": [
 					"*"
 				],
-				"append_dimensions": {
-					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
-					"ImageId": "${aws:ImageId}",
-					"InstanceId": "${aws:InstanceId}",
-					"InstanceType": "${aws:InstanceType}"
-				},
 				"measurement": [
 					{"name": "Free Physical Memory", "rename": "mem_available", "unit": "Gigabytes"},
 					{"name": "Free Virtual Memory", "rename": "vmem_available", "unit": "Gigabytes"},

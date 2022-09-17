@@ -8,13 +8,16 @@
 	},
 	"metrics": {
 		"namespace": "CWDetailedMetrics",
+    "append_dimensions": {
+      "AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+      "ImageId": "${aws:ImageId}",
+      "InstanceId": "${aws:InstanceId}",
+      "InstanceType": "${aws:InstanceType}"
+    },
 		"aggregation_dimensions": [
-			["hostname"],
 			["InstanceId"],
 			["InstanceType"],
 			["InstanceId", "InstanceType"],
-			["InstanceId", "hostname"],
-			["InstanceType", "hostname"],
 			["AutoScalingGroupName", "ImageId", "InstanceId"],
 			["AutoScalingGroupName"],
 			[]
@@ -24,13 +27,7 @@
 			"cpu": {		
 				"resources": [
 					"*"
-				],				
-				"append_dimensions": {
-					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
-					"ImageId": "${aws:ImageId}",
-					"InstanceId": "${aws:InstanceId}",
-					"InstanceType": "${aws:InstanceType}"
-				},					
+				],					
 				"measurement": [
 					"cpu_usage_idle",
 					"cpu_usage_iowait",
@@ -43,12 +40,6 @@
 				"resources": [
 					"*"
 				],
-				"append_dimensions": {
-					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
-					"ImageId": "${aws:ImageId}",
-					"InstanceId": "${aws:InstanceId}",
-					"InstanceType": "${aws:InstanceType}"
-				},
 				"measurement": [{
 						"name": "disk_free",
 						"unit": "Gigabytes"
@@ -70,12 +61,6 @@
 				"resources": [
 					"*"
 				],
-				"append_dimensions": {
-					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
-					"ImageId": "${aws:ImageId}",
-					"InstanceId": "${aws:InstanceId}",
-					"InstanceType": "${aws:InstanceType}"
-				},
 				"measurement": [
 					"diskio_iops_in_progress",
 					"diskio_io_time",
@@ -89,12 +74,6 @@
 				"resources": [
 					"*"
 				],
-				"append_dimensions": {
-					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
-					"ImageId": "${aws:ImageId}",
-					"InstanceId": "${aws:InstanceId}",
-					"InstanceType": "${aws:InstanceType}"
-				},
 				"measurement": [{
 						"name": "swap_used",
 						"unit": "Gigabytes"
@@ -110,12 +89,6 @@
 				"resources": [
 					"*"
 				],	
-				"append_dimensions": {
-					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
-					"ImageId": "${aws:ImageId}",
-					"InstanceId": "${aws:InstanceId}",
-					"InstanceType": "${aws:InstanceType}"
-				},
 				"measurement": [{
 						"name": "mem_active",
 						"unit": "Gigabytes"
@@ -152,12 +125,6 @@
 				"resources": [
 					"*"
 				],
-				"append_dimensions": {
-					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
-					"ImageId": "${aws:ImageId}",
-					"InstanceId": "${aws:InstanceId}",
-					"InstanceType": "${aws:InstanceType}"
-				},
 				"measurement": [
 					"net_bytes_sent",
 					"net_bytes_recv",
@@ -173,12 +140,6 @@
 				"resources": [
 					"*"
 				],
-				"append_dimensions": {
-					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
-					"ImageId": "${aws:ImageId}",
-					"InstanceId": "${aws:InstanceId}",
-					"InstanceType": "${aws:InstanceType}"
-				},
 				"measurement": [
 					"netstat_tcp_established",
 					"netstat_tcp_time_wait",
@@ -192,12 +153,6 @@
 				"resources": [
 					"*"
 				],
-				"append_dimensions": {
-					"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
-					"ImageId": "${aws:ImageId}",
-					"InstanceId": "${aws:InstanceId}",
-					"InstanceType": "${aws:InstanceType}"
-				},
 				"measurement": [
 					"processes_running",
 					"processes_sleeping",
