@@ -1,0 +1,204 @@
+---
+description: Help manage pkexec vuln on Linux EC2 Instance
+schemaVersion: '0.3'
+parameters:
+  instanceids:
+    type: StringList
+    default: []
+    description: >-
+      The instanceids to run the script against (max 45)
+  oslimit:
+    type: StringList
+    default: []
+
+mainSteps:
+  - name: GetInstance
+    action: aws:executeAwsApi
+    inputs:
+      Service: ssm
+      Api: DescribeInstanceInformation
+      Filters:
+      - Key: InstanceIds
+        Values:
+          - '{{ instanceids }}'
+    outputs:
+      - Name: instanceInformationList
+        Selector: $.InstanceInformationList
+        Type: MapList
+  - name: setupData
+    action: 'aws:executeScript'
+    onFailure: Abort
+    inputs:
+      Runtime: PowerShell Core 6.0
+      InputPayload:
+        instances_data: '{{ GetInstance.instanceInformationList }}'
+        instanceids: '{{ instanceids }}'
+        oslimit: '{{ oslimit }}'
+      Script: |
+        function main {
+          $inputPayload = $($env:InputPayload | ConvertFrom-Json)
+          $all_instanceids = $inputPayload.instanceids
+          $oslimit = $inputPayload.oslimit
+    
+
+
+          $processed_instances_data =  $(get_instances -instances_data $inputPayload.instances_data -oslimit $oslimit -all_instanceids $all_instanceids) 
+          return @{
+            processed_instances_data =  $processed_instances_data   
+          }
+            
+        }
+
+
+        function is_windows($str){
+          if([string]::isNullorWhitespace($str)){
+            return $false
+          }
+          
+          $str = $str.trim()
+          return ($str -ieq "Windows" -or $str -ieq "Window" -or $str -ieq "Win")
+          
+        }
+
+        function is_inx($str){
+          if([string]::isNullorWhitespace($str)){
+            return $false
+          }
+          
+          $str = $str.trim()
+          return ($str -ieq "Linux" -or $str -ieq "Unix" -or $str -ieq "inx")
+          
+        }
+
+        function get_instances($instances_data, $oslimit, $all_instanceids) {
+
+          $windows_instances = New-Object 'System.Collections.Generic.List[String]'
+          $linux_instances = New-Object 'System.Collections.Generic.List[String]'          
+
+          $processed_instances_data = New-Object 'System.Collections.Generic.Dictionary[[string],[string]]'
+          foreach ($instance in $instances_data){
+            $processed_instances_data.Add($instance.InstanceId, $instance.PlatformType )          
+          }
+
+          $get_windows_instances = ($oslimit.Count -lt 1 -or ($oslimit | `
+            Where-Object {(is_windows -str $_) } `
+          ).Count -gt 0)
+
+          $get_linux_instances = ($oslimit.Count -lt 1 -or ($oslimit | `
+            Where-Object {(is_inx -str $_) } `
+          ).Count -gt 0)
+          
+          foreach ($instance_id in $processed_instances_data.keys)
+          {
+            if ($processed_instances_data[$instance_id] -eq "Windows"){
+              if($get_windows_instances){
+                $windows_instances.Add($instance_id)
+              }
+              
+              continue
+            }
+
+            if ($processed_instances_data[$instance_id] -eq "Linux"){
+              if($get_linux_instances){
+                $linux_instances.Add($instance_id)
+              }
+              continue
+            }
+            
+          }
+
+          $unknown_instances = ($all_instanceids | Where-Object { -not ($processed_instances_data.keys -icontains $_) })   
+          if ($unknown_instances -eq $null){
+            $unknown_instances = New-Object 'System.Collections.Generic.List[String]' 
+          }
+          else {
+             $unknown_instances = [System.Collections.Generic.List[String]]$unknown_instances
+          }
+          
+          return @{ 
+            windows_instances = $windows_instances
+            windows_instances_count = $windows_instances.Count
+            linux_instances =  $linux_instances
+            linux_instances_count = $linux_instances.Count
+            unknown_instances =  $unknown_instances
+            unknown_instances_count = $unknown_instances.Count
+          }
+        }
+        
+        main
+    outputs:
+      - Name: windows_instances
+        Selector: $.Payload.processed_instances_data.windows_instances
+        Type: StringList
+      - Name: windows_instances_count
+        Selector: $.Payload.processed_instances_data.windows_instances_count
+        Type: Integer
+      - Name: linux_instances
+        Selector: $.Payload.processed_instances_data.linux_instances
+        Type: StringList
+      - Name: linux_instances_count
+        Selector: $.Payload.processed_instances_data.linux_instances_count
+        Type: Integer
+      - Name: unknown_instances
+        Selector: $.Payload.processed_instances_data.unknown_instances
+        Type: StringList
+      - Name: unknown_instances_count
+        Selector: $.Payload.processed_instances_data.unknown_instances_count
+        Type: Integer
+  - name: serviceLinuxCheck
+    action: aws:branch
+    inputs:
+      Choices:
+      - NextStep: serviceLinux
+        Variable: "{{ setupData.linux_instances_count }}"
+        NumericGreater: 0    
+      Default: instanceCheck 
+  - name: serviceLinux
+    action: "aws:runCommand"
+    onFailure: Continue 
+    isCritical: true
+    nextStep: instanceCheck
+    inputs: 
+      DocumentName: AWS-RunShellScript
+      InstanceIds:
+        - '{{ setupData.linux_instances }}'
+      Parameters: 
+        commands: |-
+          #!/bin/bash
+          
+          if [ -f "/usr/bin/pkexec" ]; then
+            echo "force update /usr/bin/pkexec"
+            sudo chmod 0755 /usr/bin/pkexec
+          else
+            echo "/usr/bin/pkexec does not exist"
+          fi
+
+          
+  - name: instanceCheck
+    action: 'aws:executeScript'
+    onFailure: Abort
+    inputs:
+      Runtime: PowerShell Core 6.0
+      InputPayload:
+        unknown_instances: '{{ setupData.unknown_instances }}'
+      Script: |
+        $inputPayload = $($env:InputPayload | ConvertFrom-Json)
+        $unknown_instances = $inputPayload.unknown_instances
+
+        if ($unknown_instances.Count -lt 1){
+          Write-Host "All instances processed"
+          exit
+        }
+
+        $unknown_instances
+        throw "Not all instances processed `r`nNot Processed Count: $($unknown_instances.Count) `r`n `r`n$($unknown_instances | Select-Object @{label="Instance ID";expression={"$_"}} | Out-String)"
+        
+        return @{
+          unknown_instances = $unknown_instances
+        }
+    outputs:
+      - Name: unknown_instances
+        Selector: $.setupData.unknown_instances
+        Type: StringList
+  
+

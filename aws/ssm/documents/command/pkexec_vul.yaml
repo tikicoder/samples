@@ -1,0 +1,25 @@
+---
+schemaVersion: "2.2"
+description: PK-Exec Vulnerability  Fix
+parameters:
+  pkexec_permission:
+    type: "String"
+    description: "The numeric read-write permission set."
+    default: "0755"
+  pkexec_path:
+    type: "String"
+    description: "The path to ps_exec"
+    default: "/usr/bin/pkexec"
+  
+mainSteps:
+- action: aws:runShellScript
+  name: Update_Cloudwatch_Config_Linux
+  precondition:
+    StringEquals:
+    - platformType
+    - Linux
+  inputs:
+    runCommand:
+    - "[ ! -f \"{{ pkexec_path }}\" ] && echo \"{{ pkexec_path }} does not exist\" && exit 0"
+    - "[ \"0$(stat -c %a {{ pkexec_path }})\" == \"{{ pkexec_permission }}\" ] &&  echo \"{{ pkexec_path }} is already {{ pkexec_permission }}\" && exit 0"
+    - sudo chmod 0755 {{ pkexec_path }}
