@@ -11,14 +11,22 @@
 			"AutoScalingGroupName": "${aws:AutoScalingGroupName}",
 			"ImageId": "${aws:ImageId}",
 			"InstanceId": "${aws:InstanceId}",
-			"InstanceType": "${aws:InstanceType}"
+			"InstanceType": "${aws:InstanceType}",
+			"InstanceOs": "Windows"
 		},
 	  "aggregation_dimensions": [
 			["InstanceId"],
 			["InstanceType"],
-			["InstanceId", "InstanceType"],
-		  ["AutoScalingGroupName", "ImageId", "InstanceId"],
-		  ["AutoScalingGroupName"]
+			["InstanceOs"],
+			["AutoScalingGroupName"],
+			["InstanceId", "InstanceType"],		
+			["InstanceType", "InstanceId"],			
+			["InstanceType", "InstanceOs", "InstanceId"],
+			["InstanceOs", "InstanceId"],	
+			["InstanceOs", "InstanceType", "InstanceId"],	
+		  ["AutoScalingGroupName", "ImageId", "InstanceId"],	
+		  ["AutoScalingGroupName", "InstanceOs", "ImageId", "InstanceId"],
+		  ["AutoScalingGroupName", "InstanceOs", "ImageId", "InstanceType", "InstanceId"]
 	  ],
 	  "force_flush_interval": 60,
 	  "metrics_collected": {
