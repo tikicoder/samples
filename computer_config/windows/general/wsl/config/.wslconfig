@@ -2,4 +2,4 @@
 [wsl2]
 memory=3GB
 swap=6GB
-processors=2
+processors=4
