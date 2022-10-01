@@ -81,7 +81,13 @@ sudo rm -Rf /tmp/missing_certs
 
 adding_ca_path="${pem_path}/*"
 python_ca_path=""
-if [ ! -z "$(command -v python)" ]; then
+python_version_match=0
+if [ ! -z "$(command -v python)" ] && [ ! -z "$(command -v python3)" ]; then
+  if [ "$(python3 --version)" == "$(python --version)" ]; then
+    python_version_match=1
+  fi
+fi
+if [ ! -z "$(command -v python)" ] && [ python_version_match -eq 0 ]; then
   python_ca_path="$(python -m certifi)"
   echo "updating python path: $(python -m certifi)"
   sudo cat $adding_ca_path | sudo tee -a $(python -m certifi) > /dev/null
