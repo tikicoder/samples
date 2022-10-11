@@ -1,0 +1,12 @@
+// Line Chart over x time
+traces
+| where timestamp >= ago(7d)
+| summarize ['rate/minute'] = dcount(cloud_RoleInstance) by bin(timestamp, 30min)
+| render timechart
+
+// Total Average over x time
+traces
+| where timestamp >= ago(7d)
+| summarize rate_minute = dcount(cloud_RoleInstance) by bin(timestamp, 30min)
+| summarize avg_count = avg(rate_minute), total_count = dcount(rate_minute)
+
