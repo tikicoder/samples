@@ -29,12 +29,12 @@ function subscription_get_policy_assignment_ids() {
     echo $local_policy_assignment_ids
 }
 
+if [ ! -z "${test_subscription_id}" ]; then
+  subscription_info=$(echo "${subscription_info}" | jq -rc "[.[] | select(.key == \"$test_subscription_id\")]")
+fi
 for row in $(echo "${subscription_info}" | jq -r '. [] | @base64'); do
     subscription_id="$(parse_jq_decode $row '.key')"
     echo "processing subscriptions id - ${subscription_id}:"
-    if [ ! -z "${test_subscription_id}" ]; then
-        subscription_id="${test_subscription_id}"
-    fi
     
     if [ $delete_existing_remediation_tasks -eq 1 ]; then
         remediation_list=$(az policy remediation list --subscription $subscription_id  2>/dev/null)
@@ -73,9 +73,6 @@ for row in $(echo "${subscription_info}" | jq -r '. [] | @base64'); do
             fi
             az policy remediation create --subscription $subscription_id -n "${id_only} - Remediation - $(date -u +"%Y%m%dT%H%M$S")Z" --policy-assignment $policy_assignment_id &
         done
-    fi
-    if [ ! -z "${test_subscription_id}" ]; then
-        break
     fi
     
 
