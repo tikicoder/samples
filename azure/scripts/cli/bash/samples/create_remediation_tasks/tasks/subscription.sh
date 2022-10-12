@@ -29,9 +29,6 @@ function subscription_get_policy_assignment_ids() {
     echo $local_policy_assignment_ids
 }
 
-if [ ! -z "${test_subscription_id}" ]; then
-  subscription_info=$(echo "${subscription_info}" | jq -rc "[.[] | select(.key == \"$test_subscription_id\")]")
-fi
 for row in $(echo "${subscription_info}" | jq -r '. [] | @base64'); do
     subscription_id="$(parse_jq_decode $row '.key')"
     echo "processing subscriptions id - ${subscription_id}:"

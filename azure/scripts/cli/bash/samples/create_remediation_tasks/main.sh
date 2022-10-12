@@ -46,6 +46,9 @@ if [ ! -z "${subscription_exclude}" ]; then
     subscription_info=$(echo "${subscription_info}" | jq --argjson sub_include "$(split_string_jq "${subscription_exclude}")" -rc "[.[] | select(.key | IN(\$sub_include[])) ]")
 fi
 
+if [ ! -z "${test_subscription_id}" ]; then
+  subscription_info=$(echo "${subscription_info}" | jq -rc "[.[] | select(.key == \"$test_subscription_id\")]")
+fi
 
 source "${dir_path}/tasks/management_group.sh"
 
