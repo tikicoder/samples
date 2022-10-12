@@ -27,7 +27,16 @@ done
 source "${root_path}/common/general.sh"
 
 if [ $dry_run -ne 0 ]; then
-    echo "--dry-run flag set skipping all update actions"
+    echo "--dry-run flag set skipping all update/delete actions"
+fi
+
+if [ $dry_run -ne 0 ] && [ $apply_delete -ne 0 ]; then
+    echo "--dry-run flag set apply with be ignored"
+    apply_delete=0
+fi
+
+if [ $apply_delete -ne 0 ]; then
+    echo "--apply flag set resource groups will be deleted"
 fi
 
 if [ ! -z "${tenant_id}" ]; then

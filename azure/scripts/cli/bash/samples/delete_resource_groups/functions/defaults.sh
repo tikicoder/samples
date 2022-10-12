@@ -1,6 +1,7 @@
 #!/bin/bash
 
 dry_run=0
+apply_delete=0
 tenant_id=""
 
 subscription_exclude=""

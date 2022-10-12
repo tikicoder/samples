@@ -33,21 +33,28 @@ if [ ! -z "${test_subscription_id}" ]; then
   subscription_info=$(echo "${subscription_info}" | jq -rc "[.[] | select(.key == \"$test_subscription_id\")]")
 fi
 
-for row in $(echo "${subscription_info}" | jq -r '. [] | @base64'); do
+for row in $(echo "${subscription_info}" | jq -r '.[] | @base64'); do
   subscription_id="$(parse_jq_decode $row '.key')"
   
   
   resource_group_names=$(subscription_get_resource_group_names $subscription_id)
 
   if [ $( echo "${resource_group_names}" | jq -r ". | length") -gt 0 ]; then
-    if [ $dry_run -ne 0 ]; then
-      echo "${subscription_id} - $(parse_jq_decode $row '.value')"
+    echo "${subscription_id} - $(parse_jq_decode $row '.value')"
 
-      echo $resource_group_names | jq -r ".[]"
-      echo ""
-      echo ""
+    echo $resource_group_names | jq -r ".[]"
+    echo ""
+    echo ""
+
+    if [ $dry_run -ne 0 ] || [ $apply_delete -ne 1 ]; then
       continue
     fi
+
+    for rg_name in $(echo "${resource_group_names}" | jq -r '.[]'); do
+      echo $rg_name
+      # az group delete  --no-wait -n "${rg_name}" --subscription $subscription_id 2>/dev/null
+    done
+     
   fi
 
 done
