@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function subscription_get_resource_group_names() {
+function subscription_get_resources() {
   if [ -z "${filter_resource_group_names}" ]; then
     filter_resource_group_names="[]"
   fi
@@ -33,7 +33,7 @@ for row in $(echo "${subscription_info}" | jq -r '.[] | @base64'); do
   subscription_id="$(parse_jq_decode $row '.key')"
   
   
-  resource_group_names=$(subscription_get_resource_group_names $subscription_id)
+  resource_group_names=$(subscription_get_resources $subscription_id)
 
   if [ $( echo "${resource_group_names}" | jq -r ". | length") -gt 0 ]; then
     echo "${subscription_id} - $(parse_jq_decode $row '.value')"  
