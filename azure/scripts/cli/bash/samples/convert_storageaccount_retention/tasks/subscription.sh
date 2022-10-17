@@ -34,11 +34,21 @@ for row in $(echo "${subscription_info}" | jq -r '.[] | @base64'); do
     fi
     echo "     updating ${base_text_display}"
 
+    if [ $verbose -eq 0 ]; then
+      az storage account update \
+        --name "$(parse_jq_decode $item '.name')" \
+        --resource-group "$(parse_jq_decode $item '.resourceGroup')" \
+        --sku "${new_sku}" \
+        --subscription $subscription_id >/dev/null
+      
+      continue
+    fi
+
     az storage account update \
       --name "$(parse_jq_decode $item '.name')" \
       --resource-group "$(parse_jq_decode $item '.resourceGroup')" \
       --sku "${new_sku}" \
-      --subscription $subscription_id >/dev/null
+      --subscription $subscription_id
       
 
   done

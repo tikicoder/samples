@@ -50,6 +50,8 @@ function validate_flags(){
     case "$1" in    
       --dry-run) dry_run=1
       ;;
+      --verbose) verbose=1
+      ;;
       --apply) apply_general=1
       ;;
       --confirm) apply_confirm=1
