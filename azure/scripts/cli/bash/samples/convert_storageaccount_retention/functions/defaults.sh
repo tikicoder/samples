@@ -9,7 +9,7 @@ subscription_filter=""
 
 test_subscription_id=''
 
-filter_storageaccount_currentreplication="(.*)_((GRS)|(RAGRS)|(ZRS))$"
+filter_storageaccount_currentreplication="(.*)_((GRS)|(RAGRS))$"
 storageaccount_newreplication="LRS"
 
 filter_storageaccount_names='[]'
