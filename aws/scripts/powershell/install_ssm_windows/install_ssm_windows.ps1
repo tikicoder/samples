@@ -23,9 +23,9 @@ $ssm_agent_url `
 # $ExtractShell = New-Object -ComObject Shell.Application 
 # $ExtractFiles = $ExtractShell.Namespace($ec2Config_latest_local).Items() 
 # $ExtractShell.NameSpace($tmp_download_dir.FullName).CopyHere($ExtractFiles) 
-Start-Process `
-    -FilePath $(Join-Path "$($tmp_download_dir.FullName)" "EC2Install.exe") `
-    -ArgumentList "/S" -wait
+# Start-Process `
+#     -FilePath $(Join-Path "$($tmp_download_dir.FullName)" "EC2Install.exe") `
+#     -ArgumentList "/S" -wait
 
 write-host "Running SSM Agent Installer"
 Start-Process -FilePath $tmp_installer_path -ArgumentList "/S" -wait
