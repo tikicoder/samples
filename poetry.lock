@@ -1868,6 +1868,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "polling2"
+version = "0.5.0"
+description = "Updated polling utility with many configurable options"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "portalocker"
 version = "2.5.1"
 description = "Wraps the portalocker recipe for easy usage"
@@ -2281,7 +2289,7 @@ python-versions = ">=3.4"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<4.0"
-content-hash = "e15538f667bdbbf8cf06034715f8a2391e1fcc292fff6a48892aa490a6e9b2dd"
+content-hash = "83a00301274ec407199700038af66d13c75a5f8b5edeed79df950cfc9c671d3e"
 
 [metadata.files]
 adal = [
@@ -2831,6 +2839,7 @@ pluggy = [
 polling = [
     {file = "polling-0.3.2.tar.gz", hash = "sha256:3afd62320c99b725c70f379964bf548b302fc7f04d4604e6c315d9012309cc9a"},
 ]
+polling2 = []
 portalocker = []
 psutil = []
 py = [

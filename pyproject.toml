@@ -25,6 +25,7 @@ azure-cli = "^2.34.1"
 azure-core = "^1.23.0"
 azure-common = "^1.1.28"
 hvac = "^1.0.2"
+polling2 = "^0.5.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
