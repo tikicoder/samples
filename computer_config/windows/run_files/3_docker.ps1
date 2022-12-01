@@ -5,7 +5,7 @@ $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 # https://download.docker.com/win/static/stable/x86_64/
 # https://lippertmarkus.com/2021/09/04/containers-without-docker-desktop/
 
-$hub_image_version = "9"
+$hub_image_version = "8.7"
 $docker_hub_image = $(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\docker_images\os\linux\rocky_linux\rocky-container.$($hub_image_version).tar.gz")
 if (-not (Test-Path -Path $docker_hub_image)) {
   Write-Host "Could not find docker hub image $($docker_hub_image)"
@@ -106,6 +106,7 @@ wsl -d $($general_defaults.docker_distro) -e sed -i "/^\[user\]$/a default=$newU
 
 wsl -d $($general_defaults.docker_distro) dnf update -y
 wsl -d $($general_defaults.docker_distro) dnf install glibc-langpack-en -y
+wsl -d $($general_defaults.docker_distro) dnf install iproute net-tools procps-ng -y
 wsl -d $($general_defaults.docker_distro) dnf install passwd sudo cracklib-dicts -y
 wsl -d $($general_defaults.docker_distro) dnf reinstall passwd sudo cracklib-dicts -y
 wsl -d $($general_defaults.docker_distro) groupadd --gid $general_defaults.user_info.gid $newUsername
