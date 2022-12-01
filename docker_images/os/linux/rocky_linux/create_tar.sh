@@ -25,7 +25,7 @@ dir_path=$(dirname $full_path)
 parent_path=$(realpath "${dir_path}/../")
 root_path=$parent_path
 
-download_version="latest" 
+download_version="9" 
 if [ $# -gt 0 ]; then
   download_version="${@:${#@}:${#@}}"
 fi

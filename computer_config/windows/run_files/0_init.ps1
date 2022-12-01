@@ -74,4 +74,8 @@ dism /online /enable-feature /all `
   /featurename:IIS-HttpCompressionStatic `
   /featurename:IIS-ManagementConsole
 
+Write-Host "Get Latest versions of Visual C++ Distro"
+Write-Host "https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170"
+pause
+
 Install-WSL 

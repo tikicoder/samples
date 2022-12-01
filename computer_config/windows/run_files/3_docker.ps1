@@ -5,19 +5,24 @@ $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 # https://download.docker.com/win/static/stable/x86_64/
 # https://lippertmarkus.com/2021/09/04/containers-without-docker-desktop/
 
-$hub_image_version = "latest"
+$hub_image_version = "9"
 $docker_hub_image = $(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\docker_images\os\linux\rocky_linux\rocky-container.$($hub_image_version).tar.gz")
 if (-not (Test-Path -Path $docker_hub_image)) {
   Write-Host "Could not find docker hub image $($docker_hub_image)"
   exit
 }
 
-$docker_hub_image = $($docker_hub_image  | Resolve-Path)
+$docker_hub_image_main = $($docker_hub_image  | Resolve-Path)
 $docker_Version = "docker-20.10.10.zip"
-$tmp_dir = (Join-Path -Path "$([System.IO.Path]::GetTempPath())" -ChildPath "win_docker")
-if (-not (Test-Path -Path $tmp_dir)) {New-Item -ItemType Directory -Path $tmp_dir}
+$tmp_dir_docker = (Join-Path -Path "$([System.IO.Path]::GetTempPath())" -ChildPath "win_docker")
+$tmp_dir_hubimg = (Join-Path -Path "$([System.IO.Path]::GetTempPath())" -ChildPath "hub_image")
+if (-not (Test-Path -Path $tmp_dir_docker)) {New-Item -ItemType Directory -Path $tmp_dir_docker}
+if (-not (Test-Path -Path $tmp_dir_hubimg)) {New-Item -ItemType Directory -Path $tmp_dir_hubimg}
 
-$tmp_docker_save = $(Join-Path -Path $tmp_dir -ChildPath $docker_Version )
+$docker_hub_image = (Join-Path -Path "$tmp_dir_hubimg" -ChildPath "hub_image.tar.gz")
+Copy-Item -Force -Path $docker_hub_image_main -Destination $docker_hub_image
+
+$tmp_docker_save = $(Join-Path -Path $tmp_dir_docker -ChildPath $docker_Version )
 Write-Host  "Downloading $docker_Version and saving to $tmp_docker_save"
 $webClient = [System.Net.WebClient]::new()
 $webClient.DownloadFile("https://download.docker.com/win/static/stable/x86_64/$docker_Version", $tmp_docker_save)
@@ -46,7 +51,7 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
 dockerd --register-service
 Start-Service docker
 
-Remove-Item -Force -Confirm:$False -Recurse $tmp_dir
+Remove-Item -Force -Confirm:$False -Recurse $tmp_dir_docker
 
 # https://docs.rockylinux.org/guides/interoperability/import_rocky_to_wsl_howto/
 # I am using Rocky as my Docker Desktop App and will install Distrod on that
@@ -68,8 +73,8 @@ if ((Test-Path -Path $path_tiki_docker_desktop)) {
 New-Item -ItemType Directory -Path $path_tiki_docker_desktop
 New-Item -ItemType Directory -Path $(Join-Path -Path $path_tiki_docker_desktop -ChildPath "LocalState")
 
-
-wsl --import $($general_defaults.docker_distro) $(Join-Path -Path $path_tiki_docker_desktop -ChildPath "LocalState") $docker_hub_image
+wsl --import $($general_defaults.docker_distro) $(Join-Path -Path $path_tiki_docker_desktop -ChildPath "LocalState") $docker_hub_image --version 2
+Remove-Item -Force -Confirm:$False -Recurse $tmp_dir_hubimg
 
 $newUsername="tiki_docker"
 Wait-Distro-Start -Distro $general_defaults.docker_distro

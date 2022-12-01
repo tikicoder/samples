@@ -1,6 +1,4 @@
 # https://docs.microsoft.com/en-us/windows/wsl/wsl-config
-[boot]
-systemd=true
 
 [wsl2]
 memory=3GB
