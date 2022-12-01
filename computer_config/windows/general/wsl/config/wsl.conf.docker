@@ -1,6 +1,0 @@
-# https://docs.microsoft.com/en-us/windows/wsl/wsl-config
-[user]
-
-[automount]
-enabled = true
-options = "metadata,uid=1003,gid=1003,umask=022,fmask=11,case=off"

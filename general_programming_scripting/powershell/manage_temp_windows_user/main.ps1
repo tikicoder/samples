@@ -1,13 +1,14 @@
 
-param (
-  [int] $AccountExpiresIn_x = 2,
-  [ValidateSet("Days", "Hours", "Minutes")]
-  [string] $AccountExpiresInType = "Hours",
-  [string] $AccountUserName = "temp_local_user",
-  [bool] $IsAdmin = $false,
-  [bool] $DeleteUser = $false,
-  [bool] $DeleteUserConfirm = $true
-)
+# This is designed to be ran as a c&p (Copy and Paste) script
+
+[int] $AccountExpiresIn_x = 2
+[ValidateSet("Days", "Hours", "Minutes")]
+[string] $AccountExpiresInType = "Hours"
+[string] $AccountUserName = "temp_local_user"
+[bool] $IsAdmin = $true
+[bool] $DeleteUser = $false
+[bool] $DeleteUserConfirm = $true
+
 
 function Get-RandomPassword {
   param (
@@ -68,8 +69,9 @@ $TimeSpanParmeters = @{
 }
 $AccountExpires = (Get-Date) + (New-TimeSpan @TimeSpanParmeters)
 
+$UserPasswordPlain = (Get-RandomPassword -length 16 -amountOfNonAlphanumeric 2)
+$UserPassword = ConvertTo-SecureString -Force -AsPlainText -String $UserPasswordPlain
 
-$UserPassword = ConvertTo-SecureString -AsPlainText -String (Get-RandomPassword -length 16 -amountOfNonAlphanumeric 2)
 New-LocalUser `
    -AccountExpires $AccountExpires `
    -Description "Temp User, expires: $($AccountExpires.ToString("yyyyMMddTHH:mm:ss"))" `
@@ -85,4 +87,4 @@ Write-Host "Current DateTime: $(Get-Date)"
 Write-Host "Is Admin User: $($IsAdmin)"
 Write-Host "User Information:"
 $AccountUserName
-ConvertFrom-SecureString -AsPlainText -SecureString $UserPassword
+$UserPasswordPlain

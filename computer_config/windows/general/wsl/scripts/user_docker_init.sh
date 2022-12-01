@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# References to fix network
+# https://docs.docker.com/network/bridge/
+# https://docs.rockylinux.org/guides/network/basic_network_configuration/
+
 DOCKER_SOCK="$1"
 DOCKER_HOST="$2"
 DOCKER_DISTRO="$3"

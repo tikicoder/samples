@@ -5,14 +5,15 @@ $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 # https://download.docker.com/win/static/stable/x86_64/
 # https://lippertmarkus.com/2021/09/04/containers-without-docker-desktop/
 
-$docker_hub_image = $(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\docker_images\os\linux\rocky_linux\rocky-container.8.5.tar.gz")
+$hub_image_version = "latest"
+$docker_hub_image = $(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\docker_images\os\linux\rocky_linux\rocky-container.$($hub_image_version).tar.gz")
 if (-not (Test-Path -Path $docker_hub_image)) {
   Write-Host "Could not find docker hub image $($docker_hub_image)"
   exit
 }
 
 $docker_hub_image = $($docker_hub_image  | Resolve-Path)
-$docker_Version = "docker-20.10.9.zip"
+$docker_Version = "docker-20.10.10.zip"
 $tmp_dir = (Join-Path -Path "$([System.IO.Path]::GetTempPath())" -ChildPath "win_docker")
 if (-not (Test-Path -Path $tmp_dir)) {New-Item -ItemType Directory -Path $tmp_dir}
 
@@ -79,8 +80,8 @@ Write-Host "Coping Script auto_cert_update.sh"
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\auto_cert_update.sh") -Destination "\\wsl$\$($general_defaults.docker_distro)\usr\bin\tiki_auto_cert_update.sh"
 
 if (Test-Path "\\wsl$\$($general_defaults.docker_distro)\etc\wsl.conf"){Remove-Item -Path "\\wsl$\$($general_defaults.docker_distro)\etc\wsl.conf"}
-Write-Host "Coping Conf WSL.conf.docker"
-Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\config\wsl.conf.docker") -Destination "\\wsl$\$($general_defaults.docker_distro)\etc\wsl.conf"
+Write-Host "Coping Conf docker.WSL.conf"
+Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\config\docker.wsl.conf") -Destination "\\wsl$\$($general_defaults.docker_distro)\etc\wsl.conf"
 
 
 $existing_repo_sslverify_check = $($(wsl -d $($general_defaults.docker_distro) grep -i "sslverify=" /etc/dnf/dnf.conf ) -Split '=')
@@ -152,11 +153,12 @@ wsl --terminate $($general_defaults.docker_distro)
 Wait-Distro-Start -Distro $general_defaults.docker_distro
 
 wsl -d $($general_defaults.docker_distro) -e sudo dnf remove --oldinstallonly --setopt installonly_limit=2 kernel
-wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_Distrod.sh" "$($general_defaults.tmp_directory)"
+# This should not be needed with the latest version of WSL it suppoerts systemd by default
+# wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_Distrod.sh" "$($general_defaults.tmp_directory)"
 
 # If you want to have this as part of auto win startup
 # wsl -d $($general_defaults.docker_distro) sudo /opt/distrod/bin/distrod enable --start-on-windows-boot
-wsl -d $($general_defaults.docker_distro) sudo /opt/distrod/bin/distrod enable 
+# wsl -d $($general_defaults.docker_distro) sudo /opt/distrod/bin/distrod enable 
 
 wsl --terminate $($general_defaults.docker_distro)
 Wait-Distro-Start -Distro $general_defaults.docker_distro

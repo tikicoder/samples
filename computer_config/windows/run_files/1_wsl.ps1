@@ -1,8 +1,9 @@
 $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 . "$(Join-Path -Path $scriptPath_init -ChildPath "..\general\defaults.ps1")"
 
-
+wsl --upgrade
 wsl --set-default-version 2
+
 
 # https://docs.microsoft.com/en-us/windows/wsl/wsl-config
 # Configures mem limit on WSL Config

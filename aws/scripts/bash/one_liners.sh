@@ -3,3 +3,12 @@ aws ec2 describe-instances --query 'Reservations[].Instances[?!not_null(Tags[?Ke
 
 # list all protected resources and filter them to only EC2 and get the ResourceARN which would have the instance id
 aws backup list-protected-resources --profile 000000000000 | jq -r '[.Results[] | select(.ResourceType == "EC2").ResourceArn] | sort | .[]'
+
+# Create RDP Port Tunnel SSM
+# if plugin is missing https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
+aws ssm start-session \
+  --profile AWS_PROFILE \
+  --target INSTANCE_ID \
+  --document-name AWS-StartPortForwardingSession \
+  --parameters '{"portNumber":["3389"],"localPortNumber":["53389"]}'
+
