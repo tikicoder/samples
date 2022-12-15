@@ -229,6 +229,15 @@ rm -Rf /tmp/kube
 echo 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' >> "${user_bash_file}"
 echo "" >> "${user_bash_file}"
 
+#K8s Lens
+k8s_lens_version="2022.12.121519-latest"
+mkdir /tmp/k8s_lens
+pushd /tmp/k8s_lens
+wget "https://downloads.k8slens.dev/ide/Lens-${k8s_lens_version}.amd64.deb" -O k8s.lens.amd64.deb
+sudo apt install ./k8s.lens.amd64.deb
+popd
+rm -Rf /tmp/k8s_lens
+
 # # GCP CLI
 # # https://cloud.google.com/sdk/docs/downloads-docker
 # # https://cloud.google.com/sdk/docs/install#linux
