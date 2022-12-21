@@ -143,13 +143,25 @@ sudo apt install -y jq
 
 # mikefarah yaml (JQ but for yaml)
 # https://github.com/mikefarah/yq
-yq_version="v4.26.1"
+yq_version="latest"
+yq_version=$(echo "${yq_version}" | tr '[:upper:]' '[:lower:]')
+if [ $yq_version == "latest" ]; then
+  yq_version=$(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | jq -r '.tag_name')
+
+if [ -f "${user_home}/.local/bin/yq" ]; then
+  rm -f "${user_home}/.local/bin/yq"
+fi
 wget https://github.com/mikefarah/yq/releases/download/${yq_version}/yq_linux_amd64 -q -O ~/.local/bin/yq
 chmod +x ~/.local/bin/yq
 
 # NVM
 # https://github.com/nvm-sh/nvm
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+nvm_version="latest"
+nvm_version=$(echo "${nvm_version}" | tr '[:upper:]' '[:lower:]')
+if [ $yq_version == "latest" ]; then
+  nvm_version=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest | jq -r '.tag_name')
+
+curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_version}/install.sh" | bash
 
 # GitHub CLI
 # https://github.com/cli/cli/blob/trunk/docs/install_linux.md
