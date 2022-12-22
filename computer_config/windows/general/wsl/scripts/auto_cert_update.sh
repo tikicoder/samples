@@ -82,6 +82,10 @@ sudo rm -Rf /tmp/missing_certs
 adding_ca_path="${pem_path}/*"
 python_ca_path=""
 python_version_match=0
+
+# look into pip-system-certs
+# This looks to tell python to auto use the system certs and then the rest might not be needed.
+
 if [ ! -z "$(command -v python)" ] && [ ! -z "$(command -v python3)" ]; then
   if [ "$(python3 --version)" == "$(python --version)" ]; then
     python_version_match=1

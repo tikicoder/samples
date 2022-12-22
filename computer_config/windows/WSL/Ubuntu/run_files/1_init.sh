@@ -141,6 +141,10 @@ sudo apt-get install -y docker-ce-cli
 # https://hub.docker.com/r/stedolan/jq
 sudo apt install -y jq
 
+# yamllint
+# https://github.com/adrienverge/yamllint
+sudo apt-get install yamllint
+
 # mikefarah yaml (JQ but for yaml)
 # https://github.com/mikefarah/yq
 yq_version="latest"
