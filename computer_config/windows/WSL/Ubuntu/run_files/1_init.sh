@@ -151,6 +151,7 @@ yq_version="latest"
 yq_version=$(echo "${yq_version}" | tr '[:upper:]' '[:lower:]')
 if [ $yq_version == "latest" ]; then
   yq_version=$(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | jq -r '.tag_name')
+fi
 
 if [ -f "${user_home}/.local/bin/yq" ]; then
   rm -f "${user_home}/.local/bin/yq"
