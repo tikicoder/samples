@@ -12,3 +12,5 @@ aws ssm start-session \
   --document-name AWS-StartPortForwardingSession \
   --parameters '{"portNumber":["3389"],"localPortNumber":["53389"]}'
 
+# get a list og images that are owned by aaccount
+aws ec2 describe-images --owners <account_id_owner> --filters "Name=name,Values=<start_of_name>*" --query 'Images[*].{ImageId: ImageId, Name: Name, CreationDate:CreationDate}'
