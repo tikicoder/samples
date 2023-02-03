@@ -14,3 +14,13 @@ aws ssm start-session \
 
 # get a list og images that are owned by aaccount
 aws ec2 describe-images --owners <account_id_owner> --filters "Name=name,Values=<start_of_name>*" --query 'Images[*].{ImageId: ImageId, Name: Name, CreationDate:CreationDate}'
+
+
+# delete account from stackset (only way to delete by acct id is cli)
+# if the account is suspended or no longer have access --retain-stacks will allow it to remove
+aws cloudformation delete-stack-instances --stack-set-name SNSSupport --accounts '["xxxxxxxxxxxx"]' --regions '["us-east-1"]' --operation-preferences FailureToleranceCount=0,MaxConcurrentCount=1 --retain-stacks
+
+# delete account from stackset and delete stacks in that account
+aws cloudformation delete-stack-instances --stack-set-name SNSSupport --accounts '["xxxxxxxxxxxx"]' --regions '["us-east-1"]' --operation-preferences FailureToleranceCount=0,MaxConcurrentCount=1 --no-retain-stacks
+
+
