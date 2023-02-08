@@ -26,7 +26,8 @@ sudo apt list --upgradable
 sudo apt update
 sudo apt upgrade -y
 
-sudo apt install -y ca-certificates python3-venv
+sudo apt install -y ca-certificates
+sudo apt -y install "python$(python3 -c 'import sys; print(f"{sys.version_info[:][0]}.{sys.version_info[:][1]}")')-venv"
 
 mkdir "${HOME}/.local"
 sudo chown -R $current_user:$current_user "${HOME}/.local"
