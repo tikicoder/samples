@@ -174,8 +174,9 @@ echo "NVM"
 # https://github.com/nvm-sh/nvm
 nvm_version="latest"
 nvm_version=$(echo "${nvm_version}" | tr '[:upper:]' '[:lower:]')
-if [ $yq_version == "latest" ]; then
+if [ $nvm_version == "latest" ]; then
   nvm_version=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest | jq -r '.tag_name')
+fi
 
 curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_version}/install.sh" | bash
 
