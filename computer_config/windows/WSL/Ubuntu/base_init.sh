@@ -42,5 +42,4 @@ if [ ! -f "${HOME}/.local/python/pip.conf" ]; then
     echo "" | sudo tee -a  "${HOME}/.local/python/pip.conf"
 fi
 
-# install some common modules for python that is needed for some scripts to work
-python3 -m pip install python-dateutil polling asyncio pycryptodomex boto3 botocore
+python3 -m pip install certifi
