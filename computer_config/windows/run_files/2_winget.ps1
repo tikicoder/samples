@@ -78,6 +78,8 @@ install-app-winget -app_name "IrfanSkiljan.IrfanView"
 
 install-app-winget -app_name "Google.Chrome"
 
+install-app-winget -app_name "Mozilla.Firefox.DeveloperEdition"
+
 install-app-winget -app_name "SlackTechnologies.Slack"
 
 install-app-winget -app_name "Postman.Postman"
