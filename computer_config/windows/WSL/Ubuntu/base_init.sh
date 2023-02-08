@@ -26,7 +26,10 @@ sudo apt list --upgradable
 sudo apt update
 sudo apt upgrade -y
 
-sudo apt install -y ca-certificates
+sudo apt install -y ca-certificates python3-venv
+
+mkdir "${HOME}/.local"
+sudo chown -R $current_user:$current_user "${HOME}/.local"
 
 # This is creating a local python environment I can use as the user
 sudo python3 -m venv "${HOME}/.local/python"
