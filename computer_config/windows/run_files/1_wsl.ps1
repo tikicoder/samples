@@ -1,6 +1,10 @@
 $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 . "$(Join-Path -Path $scriptPath_init -ChildPath "..\general\defaults.ps1")"
 
+Write-Host "Please install WSL from the MS Store"
+Write-Host "https://aka.ms/wslstorepage"
+pause 
+
 wsl --upgrade
 wsl --set-default-version 2
 
