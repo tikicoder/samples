@@ -22,13 +22,21 @@ function install-latest-dotnet(){
 
   write-host "Getting - Latest .NET SDK"
   try{
-    $latest_version_sdk = $($(winget search --id Microsoft.dotnet) | ForEach-Object {$_.split("  ") | Where-Object {-not [string]::IsNullOrWhiteSpace($_)} | ForEach-Object{$_.trim()}} | Where-Object {$_ -match "microsoft`.dotnet`.sdk(.*)" -and $_ -notmatch "(.*)`.preview"} | Sort-Object -Descending)[0]
+    $version_sdks = $($(winget search --id Microsoft.dotnet) | ForEach-Object {$_.split("  ") | Where-Object {-not [string]::IsNullOrWhiteSpace($_)} | ForEach-Object{$_.trim()}} | Where-Object {$_ -match "microsoft`.dotnet`.sdk(.*)" -and $_ -notmatch "(.*)`.preview"} | Sort-Object -Descending)
   
-    write-host "Installing - Latest .NET SDK: $($latest_version_sdk)"
+    write-host "Installing - Latest .NET SDK: $($version_sdks[0])"
 
-    if (-not [string]::IsNullOrWhiteSpace($latest_version_sdk)){
-      install-app-winget $latest_version_sdk
+    if (-not [string]::IsNullOrWhiteSpace($version_sdks[0])){
+      install-app-winget $version_sdks[0]
     }
+	
+	if ( $($version_sdks | Measure-Object).Count -gt 1 ) {
+		write-host "Ensure LTS installed"
+		write-host "Installing - Previous .NET SDK: $($version_sdks[1])"
+		if (-not [string]::IsNullOrWhiteSpace($version_sdks[1])){
+		  install-app-winget $version_sdks[1]
+		}
+	}
     return
   }
   catch {
@@ -59,11 +67,14 @@ install-app-winget -app_name "Microsoft.WindowsTerminal"
 
 install-app-winget -app_name "IrfanSkiljan.IrfanView"
 
-install-app-winget -app_name "GitHub.Atom"
+# This will no longer be installed as it has been killed off
+# install-app-winget -app_name "GitHub.Atom"
 
-install-app-winget -app_name "GIMP.GIMP"
+# WSLg support this will be installed on wslG
+# install-app-winget -app_name "GIMP.GIMP"
 
-install-app-winget -app_name "OBSProject.OBSStudio"
+# WSLg support this will be installed on wslG
+# install-app-winget -app_name "OBSProject.OBSStudio"
 
 install-app-winget -app_name "Google.Chrome"
 
