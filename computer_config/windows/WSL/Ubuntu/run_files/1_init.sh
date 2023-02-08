@@ -143,7 +143,7 @@ sudo apt install -y jq
 
 # yamllint
 # https://github.com/adrienverge/yamllint
-sudo apt-get install yamllint
+sudo apt-get install -y yamllint
 
 # mikefarah yaml (JQ but for yaml)
 # https://github.com/mikefarah/yq
