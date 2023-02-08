@@ -39,6 +39,7 @@ sudo apt upgrade -y
 # Base Packages Install
 sudo apt install -y make bash-completion git pylint
 
+echo "Installing GOLANG"
 mkdir -p /tmp/go
 pushd /tmp/go
 # verify latest https://go.dev/dl/
@@ -66,6 +67,7 @@ fi
 EOF
 fi
 
+echo "Ensuring base WSL.conf"
 if [ $(sudo ls /etc/ | grep -ic '^wsl.conf$') -gt 0  ]; then
   sudo rm -f /etc/wsl.conf
 fi
@@ -75,6 +77,7 @@ sudo cp  ./wsl.conf /etc/wsl.conf
 sudo sh -c "echo \"/ /mnt/wsl/instances/Ubuntu none defaults,bind,X-mount.mkdir 0 0\" >> /etc/fstab"
 sudo mount -a
 
+echo "install normal zip/unzip"
 # adding the ability to zip/unzip
 sudo apt-get install -y zip unzip
 
@@ -93,9 +96,11 @@ sudo apt-get install -y zip unzip
 # Python 3.9
 # apt install -y python3.9
 
+echo "install genisoimage"
 # Install genisoimage helpful for converting AWS Linux 2 to Azure
 sudo apt install -y genisoimage
 
+echo "install graphviz"
 # GraphViz this is a useful tool for graphing and is used for Diagramming as Code.
 # https://graphviz.gitlab.io/download/
 sudo apt install -y graphviz
@@ -115,6 +120,7 @@ if [ $(grep -ic "source "\${HOME}/.local/python"" "${user_bash_file}" ) -lt 1  ]
   echo "" >> "${user_bash_file}"
 fi
 
+echo "Docker Setup"
 # Docker Requirments
 # https://docs.docker.com/engine/install/ubuntu/
 # https://dev.to/bowmanjd/install-docker-on-windows-wsl-without-docker-desktop-34m9
