@@ -78,4 +78,16 @@ Write-Host "Get Latest versions of Visual C++ Distro"
 Write-Host "https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170"
 pause
 
+Write-Host "\n\n"
+
+Write-Host "Please install App Installer (winget)"
+Write-Host "https://apps.microsoft.com/store/detail/app-installer/9NBLGGH4NNS1?hl=en-us&gl=us&rtc=1"
+Write-Host "GitHub"
+Write-Host "https://github.com/microsoft/winget-cli"
+pause
+
+Write-Host "Please install PowerShell Core"
+Write-Host "https://github.com/PowerShell/PowerShell"
+pause
+
 Install-WSL 
