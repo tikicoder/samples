@@ -268,7 +268,7 @@ k8s_lens_version="2022.12.121519-latest"
 mkdir /tmp/k8s_lens
 pushd /tmp/k8s_lens
 wget "https://downloads.k8slens.dev/ide/Lens-${k8s_lens_version}.amd64.deb" -O k8s.lens.amd64.deb
-sudo apt install ./k8s.lens.amd64.deb
+sudo apt install -y ./k8s.lens.amd64.deb
 popd
 rm -Rf /tmp/k8s_lens
 
