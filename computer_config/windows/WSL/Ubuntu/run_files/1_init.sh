@@ -25,6 +25,7 @@ user_bash_file="${user_home}/.bashrc"
 user_aliases="${user_home}/.bashrc_alias"
 
 mkdir -p "${user_home}/.local/bin"
+source "${HOME}/.local/python/bin/activate" 
 
 tmp_directory=$1
 apt_keyrings="/usr/local/share/keyrings/"
@@ -143,15 +144,17 @@ echo \
 sudo apt-get update
 sudo apt-get install -y docker-ce-cli
 
-
+echo "JQ"
 # JQ
 # https://hub.docker.com/r/stedolan/jq
 sudo apt install -y jq
 
+echo "yamllint"
 # yamllint
 # https://github.com/adrienverge/yamllint
 sudo apt-get install -y yamllint
 
+echo "yq"
 # mikefarah yaml (JQ but for yaml)
 # https://github.com/mikefarah/yq
 yq_version="latest"
@@ -166,6 +169,7 @@ fi
 wget https://github.com/mikefarah/yq/releases/download/${yq_version}/yq_linux_amd64 -q -O ~/.local/bin/yq
 chmod +x ~/.local/bin/yq
 
+echo "NVM"
 # NVM
 # https://github.com/nvm-sh/nvm
 nvm_version="latest"
@@ -175,6 +179,7 @@ if [ $yq_version == "latest" ]; then
 
 curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_version}/install.sh" | bash
 
+echo "gh cli"
 # GitHub CLI
 # https://github.com/cli/cli/blob/trunk/docs/install_linux.md
 curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
@@ -182,6 +187,7 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githu
 sudo apt update -y
 sudo apt install -y gh
 
+echo "az cli"
 # Azure CLI
 # https://docs.microsoft.com/en-us/cli/azure/run-azure-cli-docker
 # https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt
@@ -194,6 +200,7 @@ az config set auto-upgrade.enable=yes
 # https://docs.microsoft.com/en-us/cli/azure/azure-cli-extensions-overview
 az config set extension.use_dynamic_install=yes_prompt
 
+echo "aws cli"
 # AWS CLI
 # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
 # https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-docker.html
@@ -205,6 +212,7 @@ sudo ./aws/install
 popd
 rm -Rf /tmp/aws
 
+echo "kubectl"
 # kubectl install - Manually
 # mkdir -p /tmp/kube
 # pushd /tmp/kube
@@ -253,6 +261,7 @@ rm -Rf /tmp/kube
 echo 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' >> "${user_bash_file}"
 echo "" >> "${user_bash_file}"
 
+echo "k8s lens"
 #K8s Lens
 k8s_lens_version="2022.12.121519-latest"
 mkdir /tmp/k8s_lens
@@ -269,31 +278,35 @@ rm -Rf /tmp/k8s_lens
 # # tar -xf google-cloud-sdk-373.0.0-linux-x86.tar.gz
 # # ./google-cloud-sdk/install.sh
 
-
+echo "steampipe"
 # Install steampipe
 # https://steampipe.io/downloads
 sudo /bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/turbot/steampipe/main/install.sh)"
 steampipe plugin install steampipe
 
+echo "poetry"
 # Install Poetry
-sudo apt -y install "python$(python3 -c 'import sys; print(f"{sys.version_info[:][0]}.{sys.version_info[:][1]}")')-venv"
-
 # https://python-poetry.org/docs/master/#installing-with-the-official-installer
 curl -sSL https://install.python-poetry.org | python3 -
 
+echo "dotnet"
 # Install dotNet
-wget https://packages.microsoft.com/config/ubuntu/21.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+# https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu
+wget https://packages.microsoft.com/config/ubuntu/$(cat /etc/os-release | grep "VERSION_ID" | awk -F= '{print $2}' | tr -d '"')/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
 sudo dpkg -i packages-microsoft-prod.deb
 rm packages-microsoft-prod.deb
 
-# Install dotNet SDK 6
+echo "dotNet LTS (currently .NET 6)"
+# Install dotNet LTS
 sudo apt-get update; \
   sudo apt-get install -y apt-transport-https && \
   sudo apt-get update && \
   sudo apt-get install -y dotnet-sdk-6.0
 
-# Install dotNet SDK 5
-sudo apt-get install -y dotnet-sdk-5.0
+echo "dotNet 7"
+# Install dotNet SDK 7
+sudo apt-get install -y dotnet-sdk-7.0
+sudo apt-get install -y aspnetcore-runtime-7.0 dotnet-runtime-7.0
 
 # Installing ClojureCLR as a dotnet tool
 dotnet tool install --global Clojure.Main
