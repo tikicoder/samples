@@ -67,14 +67,17 @@ install-app-winget -app_name "Microsoft.WindowsTerminal"
 
 install-app-winget -app_name "IrfanSkiljan.IrfanView"
 
-# This will no longer be installed as it has been killed off
+# Atom has been sunsetted and is now in archive mode
+# https://github.blog/2022-06-08-sunsetting-atom/
+# https://github.com/atom
+# https://github.com/atom/atom
 # install-app-winget -app_name "GitHub.Atom"
 
 # WSLg support this will be installed on wslG
 # install-app-winget -app_name "GIMP.GIMP"
 
-# WSLg support this will be installed on wslG
-# install-app-winget -app_name "OBSProject.OBSStudio"
+# Ran into some issues on WSLg installing normally
+install-app-winget -app_name "OBSProject.OBSStudio"
 
 install-app-winget -app_name "Google.Chrome"
 

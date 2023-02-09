@@ -24,6 +24,7 @@ user_home="/home/${user_name}"
 user_aliases="${user_home}/.bashrc_alias"
 
 mkdir -p "${user_home}/.local/bin"
+source "${HOME}/.local/python/bin/activate" 
 
 tmp_directory=$1
 docker_groupid=$
