@@ -119,7 +119,9 @@ Wait-Distro-Start -Distro $general_defaults.docker_distro
 
 wsl -d $($general_defaults.docker_distro) -e mkdir -p $general_defaults.tmp_directory
 
-$docker_init_files = $(Get-ChildItem "$($scriptPath_init)/3_docker_*.sh" -File )
+$file_prefix = "5_docker_"
+
+$docker_init_files = $(Get-ChildItem "$($scriptPath_init)/$($file_prefix)*.sh" -File )
 foreach ( $file in $docker_init_files){
   Write-Host "Coping File: $($file.Name) - \\wsl$\$($general_defaults.docker_distro)$($general_defaults.tmp_directory)\$($file.Name)"
 
@@ -160,7 +162,7 @@ Wait-Distro-Start -Distro $general_defaults.docker_distro
 
 wsl -d $($general_defaults.docker_distro) -e sudo dnf remove --oldinstallonly --setopt installonly_limit=2 kernel
 # This should not be needed with the latest version of WSL it suppoerts systemd by default
-# wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/3_docker_Distrod.sh" "$($general_defaults.tmp_directory)"
+# wsl -d $($general_defaults.docker_distro) sudo bash "$($general_defaults.tmp_directory)/$($file_prefix)Distrod.sh" "$($general_defaults.tmp_directory)"
 
 # If you want to have this as part of auto win startup
 # wsl -d $($general_defaults.docker_distro) sudo /opt/distrod/bin/distrod enable --start-on-windows-boot
@@ -170,17 +172,17 @@ wsl --terminate $($general_defaults.docker_distro)
 Wait-Distro-Start -Distro $general_defaults.docker_distro
 
 
-wsl -d $($general_defaults.docker_distro) bash "$($general_defaults.tmp_directory)/3_docker_init.sh" "$($general_defaults.tmp_directory)"
+wsl -d $($general_defaults.docker_distro) bash "$($general_defaults.tmp_directory)/$($file_prefix)init.sh" "$($general_defaults.tmp_directory)"
 
-wsl -d $($general_defaults.docker_distro) bash "$($general_defaults.tmp_directory)/3_docker_Install.sh" "$newUsername" "$($general_defaults.docker_sock)" "$($general_defaults.docker_host_sock)"
+wsl -d $($general_defaults.docker_distro) bash "$($general_defaults.tmp_directory)/$($file_prefix)Install.sh" "$newUsername" "$($general_defaults.docker_sock)" "$($general_defaults.docker_host_sock)"
 wsl --terminate $($general_defaults.docker_distro)
 Wait-Distro-Start -Distro $general_defaults.docker_distro
 
-wsl -d $($general_defaults.docker_distro) bash "$($general_defaults.tmp_directory)/3_docker_updategroup.sh"
+wsl -d $($general_defaults.docker_distro) bash "$($general_defaults.tmp_directory)/$($file_prefix)updategroup.sh"
 wsl --terminate $($general_defaults.docker_distro)
 Wait-Distro-Start -Distro $general_defaults.docker_distro
 
-wsl -d $($general_defaults.docker_distro) bash "$($general_defaults.tmp_directory)/3_docker_finalize.sh" "$($general_defaults.docker_dir)" "$($general_defaults.docker_host_sock)" "$($general_defaults.docker_host_tcp)"
+wsl -d $($general_defaults.docker_distro) bash "$($general_defaults.tmp_directory)/$($file_prefix)finalize.sh" "$($general_defaults.docker_dir)" "$($general_defaults.docker_host_sock)" "$($general_defaults.docker_host_tcp)"
 wsl --terminate $($general_defaults.docker_distro)
 Wait-Distro-Start -Distro $general_defaults.docker_distro
 

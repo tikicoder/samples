@@ -37,6 +37,9 @@ sudo mkdir -p "$apt_keyrings"
 sudo apt update
 sudo apt upgrade -y
 
+touch "${HOME}/.gtk-bookmarks"
+chmod $user_name:$user_name "${HOME}/.gtk-bookmarks"
+chmod 644 "${HOME}/.gtk-bookmarks"
 # Base Packages Install
 sudo apt install -y make bash-completion git pylint
 
@@ -82,6 +85,12 @@ echo "install normal zip/unzip"
 # adding the ability to zip/unzip
 sudo apt-get install -y zip unzip
 
+echo "Insall MS packages "
+wget "https://packages.microsoft.com/config/ubuntu/$(cat /etc/os-release | grep "VERSION_ID" | awk -F= '{print $2}' | tr -d '"')/packages-microsoft-prod.deb" -O packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+rm packages-microsoft-prod.deb
+sudo apt-get update
+
 # Goal run as much as I can via Docker
 # https://blog.jessfraz.com/post/docker-containers-on-the-desktop/
 
@@ -105,6 +114,9 @@ echo "install graphviz"
 # GraphViz this is a useful tool for graphing and is used for Diagramming as Code.
 # https://graphviz.gitlab.io/download/
 sudo apt install -y graphviz
+
+echo "install powershell"
+sudo apt-get install -y powershell
 
 # This is designed to have Node use the Same CA as python so if something custom is there you should be good
 if [ $(grep -ic "export NODE_EXTRA_CA_CERTS=" "${user_bash_file}" ) -lt 1  ]; then
@@ -201,6 +213,12 @@ az config set auto-upgrade.enable=yes
 # https://docs.microsoft.com/en-us/cli/azure/azure-cli-extensions-overview
 az config set extension.use_dynamic_install=yes_prompt
 
+# Without Prompt
+# az config set extension.use_dynamic_install=yes_without_prompt
+
+echo "Azure Powershell"
+pwsh -Command Install-Module -Name Az -Scope CurrentUser -Repository PSGallery -Force
+
 echo "aws cli"
 # AWS CLI
 # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
@@ -293,9 +311,6 @@ curl -sSL https://install.python-poetry.org | python3 -
 echo "dotnet"
 # Install dotNet
 # https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu
-wget https://packages.microsoft.com/config/ubuntu/$(cat /etc/os-release | grep "VERSION_ID" | awk -F= '{print $2}' | tr -d '"')/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-sudo dpkg -i packages-microsoft-prod.deb
-rm packages-microsoft-prod.deb
 
 echo "dotNet LTS (currently .NET 6)"
 # Install dotNet LTS

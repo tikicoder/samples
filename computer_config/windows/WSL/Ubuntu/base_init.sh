@@ -26,7 +26,7 @@ sudo apt list --upgradable
 sudo apt update
 sudo apt upgrade -y
 
-sudo apt install -y ca-certificates
+sudo apt install -y ca-certificates dbus-user-session xfonts-base xfonts-100dpi xfonts-75dpi
 sudo apt -y install "python$(python3 -c 'import sys; print(f"{sys.version_info[:][0]}.{sys.version_info[:][1]}")')-venv"
 
 mkdir "${HOME}/.local"

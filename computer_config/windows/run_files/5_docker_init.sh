@@ -10,7 +10,7 @@ if [ ! -f "${HOME}/.local/bin" ]; then
   chmod -R 755 "${HOME}/.local/bin"
 fi
 
-cp "${1}/3_docker_adduser.sh" "${HOME}/.local/bin/docker_adduser.sh"
+cp "${1}/5_docker_adduser.sh" "${HOME}/.local/bin/docker_adduser.sh"
 chmod 755 "${HOME}/.local/bin/docker_adduser.sh"
 
 sudo dnf check-update
