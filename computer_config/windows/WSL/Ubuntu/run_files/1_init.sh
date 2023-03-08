@@ -280,6 +280,10 @@ rm -Rf /tmp/kube
 echo 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' >> "${user_bash_file}"
 echo "" >> "${user_bash_file}"
 
+
+# attempting to refresh bash after krew install
+exec bash
+
 # kubectx + kubens: Power tools for kubectl
 # https://github.com/ahmetb/kubectx
 kubectl krew install ctx
