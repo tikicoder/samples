@@ -62,3 +62,17 @@ rm -Rf edge
 
 popd
 
+echo "k8s lens"
+# K8s Lens
+# k8s_lens_version="2022.12.121519-latest"
+# mkdir /tmp/k8s_lens
+# pushd /tmp/k8s_lens
+# wget "https://downloads.k8slens.dev/ide/Lens-${k8s_lens_version}.amd64.deb" -O k8s.lens.amd64.deb
+# sudo apt install -y ./k8s.lens.amd64.deb
+# popd
+# rm -Rf /tmp/k8s_lens
+curl -fsSL https://downloads.k8slens.dev/keys/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/lens-archive-keyring.gpg > /dev/null
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/lens-archive-keyring.gpg] https://downloads.k8slens.dev/apt/debian stable main" | sudo tee /etc/apt/sources.list.d/lens.list > /dev/null
+sudo apt update
+sudo apt install lens
+
