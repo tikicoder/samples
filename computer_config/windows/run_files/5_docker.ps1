@@ -13,7 +13,7 @@ if (-not (Test-Path -Path $docker_hub_image)) {
 }
 
 $docker_hub_image_main = $($docker_hub_image  | Resolve-Path)
-$docker_Version = "docker-20.10.10.zip"
+$docker_Version = "docker-23.0.3.zip  "
 $tmp_dir_docker = (Join-Path -Path "$([System.IO.Path]::GetTempPath())" -ChildPath "win_docker")
 $tmp_dir_hubimg = (Join-Path -Path "$([System.IO.Path]::GetTempPath())" -ChildPath "hub_image")
 if (-not (Test-Path -Path $tmp_dir_docker)) {New-Item -ItemType Directory -Path $tmp_dir_docker}
