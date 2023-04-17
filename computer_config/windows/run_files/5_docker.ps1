@@ -12,6 +12,9 @@ if (-not (Test-Path -Path $docker_hub_image)) {
   exit
 }
 
+new-localgroup -name "docker-users"
+Add-LocalGroupMember -Group "docker-users" -Member ([System.Security.Principal.WindowsIdentity]::GetCurrent().Name)
+
 $docker_hub_image_main = $($docker_hub_image  | Resolve-Path)
 $docker_Version = "docker-23.0.3.zip  "
 $tmp_dir_docker = (Join-Path -Path "$([System.IO.Path]::GetTempPath())" -ChildPath "win_docker")
