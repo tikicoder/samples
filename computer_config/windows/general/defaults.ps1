@@ -3,6 +3,16 @@ $scriptPath_init_generalmain = split-path -parent $MyInvocation.MyCommand.Defini
 $root_path_computer_config = Resolve-Path -Path $(Join-Path -Path $scriptPath_init_generalmain -ChildPath "../../")
 $root_path_samples =  Resolve-Path -Path $(Join-Path -Path $root_path_computer_config -ChildPath "../")
 
+function WaitUntilServices($searchString, $status)
+{
+    # Get all services where DisplayName matches $searchString and loop through each of them.
+    foreach($service in (Get-Service -DisplayName $searchString))
+    {
+        # Wait for the service to reach the $status or a maximum of 30 seconds
+        $service.WaitForStatus($status, '00:00:30')
+    }
+}
+
 function Wait-Distro-Start()
 {
   param (
