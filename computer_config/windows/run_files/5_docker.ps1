@@ -19,6 +19,7 @@ $docker_hub_image_main = $($docker_hub_image  | Resolve-Path)
 $docker_Version = "docker-23.0.3.zip  "
 $tmp_dir_docker = (Join-Path -Path "$([System.IO.Path]::GetTempPath())" -ChildPath "win_docker")
 $tmp_dir_hubimg = (Join-Path -Path "$([System.IO.Path]::GetTempPath())" -ChildPath "hub_image")
+$docker_storage_dir = "C:\ProgramData\docker"
 if (-not (Test-Path -Path $tmp_dir_docker)) {New-Item -ItemType Directory -Path $tmp_dir_docker}
 if (-not (Test-Path -Path $tmp_dir_hubimg)) {New-Item -ItemType Directory -Path $tmp_dir_hubimg}
 
@@ -40,12 +41,17 @@ if ( $(Get-Service | Where-Object {$_.Name -ieq "docker"} | Measure-Object).Coun
 }
 if ((Test-Path -Path "C:\docker")) {Remove-Folder -path_to_delete "C:\docker" -Recurse $true}
 try {
-  if ((Test-Path -Path "C:\ProgramData\docker")) {Remove-Folder -path_to_delete "C:\ProgramData\docker" -Recurse $true}
+  if ((Test-Path -Path $docker_storage_dir)) {Remove-Folder -path_to_delete $docker_storage_dir -Recurse $true}
 }
 catch {
-  if (Test-Path -Path "C:\ProgramData\docker") { takeown.exe /F "C:\ProgramData\docker" /R /A /D Y }
-  if (Test-Path -Path "C:\ProgramData\docker") { icacls "C:\ProgramData\docker\" /T /C /grant Administrators:F }
-  if ((Test-Path -Path "C:\ProgramData\docker")) {Remove-Folder -path_to_delete "C:\ProgramData\docker" -Recurse $true}
+  if (Test-Path -Path $docker_storage_dir) { takeown.exe /F $docker_storage_dir /R /A /D Y }
+  if (Test-Path -Path $docker_storage_dir) { icacls "$($docker_storage_dir)\" /T /C /grant Administrators:F }
+  if ((Test-Path -Path $docker_storage_dir)) {Remove-Folder -path_to_delete $docker_storage_dir -Recurse $true}
+  if ((Test-Path -Path "$($docker_storage_dir)\config")) {Remove-Folder -path_to_delete "$($docker_storage_dir)\config" -Recurse $true}
+}
+
+if ((Test-Path -Path "$($docker_storage_dir)\config")) {
+  Write-Host "Existing Docker Config still exists"
 }
 
 Expand-Archive $tmp_docker_save -DestinationPath C:\ -Force
@@ -53,6 +59,14 @@ Expand-Archive $tmp_docker_save -DestinationPath C:\ -Force
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
 dockerd --register-service
 Start-Service docker
+
+if (-not (Test-Path -Path "$($docker_storage_dir)\config")) {
+  if (Test-Path -Path $docker_storage_dir) { 
+    New-Item -ItemType Directory -Path $docker_storage_dir
+  }
+  New-Item -ItemType Directory -Path "$($docker_storage_dir)\config"
+  
+}
 
 Remove-Item -Force -Confirm:$False -Recurse $tmp_dir_docker
 
