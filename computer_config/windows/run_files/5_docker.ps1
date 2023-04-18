@@ -59,13 +59,19 @@ Expand-Archive $tmp_docker_save -DestinationPath C:\ -Force
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
 dockerd --register-service
 Start-Service docker
+WaitUntilServices "docker" "Running"
 
 if (-not (Test-Path -Path "$($docker_storage_dir)\config")) {
   if (Test-Path -Path $docker_storage_dir) { 
     New-Item -ItemType Directory -Path $docker_storage_dir
   }
   New-Item -ItemType Directory -Path "$($docker_storage_dir)\config"
+  Copy-Item -Force -Path "..\general\docker\daemon.json" -Destination "$($docker_storage_dir)\config\daemon.json"
+  Stop-Service docker
+  WaitUntilServices "docker" "Stopped"
   
+  Start-Service docker
+  WaitUntilServices "docker" "Running"
 }
 
 Remove-Item -Force -Confirm:$False -Recurse $tmp_dir_docker
