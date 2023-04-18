@@ -65,6 +65,8 @@ if (-not (Test-Path -Path "$($docker_storage_dir)\config")) {
   if (Test-Path -Path $docker_storage_dir) { 
     New-Item -ItemType Directory -Path $docker_storage_dir
   }
+  # Doc for more config settings
+  # https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-docker/configure-docker-daemon
   New-Item -ItemType Directory -Path "$($docker_storage_dir)\config"
   Copy-Item -Force -Path "..\general\docker\daemon.json" -Destination "$($docker_storage_dir)\config\daemon.json"
   Stop-Service docker
