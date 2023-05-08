@@ -163,6 +163,24 @@ function split_string_jq(){
   echo $(echo "\"${str_value}\"" | jq -rc "[. | split(\"[${str_split}]\";\"ig\") | .[] | rtrimstr(\" \") | ltrimstr(\" \") | select(. != \"\")]")
 }
 
+function trim_string(){
+  str_value=$1
+
+  echo $(rtrim_string $(ltrim_string $str_value))
+}
+
+function ltrim_string(){
+  str_value=$1
+
+  echo $str_value | sed -e 's/^[[:space:]]*//' 
+}
+
+function rtrim_string(){
+  str_value=$1
+
+  echo $str_value |  sed -e 's/[[:space:]]*$//'
+}
+
 function base_subscription_get_resources() {
   
   local localbase_jq_unique_attr=".id"

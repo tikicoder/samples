@@ -1,12 +1,11 @@
-The goal of this script is to delete specific resource groups
+The goal of this script is to list all resource manager remaining reuquest
 
 # Samples
 
 Spaces are not allowed in flag values
 run only specific policies
 
-main.sh --filter-rgnames='["^rg-(.*)$"]' --dry-run
+main.sh 
 
-main.sh --filter-rgnames='["^rg-(.*)$"]'
 
 
