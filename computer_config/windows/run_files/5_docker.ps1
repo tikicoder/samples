@@ -1,3 +1,13 @@
+# Switch from Docker to minikube and install kaniko 
+# MiniKube
+# https://minikube.sigs.k8s.io/docs/start/
+# supports multinode, the biggest issue is windows
+# https://github.com/vrapolinario/MinikubeWindowsContainers
+
+# Kaniko 
+# https://github.com/GoogleContainerTools/kaniko
+# is designed to build container images inside of K8s from a docker file.
+
 
 $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 . "$(Join-Path -Path $scriptPath_init -ChildPath "..\general\defaults.ps1")"
