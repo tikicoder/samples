@@ -93,6 +93,8 @@ install-app-winget -app_name "Microsoft.AzureStorageExplorer"
 
 install-app-winget -app_name "Python.Python.3.11"
 
+install-app-winget -app_name "Microsoft.Bicep"
+
 pwsh -Command "Install-Module -Name Az -Scope CurrentUser -Repository PSGallery -Force"
 pwsh -Command "Install-Module -Name PowerStig -Scope CurrentUser -Force"
 
