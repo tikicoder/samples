@@ -14,3 +14,10 @@ pause
 
 
 powershell -command Install-Module -Name PowerShellGet -Force
+
+
+Write-Host "Install PSRule for validating Azure Bicep"
+pwsh -Command Install-Module -Name PSRule -Scope CurrentUser -Repository PSGallery -Force
+Find-Module -Repository PSGallery -Name 'PSRule.Rules.*' | ForEach-Object {
+  pwsh -Command Install-Module -Name $_.Name -Scope CurrentUser -Repository PSGallery -Force
+}

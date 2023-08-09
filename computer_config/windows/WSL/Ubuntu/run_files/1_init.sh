@@ -222,6 +222,9 @@ az bicep upgrade
 echo "Azure Powershell"
 pwsh -Command Install-Module -Name Az -Scope CurrentUser -Repository PSGallery -Force
 
+pwsh -Command Install-Module -Name PSRule -Scope CurrentUser -Repository PSGallery -Force
+pwsh -Command "Find-Module -Repository PSGallery -Name 'PSRule.Rules.*' | ForEach-Object{ Install-Module -Name \$_.Name -Scope CurrentUser -Repository PSGallery -Force}"
+
 echo "aws cli"
 # AWS CLI
 # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
