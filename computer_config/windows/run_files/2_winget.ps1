@@ -2,6 +2,13 @@ $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 . "$(Join-Path -Path $scriptPath_init -ChildPath "..\general\defaults.ps1")"
 
 
+if(-not $is_admin_context ){
+  Write-Host "running as Admin"
+  start-process -verb runas -ArgumentList "-Command $($scriptPath_init)\$($MyInvocation.MyCommand.Name)" pwsh
+  exit
+}
+
+
 function install-app-winget(){
   param(
     [string]$app_name

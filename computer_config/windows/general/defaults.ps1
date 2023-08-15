@@ -1,7 +1,56 @@
+
 $scriptPath_init_generalmain = split-path -parent $MyInvocation.MyCommand.Definition
+
+function validate-user-admin-context(){
+  
+  $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+  if(-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)){   
+    return $false
+  }
+
+  return $true
+}
 
 $root_path_computer_config = Resolve-Path -Path $(Join-Path -Path $scriptPath_init_generalmain -ChildPath "../../")
 $root_path_samples =  Resolve-Path -Path $(Join-Path -Path $root_path_computer_config -ChildPath "../")
+$is_admin_context = validate-user-admin-context
+
+
+
+
+function Get-Download-Remote-File()
+{
+    param (
+      [string]$url_remote_file,
+      [string]$save_location
+    )
+
+    $request  = [System.Net.WebRequest]::Create($url_remote_file)
+    $response = [System.Net.HttpWebResponse]$request.GetResponse()
+    
+    try {
+      $dispositionHeader = $response.Headers['Content-Disposition']
+      $disposition = [System.Net.Mime.ContentDisposition]::new($dispositionHeader)
+      $file_save_name = $disposition.FileName
+    }
+    catch {
+      $file_save_name = ""
+    }
+    
+    if ([string]::IsNullorWhitespace($file_save_name)){
+      $file_save_name = $response.ResponseUri.Segments[$response.ResponseUri.Segments.Length-1]
+    }
+
+    $filepath = Join-Path -Path $save_location -ChildPath $file_save_name
+    if (-not (Test-Path -Path $save_location)) {New-Item -ItemType Directory -Path $save_location}
+    if (Test-Path $filepath){Remove-Item -Force -Path $filepath}
+
+    $file = [System.IO.FileStream]::new($filepath, [System.IO.FileMode]::Create)
+    $response.GetResponseStream().CopyTo($file);
+    $file.Close()
+
+    return $filepath
+}
 
 function WaitUntilServices($searchString, $status)
 {
@@ -21,7 +70,7 @@ function Wait-Distro-Start()
   
   Write-Host "Pending Distro Start - $Distro"
   while ($(wsl -l --running | Where-Object {$_ -ieq $Distro -or $_ -ieq "$Distro (default)"} | Measure-Object).Count -lt 1){
-    wsl -d $Distro echo "test" > $null
+    (wsl -d $Distro -e echo "test") > $null
     Start-Sleep -m 500
   }
   wsl -d $Distro echo "Connected"

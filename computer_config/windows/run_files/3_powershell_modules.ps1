@@ -1,6 +1,13 @@
 $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 . "$(Join-Path -Path $scriptPath_init -ChildPath "..\general\defaults.ps1")"
 
+
+if(-not $is_admin_context ){
+  Write-Host "running as Admin"
+  start-process -verb runas -ArgumentList "-Command $($scriptPath_init)\$($MyInvocation.MyCommand.Name)" pwsh
+  exit
+}
+
 Write-Host "Install AZ Module for PS Core"
 # https://learn.microsoft.com/en-us/powershell/azure/install-az-ps?view=azps-9.4.0
 pwsh -Command Install-Module -Name Az -Scope CurrentUser -Repository PSGallery -Force

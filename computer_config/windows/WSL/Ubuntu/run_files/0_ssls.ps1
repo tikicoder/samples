@@ -5,6 +5,7 @@ $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"}
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\auto_cert_update.sh") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"
 wsl -d $($general_defaults.main_distro) sudo mv "$($general_defaults.tmp_directory)/tiki_auto_cert_update.sh" /usr/bin/tiki_auto_cert_update.sh
+wsl -d $($general_defaults.main_distro) sudo chown "root:root" /usr/bin/tiki_auto_cert_update.sh
 wsl -d $($general_defaults.main_distro) sudo chmod 755 /usr/bin/tiki_auto_cert_update.sh
 
 wsl -d $($general_defaults.main_distro) mkdir -p "$($general_defaults.tmp_directory)/missing_certs"
