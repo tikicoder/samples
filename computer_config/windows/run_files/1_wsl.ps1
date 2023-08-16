@@ -11,7 +11,7 @@ Write-Host "Please install WSL from the MS Store"
 Write-Host "https://aka.ms/wslstorepage"
 pause 
 
-wsl --upgrade
+wsl --update
 $wsl_current_version = $(Get-ItemPropertyValue `
       -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Lxss `
       -Name DefaultVersion)

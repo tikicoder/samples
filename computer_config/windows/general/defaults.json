@@ -7,12 +7,18 @@
   "tmp_directory":"/tmp/general_setup_temp",
   "wsl_share_path":"\\\\wsl.localhost",
   "wsl_config_path":"/etc/wsl.conf",
-  "wsl_share": "/mnt/wsl",
-  "docker_distro": "tiki_container_desktop",
-  "docker_gropuid": 36257,
-  "docker_sock": "/mnt/wsl/shared-docker/docker.sock",
-  "docker_host_sock": "unix:///mnt/wsl/shared-docker/docker.sock",
-  "docker_host_tcp": "tcp://127.0.0.1:2375",
-  "docker_dir": "/mnt/wsl/shared-docker"
+  "wsl_share": "/mnt/wsl-share",
+  "unix_sock": "unix://",
+  "docker":{
+    "distro_name": "tiki_docker",
+    "host_name": "tiki_docker",
+    "username": "tiki_docker",
+    "wsl_config": "docker.wsl.conf",
+    "groupid": 36257,
+    "group": "grp_general_container",
+    "share_dir": "docker",
+    "sock": "docker.sock",
+    "host_tcp": "tcp://127.0.0.1:2375"
+  }
 }
 
