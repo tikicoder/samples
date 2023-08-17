@@ -56,7 +56,7 @@ foreach ( $file in $files_copy){
 }
 
 Write-Host "Running Script user_docker_init.sh"
-wsl -d $($general_defaults.main_distro) bash "$($general_defaults.tmp_directory)/user_docker_init.sh" "'$($general_defaults.docker_sock)'" "'$($general_defaults.docker_host_sock)'" "'$($general_defaults.docker_distro)'" "'$($general_defaults.docker_dir)'" "$($general_defaults.docker_gropuid)"
+wsl -d $($general_defaults.main_distro) bash "$($general_defaults.tmp_directory)/user_docker_init.sh" $general_defaults.docker.groupid "$($general_defaults.unix_sock)" "$($general_defaults.wsl_share)/$($general_defaults.docker.share_dir)" "$($general_defaults.docker.sock)"
 
 
 Write-Host "Running VS Code restore"
@@ -69,7 +69,5 @@ $vsbackup = $(Join-Path -Path $root_path_samples -ChildPath "general_programming
 if ( Test-Path $vsbackup ){
   & $vsbackup -isRestore $true -wsl_command $($general_defaults.main_distro) -skip_win $true
 }
-
-wsl -d $($general_defaults.docker_distro) "`${HOME}/.local/bin/docker_adduser.sh" "$local_user" $local_user_groupid $local_user_id "/mnt/wsl/instances/$($general_defaults.main_distro)/home/$local_user"
 
 wsl -d $($general_defaults.main_distro) rm -Rf $($general_defaults.tmp_directory)

@@ -96,14 +96,9 @@ function run-linux-docker {
   wsl --terminate $($general_defaults.docker.distro_name)
   Wait-Distro-Start -Distro $general_defaults.docker.distro_name
 
-  wsl -d $($general_defaults.docker.distro_name) -e bash "$($general_defaults.tmp_directory)/docker_init.sh" "$($general_defaults.tmp_directory)" "$($general_defaults.docker.group)" $general_defaults.docker.groupid "$($general_defaults.unix_sock)" "$($general_defaults.wsl_share)/$($general_defaults.docker.share_dir)" "$($general_defaults.docker.sock)"
-  wsl --terminate $($general_defaults.docker.distro_name)
-  Wait-Distro-Start -Distro $general_defaults.docker.distro_name
-  
-  wsl -d $($general_defaults.docker.distro_name) -e bash "$($general_defaults.tmp_directory)/docker_setup.sh" "$($general_defaults.tmp_directory)" "$($general_defaults.docker.host_tcp)" "$($general_defaults.docker.group)"
-  
-  wsl -d $($general_defaults.docker.distro_name) -e bash "$($general_defaults.tmp_directory)/finalize.sh" "$($general_defaults.tmp_directory)"
+  # Setup rest of PodMan here
 
+  wsl -d $($general_defaults.docker.distro_name) -e bash "$($general_defaults.tmp_directory)/finalize.sh" "$($general_defaults.tmp_directory)"
 
 }
 

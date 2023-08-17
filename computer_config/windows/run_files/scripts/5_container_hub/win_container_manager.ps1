@@ -47,6 +47,11 @@ function run-windows {
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
   }
 
+  if ((Test-Path -Path $tmp_dir_docker)) {
+    Remove-Item -Force -Confirm:$False -Recurse $tmp_dir_docker
+  }
+  
+
   dockerd --register-service
   Start-Service docker
   if(-not $?){
@@ -71,5 +76,5 @@ function run-windows {
     WaitUntilServices "Docker Engine" "Running"
   }
 
-  Remove-Item -Force -Confirm:$False -Recurse $tmp_dir_docker
+  docker context create lin --docker host=$($general_defaults.docker.host_tcp)
 }
