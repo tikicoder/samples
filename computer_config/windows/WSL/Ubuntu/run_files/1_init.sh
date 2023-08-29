@@ -171,15 +171,19 @@ echo "yq"
 # https://github.com/mikefarah/yq
 yq_version="latest"
 yq_version=$(echo "${yq_version}" | tr '[:upper:]' '[:lower:]')
-if [ $yq_version == "latest" ]; then
-  yq_version=$(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | jq -r '.tag_name')
-fi
+download_release_github "mikefarah" "yq" "yq_linux_amd64" "${yq_version}"
+# if [ $yq_version == "latest" ]; then
+#   yq_version=$(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | jq -r '.tag_name')
+# fi
 
-if [ -f "${user_home}/.local/bin/yq" ]; then
-  rm -f "${user_home}/.local/bin/yq"
-fi
-wget https://github.com/mikefarah/yq/releases/download/${yq_version}/yq_linux_amd64 -q -O ~/.local/bin/yq
+# if [ -f "${user_home}/.local/bin/yq" ]; then
+#   rm -f "${user_home}/.local/bin/yq"
+# fi
+# wget https://github.com/mikefarah/yq/releases/download/${yq_version}/yq_linux_amd64 -q -O ~/.local/bin/yq
+
+mv /tmp/github-release/yq_linux_amd64 ~/.local/bin/yq
 chmod +x ~/.local/bin/yq
+sudo rm /tmp/github-release/yq_linux_amd64
 
 echo "NVM"
 # NVM

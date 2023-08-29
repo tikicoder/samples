@@ -26,11 +26,16 @@ $local_user = $(wsl -d Ubuntu echo ``whoami``)
 $local_user_groupid = $(wsl -d Ubuntu echo ``id -u $local_user``)
 $local_user_id = $(wsl -d Ubuntu echo ``getent group $local_user `| `cut `-d: `-f3``)
 
+if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\download_release_github.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\download_release_github.sh"}
 if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\disable_sudo_pass.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\disable_sudo_pass.sh"}
 if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\base_init.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\base_init.sh"}
 
 # disable sudo password for default user
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\disable_sudo_pass.sh") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
+
+# disable sudo password for default user
+Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\download_release_github.sh") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\download_release_github.sh"
+
 
 # base init
 Copy-item -Path $(Join-Path -Path $scriptPath_init_mainset -ChildPath "base_init.sh") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\base_init.sh"

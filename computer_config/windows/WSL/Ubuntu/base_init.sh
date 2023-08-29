@@ -16,10 +16,17 @@ if [ ! $(command -v "realpath") ]; then
 fi
 
 base_dir="$(dirname $(realpath $0))"
+general_tmp_dir=$1
+current_user=$(echo `whoami`)
 
 cd ~
-current_user=$(echo `whoami`)
-bash "$base_dir/disable_sudo_pass.sh" "$current_user"
+if [ -f "${general_tmp_dir}/disable_sudo_pass.sh" ]; then
+    bash "$general_tmp_dir/disable_sudo_pass.sh" "$current_user"
+fi
+
+
+
+
 
 
 sudo apt list --upgradable
@@ -31,7 +38,7 @@ sudo apt -y install "python$(python3 -c 'import sys; print(f"{sys.version_info[:
 
 sudo apt install -y dos2unix
 
-mkdir "${HOME}/.local"
+mkdir -p "${HOME}/.local/bin"
 sudo chown -R $current_user:$current_user "${HOME}/.local"
 
 # This is creating a local python environment I can use as the user
@@ -46,3 +53,13 @@ if [ ! -f "${HOME}/.local/python/pip.conf" ]; then
 fi
 
 python3 -m pip install certifi
+
+if [ -f "${general_tmp_dir}/disable_sudo_pass.sh" ]; then
+    mv "$general_tmp_dir/disable_sudo_pass.sh" ~/.local/bin/disable_sudo_pass
+    sudo chown ${current_user}:${current_user} ~/.local/bin/disable_sudo_pass
+    sudo chmod 750 ~/.local/bin/disable_sudo_pass
+fi
+
+mv "$general_tmp_dir/download_release_github.sh" ~/.local/bin/download_release_github
+sudo chown ${current_user}:${current_user} ~/.local/bin/download_release_github
+sudo chmod 750 ~/.local/bin/download_release_github
