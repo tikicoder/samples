@@ -31,11 +31,13 @@ $section_prefix = "5_container_hub"
 
 $scripts_folder = "$(Join-Path -Path $scriptPath_init -ChildPath "scripts\$($section_prefix)")"
 
-# . "$(Join-Path -Path $scripts_folder -ChildPath "win_container_manager.ps1")"
-# run-windows
+# . "$(Join-Path -Path $scripts_folder -ChildPath "linux_docker_manager.ps1")"
+# run-linux-docker
 
-. "$(Join-Path -Path $scripts_folder -ChildPath "linux_docker_manager.ps1")"
-run-linux-docker
+. "$(Join-Path -Path $scripts_folder -ChildPath "win_container_manager.ps1")"
+run-windows
+
+
 
 # Windows 11 supports nested virtulization for WSL. So once I am on Windows 11 I think some of this will go away.
 # https://learn.microsoft.com/en-us/windows/wsl/wsl-config#configuration-setting-for-wslconfig
