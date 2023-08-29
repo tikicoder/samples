@@ -50,6 +50,8 @@ Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "genera
 if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\wsl.conf"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\wsl.conf"}
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\config\wsl.conf") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\wsl.conf"
 
+wsl -d $($general_defaults.docker.distro_name) -e sed -i "/^\[network\]$/a hostname=$(hostname)-ubuntu" /etc/wsl.conf
+
 wsl --terminate $($general_defaults.main_distro)
 Wait-Distro-Start -Distro $general_defaults.main_distro
 
