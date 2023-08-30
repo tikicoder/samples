@@ -85,8 +85,10 @@ echo "install normal zip/unzip"
 # adding the ability to zip/unzip
 sudo apt-get install -y zip unzip
 
-echo "Insall MS packages "
-wget "https://packages.microsoft.com/config/ubuntu/$(cat /etc/os-release | grep "VERSION_ID" | awk -F= '{print $2}' | tr -d '"')/packages-microsoft-prod.deb" -O packages-microsoft-prod.deb
+echo "Insall MS packages"
+declare repo_version=$(if command -v lsb_release &> /dev/null; then lsb_release -r -s; else grep -oP '(?<=^VERSION_ID=).+' /etc/os-release | tr -d '"'; fi)
+wget https://packages.microsoft.com/config/ubuntu/$repo_version/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+
 sudo dpkg -i packages-microsoft-prod.deb
 rm packages-microsoft-prod.deb
 sudo apt-get update
@@ -171,7 +173,7 @@ echo "yq"
 # https://github.com/mikefarah/yq
 yq_version="latest"
 yq_version=$(echo "${yq_version}" | tr '[:upper:]' '[:lower:]')
-download_release_github "mikefarah" "yq" "yq_linux_amd64" "${yq_version}"
+download_release_github "derailed" "k9s" "k9s_Linux_amd64.tar.gz" "${yq_version}"
 # if [ $yq_version == "latest" ]; then
 #   yq_version=$(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | jq -r '.tag_name')
 # fi
@@ -318,14 +320,28 @@ echo "poetry"
 curl -sSL https://install.python-poetry.org | python3 -
 
 echo "dotnet"
+# Make sure things are removed
+# https://learn.microsoft.com/en-us/dotnet/core/install/linux-package-mixup?pivots=os-linux-ubuntu#i-need-a-version-of-net-that-isnt-provided-by-my-linux-distribution
+
+sudo apt remove 'dotnet*' 'aspnet*' 'netstandard*'
+if [ ! -f "/etc/apt/preferences.d/dotnet" ]; then
+  sudo touch /etc/apt/preferences.d/dotnet
+fi
+
+sudo tee /etc/apt/preferences.d/dotnet << EOF
+Package: dotnet* aspnet* netstandard*
+Pin: origin "archive.ubuntu.com"
+Pin-Priority: -10
+EOF
+
 # Install dotNet
 # https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu
 
+sudo apt-get update;
 echo "dotNet LTS (currently .NET 6)"
 # Install dotNet LTS
-sudo apt-get update; \
+ 
   sudo apt-get install -y apt-transport-https && \
-  sudo apt-get update && \
   sudo apt-get install -y dotnet-sdk-6.0
 
 echo "dotNet 7"
