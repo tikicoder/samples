@@ -195,9 +195,10 @@ mkdir -p /tmp/7zip/contents
 wget $sevenZip_version_url -q -O /tmp/7zip/7zip.tar.xz
 pushd /tmp/7zip/contents
 
-tar -xvzf ../7zip.tar.xz ./
-
+tar -xvzf ../7zip.tar.xz
+mv ./7zz* "${user_home}/.local/bin/"
 popd
+rm -Rf /tmp/7zip
 
 echo "NVM"
 # NVM
