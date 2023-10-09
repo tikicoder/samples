@@ -187,6 +187,18 @@ mv /tmp/github-release/yq_linux_amd64 ~/.local/bin/yq
 chmod +x ~/.local/bin/yq
 sudo rm /tmp/github-release/yq_linux_amd64
 
+echo "7zip"
+# https://www.7-zip.org/download.html
+sevenZip_version="2301-linux-x64"
+sevenZip_version_url="https://www.7-zip.org/a/7z${sevenZip_version}.tar.xz"
+mkdir -p /tmp/7zip/contents
+wget $sevenZip_version_url -q -O /tmp/7zip/7zip.tar.xz
+pushd /tmp/7zip/contents
+
+tar -xvzf ../7zip.tar.xz ./
+
+popd
+
 echo "NVM"
 # NVM
 # https://github.com/nvm-sh/nvm
