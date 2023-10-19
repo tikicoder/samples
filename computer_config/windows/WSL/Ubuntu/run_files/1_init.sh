@@ -313,6 +313,7 @@ exec bash
 # https://github.com/ahmetb/kubectx
 kubectl krew install ctx
 kubectl krew install ns
+kubectl krew install aks
 
 # # GCP CLI
 # # https://cloud.google.com/sdk/docs/downloads-docker
