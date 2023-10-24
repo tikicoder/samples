@@ -173,7 +173,8 @@ echo "yq"
 # https://github.com/mikefarah/yq
 yq_version="latest"
 yq_version=$(echo "${yq_version}" | tr '[:upper:]' '[:lower:]')
-download_release_github "derailed" "k9s" "k9s_Linux_amd64.tar.gz" "${yq_version}"
+yq_binary="yq_linux_amd64"
+download_release_github "mikefarah" "yq" "${yq_binary}" "${yq_version}"
 # if [ $yq_version == "latest" ]; then
 #   yq_version=$(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | jq -r '.tag_name')
 # fi
@@ -183,9 +184,9 @@ download_release_github "derailed" "k9s" "k9s_Linux_amd64.tar.gz" "${yq_version}
 # fi
 # wget https://github.com/mikefarah/yq/releases/download/${yq_version}/yq_linux_amd64 -q -O ~/.local/bin/yq
 
-mv /tmp/github-release/yq_linux_amd64 ~/.local/bin/yq
+mv "/tmp/github-release/${yq_binary}" ~/.local/bin/yq
 chmod +x ~/.local/bin/yq
-sudo rm /tmp/github-release/yq_linux_amd64
+sudo chown $user_name:$user_name
 
 echo "7zip"
 # https://www.7-zip.org/download.html
@@ -313,7 +314,62 @@ exec bash
 # https://github.com/ahmetb/kubectx
 kubectl krew install ctx
 kubectl krew install ns
+
+# https://github.com/Azure/kubectl-aks
 kubectl krew install aks
+
+# https://github.com/stern/stern
+# Stern allows you to tail multiple pods on Kubernetes and multiple containers within the pod. Each result is color coded for quicker debugging.
+kubectl krew install stern
+
+# https://github.com/kubepug/kubepug
+# Downloads a data.json generated containing Kubernetes APIs deprecation information
+# Verifies the current Kubernetes cluster or input files checking whether exists objects in this deprecated API Versions, allowing the user to check before migrating
+kubectl krew install deprecations
+
+# https://github.com/aquasecurity/kubectl-who-can
+# Shows which subjects have RBAC permissions to VERB [TYPE | TYPE/NAME | NONRESOURCEURL] in Kubernetes.
+kubectl krew install who-can
+
+# https://github.com/corneliusweig/rakkess
+# Review Access - kubectl plugin to show an access matrix for server resources
+kubectl krew install access-matrix
+
+# https://github.com/zegl/kube-score
+# kube-score is a tool that performs static code analysis of your Kubernetes object definitions.
+kubectl krew install score
+
+# https://github.com/corneliusweig/ketall
+# Kubectl plugin to show really all kubernetes resources
+kubectl krew install get-all
+
+# https://github.com/replicatedhq/outdated
+# kubectl outdated is a kubectl plugin that displays all out-of-date images running in a Kubernetes cluster.
+kubectl krew install outdated
+
+# https://github.com/ahmetb/kubectl-tree
+# A kubectl plugin to explore ownership relationships between Kubernetes objects through ownersReferences on the objects.
+kubectl krew install tree
+
+# k9s
+
+https://github.com/derailed/releases/latest/download/yq_linux_amd64
+https://github.com/derailed/k9s/releases/download/v0.27.4/k9s_Linux_amd64
+https://github.com/derailed/k9s/releases/download/v0.27.4/k9s_Linux_amd64.tar.gz
+k9_version="latest"
+k9_version=$(echo "${k9_version}" | tr '[:upper:]' '[:lower:]')
+k9_binary="k9s"
+k9_filename="${k9_binary}_Linux_amd64.tar.gz"
+download_release_github "derailed" "k9s" "${k9_filename}" "${k9_version}"
+
+mkdir -p "/tmp/github-release/${k9_binary}"
+pushd "/tmp/github-release/${k9_binary}"
+tar -xzf ../$k9_filename
+mv "./${k9_binary}" ~/.local/bin/k9s
+chmod +x ~/.local/bin/k9s
+popd
+sudo rm -Rf "/tmp/github-release/${k9_binary}"
+sudo rm -f "/tmp/github-release/${k9_filename}"
 
 # # GCP CLI
 # # https://cloud.google.com/sdk/docs/downloads-docker
