@@ -31,8 +31,8 @@ $section_prefix = "5_container_hub"
 
 $scripts_folder = "$(Join-Path -Path $scriptPath_init -ChildPath "scripts\$($section_prefix)")"
 
-# . "$(Join-Path -Path $scripts_folder -ChildPath "linux_docker_manager.ps1")"
-# run-linux-docker
+. "$(Join-Path -Path $scripts_folder -ChildPath "linux_docker_manager.ps1")"
+run-linux-docker
 
 . "$(Join-Path -Path $scripts_folder -ChildPath "win_container_manager.ps1")"
 run-windows
