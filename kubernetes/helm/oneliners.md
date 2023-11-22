@@ -5,7 +5,7 @@
 #### Bash
 helm list -A | grep "replace_with_string" | awk -F' ' '{print $1}' | while read ns; do helm uninstall -n $ns $ns; done
 
-helm list -A -o json | jq -rc ".[] | select(.name | ascii_downcase | startswith(\"platform\")) | .name" | while read ns; do helm uninstall -n $ns $ns; done
+helm list -A -o json | jq -rc ".[] | select(.name | ascii_downcase | startswith(\"replace_with_string\")) | .name" | while read ns; do helm uninstall -n $ns $ns; done
 
 #### Powershell v7+
 helm list -A -o json | ConvertFrom-Json -Depth 10 | ForEach-Object {if(($_.name -ilike 'replace_with_string-*')){ helm uninstall -n $_.name $_.name }}
