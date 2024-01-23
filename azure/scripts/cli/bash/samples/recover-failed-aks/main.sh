@@ -77,11 +77,11 @@ echo "AKS Resource Group: $aks_resource_group"
 echo "AKS Name: $aks_name"
 
 
+if [ $update_instances -gt 0 ]; then
+  update_aks_instances
+fi
+
 if [ $update_instances_only -lt 1 ]; then
   Write-Host "Processing AKS - $($aks_resource_group) $($aks_name)"
   az resource update --subscription $subscription_id --ids /subscriptions/$subscription_id/resourceGroups/$aks_resource_group/providers/Microsoft.ContainerService/managedClusters/$aks_name
-fi
-
-if [ $update_instances -gt 0 ]; then
-  update_aks_instances
 fi

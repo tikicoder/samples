@@ -69,11 +69,11 @@ function Update-AKSInstance{
   }
 }
 
+if($updateVMInstances -or $updateVMInstancesOnly){
+  Update-AKSInstance
+}
+
 if(-not $updateVMInstancesOnly){
   Write-Host "Processing AKS - $($resourcegroup) $($name)"
   az resource update --subscription $subscription --ids /subscriptions/$subscription/resourceGroups/$resourcegroup/providers/Microsoft.ContainerService/managedClusters/$name
-}
-
-if($updateVMInstances -or $updateVMInstancesOnly){
-  Update-AKSInstance
 }
