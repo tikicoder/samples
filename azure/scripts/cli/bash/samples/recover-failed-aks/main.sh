@@ -67,7 +67,7 @@ function update_aks_instances(){
   (az vmss list --subscription $subscription_id -g $rg_node_aks --query "[].name" -o json) | jq -r ".[]" | while read -r vmss; do 
     (az vmss list-instances --subscription $subscription_id -g $rg_node_aks --name $vmss --query "[].instanceId" -o json) | jq -r ".[]" | while read -r instance; do 
       echo "Processing VMSS ${rg_node_aks} - ${vmss} - ${instance}"
-      az vmss update-instances --subscription $subscription_id -g $rg_node_aks  --name vmss --instance-id $instance
+      az vmss update-instances --subscription $subscription_id -g $rg_node_aks  --name $vmss --instance-id $instance
     done
   done
 }
