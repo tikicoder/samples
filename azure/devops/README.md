@@ -1,0 +1,1 @@
+General Azure DevOps Samples. For Scripts please see the general scripts folder
