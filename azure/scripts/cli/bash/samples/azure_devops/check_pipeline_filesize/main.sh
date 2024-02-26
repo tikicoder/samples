@@ -34,3 +34,5 @@ az devops invoke \
   --area pipelines --resource preview --api-version 7.1 --http-method post \
   --route-parameters pipelineId=${pipeline_id} project="${project}" --in-file $tmp_invoke_file \
   | jq -r ".finalYaml | length/1024/1024"
+
+  rm $tmp_invoke_file
