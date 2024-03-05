@@ -41,25 +41,25 @@ param(
 
 if ($help -eq $true)
 {
-    Get-Help $MyInvcation.MyCommand.Path -Full
+    Get-Help $MyInvocation.MyCommand.Path -Full
     exit
 }
 
 if([string]::IsNullOrWhiteSpace($organization)){
   Write-Error "Organization cannot be empty"
-  Get-Help $MyInvcation.MyCommand.Path -Full
+  Get-Help $MyInvocation.MyCommand.Path -Full
   exit 1
 }
 
 if([string]::IsNullOrWhiteSpace($organization)){
   Write-Error "Prganization cannot be empty"
-  Get-Help $MyInvcation.MyCommand.Path -Full
+  Get-Help $MyInvocation.MyCommand.Path -Full
   exit 1
 }
 
 if([string]::IsNullOrWhiteSpace($pipelineId)){
   Write-Error "Pipeline cannot be empty"
-  Get-Help $MyInvcation.MyCommand.Path -Full
+  Get-Help $MyInvocation.MyCommand.Path -Full
   exit 1
 }
 
