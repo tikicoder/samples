@@ -4,3 +4,6 @@
 memory=3GB
 swap=6GB
 processors=4
+localhostForwarding=true
+nestedVirtualization=true
+guiApplications=true
