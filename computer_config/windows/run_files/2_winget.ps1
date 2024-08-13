@@ -74,6 +74,10 @@ install-app-winget -app_name "Microsoft.WindowsTerminal"
 
 install-app-winget -app_name "IrfanSkiljan.IrfanView"
 
+
+install-app-winget -app_name "Kubernetes.kubectl"
+install-app-winget -app_name "Microsoft.Azure.Kubelogin"
+
 # Atom has been sunsetted and is now in archive mode
 # https://github.blog/2022-06-08-sunsetting-atom/
 # https://github.com/atom
