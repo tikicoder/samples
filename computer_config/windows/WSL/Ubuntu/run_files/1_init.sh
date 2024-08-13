@@ -120,6 +120,9 @@ sudo apt install -y graphviz
 echo "install powershell"
 sudo apt-get install -y powershell
 
+# look into asds
+# https://asdf-vm.com/
+
 # This is designed to have Node use the Same CA as python so if something custom is there you should be good
 if [ $(grep -ic "export NODE_EXTRA_CA_CERTS=" "${user_bash_file}" ) -lt 1  ]; then
   echo "" >> "${user_bash_file}"
