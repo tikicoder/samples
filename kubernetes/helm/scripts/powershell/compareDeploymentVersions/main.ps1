@@ -74,7 +74,7 @@ function Check-HelmDeployments{
             $deploymentVersion[$deploymentVersionKey] = @{
                 name = $deployment.name
                 namespace = $deployment.namespace
-                version = $deployment.app_version
+                version = ($isMainContext ?($deployment.app_version) :$null)
                 notInMain = (-not $isMainContext)
                 versions = @{
                     $kubeContext = @{
@@ -170,6 +170,7 @@ if($deploymentsInError.Keys.Count -gt 0){
         Write-Host "Namespace: $($deploymentKey)"
         foreach($deployment in $deploymentsInError[$deploymentKey].GetEnumerator()){            
             Write-Host "Name: $($deployment.Value.name)"
+            Write-Host "notInMain: $($deployment.Value.notInMain)"
             Write-Host "version: $($deployment.Value.version)"
             foreach($mismatch in $deployment.Value.mismatch.GetEnumerator()){
                 Write-Host "  context: $($mismatch.Key)"
