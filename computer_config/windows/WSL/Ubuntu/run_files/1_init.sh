@@ -62,6 +62,15 @@ fi
 EOF
 fi
 
+if [ $(grep -ic "\"\$HOME/bin/go/bin\"" "${user_home}/.profile") -lt 1 ]; then
+  cat >> "${user_home}/.profile" << EOF
+# set PATH so it includes user's private golang bin if it exists
+if [ -d "\$HOME/.local/bin/go/bin" ]; then
+    PATH="\$HOME/.local/bin/go/bin:\$PATH"
+fi
+EOF
+fi
+
 if [ $(grep -ic "\"\$HOME/.local/bin/go/bin\"" "${user_home}/.profile") -lt 1 ]; then
   cat >> "${user_home}/.profile" << EOF
 # set PATH so it includes user's private golang bin if it exists
