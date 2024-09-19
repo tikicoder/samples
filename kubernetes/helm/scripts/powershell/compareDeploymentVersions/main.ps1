@@ -54,7 +54,7 @@ if($null -ieq $compareContextDetails){
     throw "compareContextDetails is required"
 }
 
-function Check-HelmDeployments{
+function Test-HelmDeployment{
     param(
         [string]$deploymentNameRegex,
         [string]$deploymentNamespaceRegex,
@@ -132,7 +132,7 @@ foreach($kubernetesContext in $compareKubernetesContextMain){
     $null = (kubectl config use-context $kubernetesContext)
     
     Write-Host "Checking $($mainContext) - $($kubernetesContext)"
-    $null = (Check-HelmDeployments `
+    $null = (Test-HelmDeployment `
         -deploymentNameRegex $deploymentNameRegex -deploymentNamespaceRegex $deploymentNamespaceRegex `
         -excludeDeploymentNameRegex $excludeDeploymentNameRegex -excludeDeploymentNamespaceRegex $excludeDeploymentNamespaceRegex `
         -deploymentVersion $deploymentVersion -isMainContext `
@@ -145,7 +145,7 @@ foreach($environment in $compareKubernetesContext.GetEnumerator()){
         $null = (kubectl config use-context $kubernetesContext)
 
         Write-Host "Checking $($mainContext) - $($kubernetesContext)"
-        $null = (Check-HelmDeployments `
+        $null = (Test-HelmDeployment `
             -deploymentNameRegex $deploymentNameRegex -deploymentNamespaceRegex $deploymentNamespaceRegex `
             -excludeDeploymentNameRegex $excludeDeploymentNameRegex -excludeDeploymentNamespaceRegex $excludeDeploymentNamespaceRegex `
             -deploymentVersion $deploymentVersion `
