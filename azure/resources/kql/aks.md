@@ -17,6 +17,14 @@ ContainerLogV2
 | order by ErrorCount
 
 
+```
+
+## Generate Query for all Entra Users
+
+```
+AKSAuditAdmin
+| extend UserDetails = parse_json(User)
+| where UserDetails.username matches regex "^([a-z0-9]{8}-)([a-z0-9]{4}-)([a-z0-9]{4}-)([a-z0-9]{4}-)([a-z0-9]{12})$"
 
 ```
 
