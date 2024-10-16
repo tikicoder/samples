@@ -31,7 +31,7 @@ tmp_invoke_file=$(mktemp)
 echo "${default_bodyjson/\%refname\%/"$default_reporef"}" > $tmp_invoke_file
 
 az devops invoke \
-  --area pipelines --resource preview --api-version 7.1 --http-method post \
+  --area pipelines --resource runs --api-version 7.2-preview --http-method post \
   --route-parameters pipelineId=${pipeline_id} project="${project}" --organization "${organization}" --in-file $tmp_invoke_file \
   | jq -r ".finalYaml | length/1024/1024"
 

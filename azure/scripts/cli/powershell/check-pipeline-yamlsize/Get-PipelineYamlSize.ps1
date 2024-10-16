@@ -74,7 +74,7 @@ Write-Host "project: $project"
 Write-Host "organization: $organization"
 Write-Host "pipelineId: $pipelineId"
 
-az devops invoke --area pipelines --resource preview --api-version 7.1 --http-method post `
+az devops invoke --area pipelines --resource runs --api-version 7.2-preview --http-method post `
   --route-parameters pipelineId=$pipelineId project="$($project)" --organization "$($organization)" `
   --in-file (Join-Path -Path $tmpStorageDirectroy.FullName -ChildPath "body.json") | ConvertFrom-Json | Select-Object {$_.finalYaml.length/1024/1024}
 
