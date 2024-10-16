@@ -76,6 +76,7 @@ fi
 process_login_request $1
 
 if [ ! -z "${DEFAULT_AZURE_SUBSCRIPTION}" ]; then
+    az account set --subscription "${DEFAULT_AZURE_SUBSCRIPTION}"
     if [ "$v2_login_experience" != "off" ]; then
         az config set core.login_experience_v2=$v2_login_experience
     fi
