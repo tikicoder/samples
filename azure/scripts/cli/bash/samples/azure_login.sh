@@ -4,6 +4,8 @@ function get_v2_login_experience(){
     v2_login_experience=$(az config get core.login_experience_v2 --only-show-errors 2>/dev/null)
     if [ "$v2_login_experience" == "" ]; then
         v2_login_experience="on"
+    else
+        v2_login_experience=$(echo $v2_login_experience | jq -r ".value")
     fi
 
     echo $v2_login_experience
@@ -34,7 +36,7 @@ function process_login_request(){
     v2_login_experience=$(get_v2_login_experience)
 
     if [ "$v2_login_experience" != "off" ]; then
-        az config set core.login_experience_v2=off
+        az config set --only-show-errors core.login_experience_v2=off
     fi
     
     lastTenantId=$(az account list --query "[].homeTenantId" | jq -r ". | unique | .[-1]")
@@ -48,7 +50,7 @@ function process_login_request(){
     done
 
     if [ "$v2_login_experience" != "off" ]; then
-        az config set core.login_experience_v2=$v2_login_experience
+        az config set --only-show-errors core.login_experience_v2=$v2_login_experience
     fi 
     echo "There are multiple tenants please ensure correct is set to default"
     echo "current default subscription"
@@ -56,28 +58,27 @@ function process_login_request(){
     
     return
     fi
+
+    azcli_login "${1}"
 }
 
 if [ ! -z "${DEFAULT_AZURE_SUBSCRIPTION}" ]; then
     v2_login_experience=$(get_v2_login_experience)
 
     if [ "$v2_login_experience" != "off" ]; then
-        az config set core.login_experience_v2=off
+        az config set --only-show-errors core.login_experience_v2=off
     fi
 fi
 
-
-
 if [ $# -lt 1 ]; then
     process_login_request
-    exit
+else 
+    process_login_request $1
 fi
-
-process_login_request $1
 
 if [ ! -z "${DEFAULT_AZURE_SUBSCRIPTION}" ]; then
     az account set --subscription "${DEFAULT_AZURE_SUBSCRIPTION}"
-    if [ "$v2_login_experience" != "off" ]; then
-        az config set core.login_experience_v2=$v2_login_experience
+    if [ "$v2_login_experience" == "on" ]; then
+        az config set --only-show-errors core.login_experience_v2=$v2_login_experience
     fi
 fi
