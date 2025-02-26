@@ -47,12 +47,22 @@ EOF
 fi
 
 if [ $(grep -ic "alias k=kubectl" "${user_aliases}" ) -lt 1  ]; then
-  mkdir -p "${user_home}/.aws"
-  # https://hub.docker.com/r/amazon/aws-cli
-
   echo "alias k=kubectl" >> "${user_aliases}"
   echo "" >> "${user_aliases}"
 fi
+
+# move to script so can check if any exists
+# if [ $(grep -ic "alias dockimage-clear=docker image ls -a | grep -iv \"IMAGE\" | awk -F" " '{print \$3}'" "${user_aliases}" ) -lt 1  ]; then
+
+#   echo "alias dockimage-clear=docker image ls -a | grep -iv \"IMAGE\" | awk -F" " '{print \$3}' | xargs docker image rm" >> "${user_aliases}"
+#   echo "" >> "${user_aliases}"
+# fi
+
+# if [ $(grep -ic "alias dockcontainer-clear=docker container ls -a | grep -iv \"IMAGE\" | awk -F" " '{print \$1}'" "${user_aliases}" ) -lt 1  ]; then
+
+#   echo "alias dockcontainer-clear=docker container ls -a | grep -iv \"IMAGE\" | awk -F" " '{print \$1}' | xargs docker container rm" >> "${user_aliases}"
+#   echo "" >> "${user_aliases}"
+# fi
 
 # https://docs.docker.com/network/bridge/#differences-between-user-defined-bridges-and-the-default-bridge
 # using --network host while work to figure the bridge config out
