@@ -28,6 +28,8 @@ if(-not $is_admin_context ){
 }
 
 $section_prefix = "5_container_hub"
+Write-Host "Update to use ubuntu as docker. Windows 11 WSL support Virtualization"
+exit
 
 $scripts_folder = "$(Join-Path -Path $scriptPath_init -ChildPath "scripts\$($section_prefix)")"
 

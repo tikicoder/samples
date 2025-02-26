@@ -4,6 +4,7 @@
 memory=3GB
 swap=6GB
 processors=4
+vmIdleTimeout=3600000
 localhostForwarding=true
 nestedVirtualization=true
 guiApplications=true
