@@ -18,8 +18,9 @@ union withsource=_TableName *
 
 ```kql
 VMComputer 
-| where TimeGenerated >= ago(4h)
-| summarize sum(Cpus) by tolower(replace_regex(AzureSize, @'^([A-Za-z]{1,}_)([a-zA-Z]{1,})(\d)(.*)', @'\1\2\4')), bin(TimeGenerated, 1h)
+| where TimeGenerated >= ago(14d)
+| summarize sum(Cpus) by strcat(AzureLocation, ' - ', tolower(replace_regex(AzureSize, @'^([A-Za-z]{1,}_)([a-zA-Z]{1,})(\d)(.*)', @'\1\2\4'))), bin(TimeGenerated, 1d)
+| render timechart  
 
 
 ```
