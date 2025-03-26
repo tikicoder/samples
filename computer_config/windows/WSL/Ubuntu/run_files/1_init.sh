@@ -245,7 +245,7 @@ az config set auto-upgrade.enable=yes
 # https://docs.microsoft.com/en-us/cli/azure/azure-cli-extensions-overview
 az config set extension.use_dynamic_install=yes_prompt
 
-# this will install and upgradeaz bicep
+# this will install and upgrade az bicep
 az bicep upgrade
 
 # Without Prompt
