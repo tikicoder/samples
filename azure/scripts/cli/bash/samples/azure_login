@@ -1,0 +1,58 @@
+#!/bin/bash
+
+function azcli_login(){
+    if [ $# -gt 0 ]; then
+        if [ ! -z "$1" ]; then
+            az login --tenant $1 --output none > /dev/null
+            return
+        fi
+    fi   
+
+    az login --scope https://management.core.windows.net//.default --output none > /dev/null
+}
+
+function process_login_request(){
+    if [ $# -lt 1 ]; then
+        if [ ! -z "${DEFAULT_AZURE_TENANT}" ]; then
+            azcli_login "${DEFAULT_AZURE_TENANT}"
+            return
+        fi
+
+        uniqueTenantCount=$(az account list --query "[].homeTenantId" | jq -r ". | unique | length")
+        if [ $uniqueTenantCount -lt 1 ]; then
+            azcli_login
+            return
+        fi
+    
+        lastTenantId=$(az account list --query "[].homeTenantId" | jq -r ". | unique | .[-1]")
+        for tenantId in $(az account list --query "[].homeTenantId" | jq -r ". | unique | .[]"); do
+            echo "Authenticating ${tenantId}"
+            azcli_login "${tenantId}"
+            echo "Please close the browser to prevent any caching issues and press enter to continue"
+            if [ $tenantId != $lastTenantId ]; then
+                read -p "Press enter to continue"
+            fi
+        done
+
+        echo "There are multiple tenants please ensure correct is set to default"
+        echo "current default subscription"
+        az account show
+        
+        return
+    fi
+
+    azcli_login "${1}"
+}
+
+if [ $# -lt 1 ]; then
+    process_login_request
+else 
+    process_login_request $1
+fi
+
+if [ ! -z "${DEFAULT_AZURE_SUBSCRIPTION}" ]; then
+    az account set --subscription "${DEFAULT_AZURE_SUBSCRIPTION}"
+    if [ "$v2_login_experience" == "on" ]; then
+        az config set --only-show-errors core.login_experience_v2=$v2_login_experience
+    fi
+fi
