@@ -48,8 +48,14 @@ fi
 
 if [ $(grep -ic "alias k=kubectl" "${user_aliases}" ) -lt 1  ]; then
   echo "alias k=kubectl" >> "${user_aliases}"
-  echo "" >> "${user_aliases}"
 fi
+if [ $(grep -ic "ie-edge=" "${user_aliases}" ) -lt 1  ]; then
+  echo "alias ie-edge='2>/dev/null 1>&2 microsoft-edge --enable-unsafe-swiftshader &'" >> "${user_aliases}"
+fi
+if [ $(grep -ic "chrome-google=" "${user_aliases}" ) -lt 1  ]; then
+  echo "alias chrome-google='2>/dev/null 1>&2 google-chrome --disable-gpu &'" >> "${user_aliases}"
+fi
+echo "" >> "${user_aliases}"
 
 # move to script so can check if any exists
 # if [ $(grep -ic "alias dockimage-clear=docker image ls -a | grep -iv \"IMAGE\" | awk -F" " '{print \$3}'" "${user_aliases}" ) -lt 1  ]; then
