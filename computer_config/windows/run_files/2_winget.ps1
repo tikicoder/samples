@@ -58,6 +58,8 @@ install-app-winget -app_name "Microsoft.dotNetFramework"
 
 install-latest-dotnet
 
+install-app-winget -app_name "Notepad++.Notepad++"
+
 install-app-winget -app_name "7zip.7zip"
 
 install-app-winget -app_name "WiresharkFoundation.Wireshark"
