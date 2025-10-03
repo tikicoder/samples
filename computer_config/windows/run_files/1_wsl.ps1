@@ -11,10 +11,13 @@ Write-Host "Please install WSL from the MS Store"
 Write-Host "https://aka.ms/wslstorepage"
 pause 
 
+Write-Host "Ensure Latest Version of WSL installed"
 wsl --update
-$wsl_current_version = $(Get-ItemPropertyValue `
-      -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Lxss `
-      -Name DefaultVersion)
+
+Write-Host "Ensure WSLv2 is configured"
+wsl --install --no-distribution
+
+$wsl_current_version = [int]::Parse((((wsl --status)[0] -split ':')[1]).Replace("`0", "").Trim())
 if(-not $?){
   $wsl_current_version = 1
 }
