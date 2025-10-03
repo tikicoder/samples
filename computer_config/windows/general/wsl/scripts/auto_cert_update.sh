@@ -7,7 +7,8 @@ pushd /tmp/missing_certs
 function find_ssl_ca(){
   cert_domain=$1
   cert_domain_file=$2
-  openssl s_client -showcerts -verify 5 -connect "${cert_domain}:443" < /dev/null | awk -v awkcert="$cert_domain_file" '/BEGIN/,/END/{ if(/BEGIN/){a++}; out=""awkcert""a".pem"; print >out}'; 
+  echo "Processing Cert Domain $cert_domain..."
+  timeout 10 openssl s_client -showcerts -verify 5 -connect "${cert_domain}:443" < /dev/null | awk -v awkcert="$cert_domain_file" '/BEGIN/,/END/{ if(/BEGIN/){a++}; out=""awkcert""a".pem"; print >out}'; 
 }
 
 find_ssl_ca "dl.k8s.io" "dl_k8s_io"
