@@ -21,36 +21,19 @@ if ($(wsl -l | Where-Object {$_ -ieq $($general_defaults.main_distro) -or $_ -ie
 
 
 Wait-Distro-Start -Distro $general_defaults.main_distro
-while(-not (Test-Path -Path "$($general_defaults.wsl_share_path)\$($general_defaults.main_distro)$($general_defaults.tmp_directory)")){
-	Write-Host "Directory Missing - Distro: $($($general_defaults.main_distro)) - Path: $( $general_defaults.tmp_directory)"
-	wsl -d $($general_defaults.main_distro) -e mkdir -p "$($general_defaults.tmp_directory)"
-}
-Write-Host "Directory Exists - Distro: $($($general_defaults.main_distro)) - Path: $( $general_defaults.tmp_directory)"
+Ensure-TempDirectory-Populated `
+  -Distro $general_defaults.main_distro `
+  -rootPath $general_defaults.root_path `
+  -wslSharePath $general_defaults.wsl_share_path `
+  -tmpDirectoryPath $general_defaults.tmp_directory `
+  -scriptPathInitMainset $scriptPath_init_mainset
 
 $local_user = $(wsl -d Ubuntu echo ``whoami``)
 $local_user_groupid = $(wsl -d Ubuntu echo ``id -u $local_user``)
 $local_user_id = $(wsl -d Ubuntu echo ``getent group $local_user `| `cut `-d: `-f3``)
 
-if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\download_release_github.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\download_release_github.sh"}
-if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\disable_sudo_pass.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\disable_sudo_pass.sh"}
-if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\base_init.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\base_init.sh"}
-
-# disable sudo password for default user
-Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\disable_sudo_pass.sh") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\disable_sudo_pass.sh"
-
-# disable sudo password for default user
-Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\download_release_github.sh") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\download_release_github.sh"
-
-
-# base init
-Copy-item -Path $(Join-Path -Path $scriptPath_init_mainset -ChildPath "base_init.sh") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\base_init.sh"
-
-wsl -d $general_defaults.main_distro -e bash "$($general_defaults.tmp_directory)/base_init.sh" "'$($general_defaults.tmp_directory)'"
-
-
-if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"}
-Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\user_docker_init.sh") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\user_docker_init.sh"
-
+wsl -d $general_defaults.main_distro -e bash "$($general_defaults.tmp_directory)/base_init.sh" "$($general_defaults.tmp_directory)"
+exit
 
 if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\wsl.conf"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\wsl.conf"}
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\config\wsl.conf") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\wsl.conf"
@@ -59,7 +42,13 @@ wsl -d $($general_defaults.docker.distro_name) -e sed -i "/^\[network\]$/a hostn
 
 wsl --terminate $($general_defaults.main_distro)
 Wait-Distro-Start -Distro $general_defaults.main_distro
-
+Ensure-TempDirectory-Populated `
+  -Distro $general_defaults.main_distro `
+  -rootPath $general_defaults.root_path `
+  -wslSharePath $general_defaults.wsl_share_path `
+  -tmpDirectoryPath $general_defaults.tmp_directory `
+  -scriptPathInitMainset $scriptPath_init_mainset
+  
 # General Run steps
 $files_copy = $(Get-ChildItem "$($scriptPath_init_mainset)/run_files/*.ps1" -File | Sort-Object -Property Name)
 foreach ( $file in $files_copy){
