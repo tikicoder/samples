@@ -23,3 +23,4 @@ Wait-Distro-Start -Distro $general_defaults.main_distro
 
 wsl -d $general_defaults.main_distro sudo apt update 
 wsl -d $general_defaults.main_distro sudo apt upgrade -y
+wsl -d $general_defaults.main_distro sudo apt autoremove -y
