@@ -6,7 +6,7 @@
 # There is a new sync setting tool, but this was done so I could easily sync settings from work and personal
 
 param (
-  [boolean] $isRestore = $false,
+  [switch] $isRestore,
   [string] $pathToVSSettings = "${env:APPDATA}/Code/User/settings.json",
   [string] $pathToVSSettingsBak = "${PSScriptRoot}/settings.bak",
   [string] $wsl_command = $null,
@@ -15,7 +15,6 @@ param (
 )
 
 if ( $isRestore ) {
-
   $vsCodeCustomStoreSettings = $(Get-Content $pathToVSSettingsBak | ConvertFrom-Json )
 
   if (-not $skip_win){
