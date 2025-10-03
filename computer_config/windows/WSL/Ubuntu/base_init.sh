@@ -33,10 +33,11 @@ sudo apt list --upgradable
 sudo apt update
 sudo apt upgrade -y
 
-sudo apt install -y ca-certificates dbus-user-session xfonts-base xfonts-100dpi xfonts-75dpi
+sudo apt install -y ca-certificates dbus-user-session 
+sudo apt install -y --fix-missing xfonts-base xfonts-100dpi xfonts-75dpi
 sudo apt -y install "python$(python3 -c 'import sys; print(f"{sys.version_info[:][0]}.{sys.version_info[:][1]}")')-venv"
 
-sudo apt install -y dos2unix
+sudo apt install -y --fix-missing dos2unix
 
 mkdir -p "${HOME}/.local/bin"
 sudo chown -R $current_user:$current_user "${HOME}/.local"
