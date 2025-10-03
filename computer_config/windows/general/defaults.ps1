@@ -62,6 +62,28 @@ function WaitUntilServices($searchString, $status)
     }
 }
 
+function Ensure-TempDirectory-Populated()
+{
+  param (
+    [string]$Distro,
+    [string]$rootPath,
+    [string]$wslSharePath,
+    [string]$tmpDirectoryPath,
+    [string]$scriptPathInitMainset
+  )
+  
+  while(-not (Test-Path -Path "$($wslSharePath)\$Distro$($tmpDirectoryPath)")){
+    Write-Host "Directory Missing - Distro: $($Distro) - Path: $( $tmpDirectoryPath)"
+    wsl -d $Distro -e mkdir -p "$($tmpDirectoryPath)"
+  }
+  Write-Host "Directory Exists - Distro: $($Distro) - Path: $( $tmpDirectoryPath)"
+ 
+
+  Copy-item -Path $(Join-Path -Path $rootPath -ChildPath "general\wsl\scripts\*.sh") -Destination "\\wsl$\$($Distro)$($tmpDirectoryPath)\"
+
+  Copy-item -Path $(Join-Path -Path $scriptPathInitMainset -ChildPath "base_init.sh") -Destination "\\wsl$\$($Distro)$($tmpDirectoryPath)\base_init.sh"
+}
+
 function Wait-Distro-Start()
 {
   param (
