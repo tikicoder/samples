@@ -29,7 +29,7 @@ tmp_directory=$1
 mkdir -p $tmp_directory
 pushd $tmp_directory
 
-sudo apt install -y gedit gimp nautilus vlc x11-apps gtk2-engines-pixbuf
+sudo apt install -y --fix-missing gedit gimp nautilus vlc x11-apps gtk2-engines-pixbuf
 
 mkdir chrome
 pushd chrome
@@ -39,7 +39,6 @@ sudo wget -O chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_
 sudo dpkg -i chrome.deb
 sudo apt install --fix-broken -y
 sudo dpkg -i chrome.deb
-
 
 
 popd
@@ -76,3 +75,12 @@ echo "deb [arch=amd64 signed-by=/usr/share/keyrings/lens-archive-keyring.gpg] ht
 sudo apt update
 sudo apt install lens
 
+echo "freelens"
+# Freelens is a free and open-source user interface designed for managing Kubernetes clusters
+# https://github.com/freelensapp/freelens
+freelens_version="latest"
+freelens_version=$(echo "${freelens_version}" | tr '[:upper:]' '[:lower:]')
+freelens_binary="Freelens-1.6.1-linux-amd64.deb"
+download_release_github "freelensapp" "freelens" "${yq_binary}" "${freelens_version}"
+sudo dpkg -i /tmp/github-release/freelens/Freelens-1.6.1-linux-amd64.deb
+sudo apt install --fix-broken -y
