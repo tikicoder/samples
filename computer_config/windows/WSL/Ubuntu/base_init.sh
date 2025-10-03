@@ -1,182 +1,68 @@
+#!/bin/bash
 
-$scriptPath_init_generalmain = split-path -parent $MyInvocation.MyCommand.Definition
-
-function validate-user-admin-context(){
-  
-  $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-  if(-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)){   
-    return $false
-  }
-
-  return $true
-}
-
-$root_path_computer_config = Resolve-Path -Path $(Join-Path -Path $scriptPath_init_generalmain -ChildPath "../../")
-$root_path_samples =  Resolve-Path -Path $(Join-Path -Path $root_path_computer_config -ChildPath "../")
-$is_admin_context = validate-user-admin-context
-
-
-
-
-function Get-Download-Remote-File()
-{
-    param (
-      [string]$url_remote_file,
-      [string]$save_location
-    )
-
-    $request  = [System.Net.WebRequest]::Create($url_remote_file)
-    $response = [System.Net.HttpWebResponse]$request.GetResponse()
-    
-    try {
-      $dispositionHeader = $response.Headers['Content-Disposition']
-      $disposition = [System.Net.Mime.ContentDisposition]::new($dispositionHeader)
-      $file_save_name = $disposition.FileName
+if [ ! $(command -v "realpath") ]; then
+    realpath() {
+    OURPWD=$PWD
+    cd "$(dirname "$1")"
+    LINK=$(readlink "$(basename "$1")")
+    while [ "$LINK" ]; do
+        cd "$(dirname "$LINK")"
+        LINK=$(readlink "$(basename "$1")")
+    done
+    REALPATH="$PWD/$(basename "$1")"
+    cd "$OURPWD"
+    echo "$REALPATH"
     }
-    catch {
-      $file_save_name = ""
-    }
-    
-    if ([string]::IsNullorWhitespace($file_save_name)){
-      $file_save_name = $response.ResponseUri.Segments[$response.ResponseUri.Segments.Length-1]
-    }
+fi
 
-    $filepath = Join-Path -Path $save_location -ChildPath $file_save_name
-    if (-not (Test-Path -Path $save_location)) {New-Item -ItemType Directory -Path $save_location}
-    if (Test-Path $filepath){Remove-Item -Force -Path $filepath}
+base_dir="$(dirname $(realpath $0))"
+general_tmp_dir=$1
+current_user=$(echo `whoami`)
 
-    $file = [System.IO.FileStream]::new($filepath, [System.IO.FileMode]::Create)
-    $response.GetResponseStream().CopyTo($file);
-    $file.Close()
-
-    return $filepath
-}
-
-function WaitUntilServices($searchString, $status)
-{
-    # Get all services where DisplayName matches $searchString and loop through each of them.
-    foreach($service in (Get-Service -DisplayName $searchString))
-    {
-        # Wait for the service to reach the $status or a maximum of 30 seconds
-        $service.WaitForStatus($status, '00:00:30')
-    }
-}
-
-function Ensure-TempDirectory-Populated()
-{
-  param (
-    [string]$Distro,
-    [string]$rootPath,
-    [string]$wslSharePath,
-    [string]$tmpDirectoryPath,
-    [string]$scriptPathInitMainset
-  )
-  
-  while(-not (Test-Path -Path "$($wslSharePath)\$Distro$($tmpDirectoryPath)")){
-    Write-Host "Directory Missing - Distro: $($Distro) - Path: $( $tmpDirectoryPath)"
-    wsl -d $Distro -e mkdir -p "$($tmpDirectoryPath)"
-  }
-  Write-Host "Directory Exists - Distro: $($Distro) - Path: $( $tmpDirectoryPath)"
- 
-
-  Copy-item -Path $(Join-Path -Path $rootPath -ChildPath "general\wsl\scripts\*.sh") -Destination "\\wsl$\$($Distro)$($tmpDirectoryPath)\"
-
-  Copy-item -Path $(Join-Path -Path $scriptPathInitMainset -ChildPath "base_init.sh") -Destination "\\wsl$\$($Distro)$($tmpDirectoryPath)\base_init.sh"
-}
-
-function Wait-Distro-Start()
-{
-  param (
-    [string]$Distro
-  )
-  
-  Write-Host "Pending Distro Start - $Distro"
-  while ($(wsl -l --running | Where-Object {$_ -ieq $Distro -or $_ -ieq "$Distro (default)"} | Measure-Object).Count -lt 1){
-    (wsl -d $Distro -e echo "test") | Out-Null
-    Start-Sleep -m 500
-  }
-  wsl -d $Distro echo "Connected"
-}
-
-function Copy-Missing-Certs(){
-  param (
-    [string]$DestinationTempFolderInDistro,    
-    [string]$DestinationSSLFolderInDistro,
-    [string]$Distro
-  )
-  
-  $missing_root_certs_path = $(Join-Path -Path $general_defaults.root_path -ChildPath 'general\missing_root_certs' )
-  $missing_root_certs = $(Get-Childitem -Path $missing_root_certs_path -File | Where-Object {$_.Name.ToLower().EndsWith(".crt")})
-
-  foreach ( $file in $missing_root_certs){
-    Copy-item -Path $file.FullName -Destination $(Join-Path -Path "\\wsl$\$($Distro)$($DestinationTempFolderInDistro)" -ChildPath $file.Name)
-    wsl -d $Distro openssl x509 -in "$($DestinationTempFolderInDistro)/$($file.Name)" -out "$($DestinationTempFolderInDistro)/$($file.Name).pem" -outform PEM
-    Remove-Item -Force -Path $(Join-Path -Path "\\wsl$\$($Distro)$($DestinationTempFolderInDistro)" -ChildPath $file.Name)
-  }
-
-  if ( $missing_root_certs.Length -gt 0 ){
-    wsl -d $Distro sudo cp "$($DestinationTempFolderInDistro)/*.pem" $DestinationSSLFolderInDistro
-  }
-}
-
-function Remove-Folder()
-{
-    param (
-      [string]$path_to_delete,
-      [bool] $Recurse  = $false
-    )
-
-    if ( [string]::IsNullorWhitespace($path_to_delete) ){
-      return
-    }
-    
-    if ( $Recurse -and (Test-Path $path_to_delete ) -and (Get-Item $path_to_delete) -is [System.IO.DirectoryInfo]){
-      Get-ChildItem "$($path_to_delete)/*" -File -Recurse | Remove-Item -Force -Confirm:$False
-      Remove-Item -Force -Confirm:$False -Recurse $path_to_delete
-    }
-
-    if ((Test-Path $path_to_delete )) { Remove-Item -Path $path_to_delete -Recurse -Force -Confirm:$false  }
-}
-
-function Convert-GeneralPsObjectHashTable(){
-  param(
-    [object]$settings
-  )
-
-  $general_settings = @{}
-  
-  foreach ($property in $settings.PSObject.Properties) {
-    if ( $null -ne $property.Value -and $property.Value.GetType().Name -ieq "PSCustomObject"){
-      $general_settings[$property.Name] = Convert-GeneralPsObjectHashTable -settings $property.Value
-      continue
-    }
-    $general_settings[$property.Name] = $property.Value
-  }
-
-  return $general_settings
-  
-}
-
-function Load-Settings(){
-  param(
-    [string] $path_to_settings = $null
-  )
-
-  if ( [string]::IsNullorWhitespace($path_to_settings) ){
-    return $null
-  }
+cd ~
+if [ -f "${general_tmp_dir}/disable_sudo_pass.sh" ]; then
+    bash "$general_tmp_dir/disable_sudo_pass.sh" "$current_user"
+fi
 
 
-  if ((Test-Path $path_to_settings)) { 
-      return Convert-GeneralPsObjectHashTable -settings $(Get-Content -Path $path_to_settings | ConvertFrom-Json)      
-  }
-
-  return $null
-  
-}
 
 
-$general_defaults = Load-Settings -path_to_settings $(Join-Path -Path $scriptPath_init_generalmain -ChildPath "defaults.json")
-$general_defaults.root_path = $(Join-Path -Path $scriptPath_init_generalmain -ChildPath "..\")
-$general_defaults.repo_root = $(Join-Path -Path $scriptPath_init_generalmain -ChildPath "..\..\..\")
-$general_defaults.main_distro = ""
+
+
+sudo apt list --upgradable
+sudo apt update
+sudo apt upgrade -y
+
+sudo apt install -y ca-certificates dbus-user-session 
+sudo apt install -y --fix-missing xfonts-base xfonts-100dpi xfonts-75dpi
+sudo apt -y install "python$(python3 -c 'import sys; print(f"{sys.version_info[:][0]}.{sys.version_info[:][1]}")')-venv"
+
+sudo apt install -y --fix-missing dos2unix
+
+mkdir -p "${HOME}/.local/bin"
+sudo chown -R $current_user:$current_user "${HOME}/.local"
+
+# This is creating a local python environment I can use as the user
+sudo python3 -m venv "${HOME}/.local/python"
+sudo chown -R $current_user:$current_user "${HOME}/.local/python" 
+source "${HOME}/.local/python/bin/activate" 
+
+if [ ! -f "${HOME}/.local/python/pip.conf" ]; then
+    echo "[install]" | sudo tee "${HOME}/.local/python/pip.conf"
+    echo "user = false" | sudo tee -a "${HOME}/.local/python/pip.conf"
+    echo "" | sudo tee -a  "${HOME}/.local/python/pip.conf"
+fi
+
+python3 -m pip install certifi
+
+if [ -f "${general_tmp_dir}/disable_sudo_pass.sh" ]; then
+    mv "$general_tmp_dir/disable_sudo_pass.sh" ~/.local/bin/disable_sudo_pass
+    sudo chown ${current_user}:${current_user} ~/.local/bin/disable_sudo_pass
+    sudo chmod 750 ~/.local/bin/disable_sudo_pass
+fi
+
+mv "$general_tmp_dir/download_release_github.sh" ~/.local/bin/download_release_github
+sudo chown ${current_user}:${current_user} ~/.local/bin/download_release_github
+sudo chmod 750 ~/.local/bin/download_release_github
+
+sudo apt autoremove -y
