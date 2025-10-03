@@ -8,3 +8,6 @@ vmIdleTimeout=3600000
 localhostForwarding=true
 nestedVirtualization=true
 guiApplications=true
+networkingMode=mirrored
+dnsTunneling=true
+autoProxy=true
