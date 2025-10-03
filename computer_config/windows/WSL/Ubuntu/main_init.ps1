@@ -19,8 +19,13 @@ if ($(wsl -l | Where-Object {$_ -ieq $($general_defaults.main_distro) -or $_ -ie
   wsl --setdefault $($general_defaults.main_distro)
 }
 
+
 Wait-Distro-Start -Distro $general_defaults.main_distro
-wsl -d $($general_defaults.main_distro) mkdir -p $general_defaults.tmp_directory
+while(-not (Test-Path -Path "$($general_defaults.wsl_share_path)\$($general_defaults.main_distro)$($general_defaults.tmp_directory)")){
+	Write-Host "Directory Missing - Distro: $($($general_defaults.main_distro)) - Path: $( $general_defaults.tmp_directory)"
+	wsl -d $($general_defaults.main_distro) -e mkdir -p "$($general_defaults.tmp_directory)"
+}
+Write-Host "Directory Exists - Distro: $($($general_defaults.main_distro)) - Path: $( $general_defaults.tmp_directory)"
 
 $local_user = $(wsl -d Ubuntu echo ``whoami``)
 $local_user_groupid = $(wsl -d Ubuntu echo ``id -u $local_user``)
