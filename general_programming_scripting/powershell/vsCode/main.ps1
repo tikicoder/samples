@@ -10,8 +10,8 @@ param (
   [string] $pathToVSSettings = "${env:APPDATA}/Code/User/settings.json",
   [string] $pathToVSSettingsBak = "${PSScriptRoot}/settings.bak",
   [string] $wsl_command = $null,
-  [bool] $skip_wsl = $false,
-  [bool] $skip_win = $false
+  [switch] $skip_wsl,
+  [switch] $skip_win
 )
 
 if ( $isRestore ) {
