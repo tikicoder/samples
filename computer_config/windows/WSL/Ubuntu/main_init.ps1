@@ -59,16 +59,17 @@ foreach ( $file in $files_copy){
 Write-Host "Running Script user_docker_init.sh"
 wsl -d $($general_defaults.main_distro) bash "$($general_defaults.tmp_directory)/user_docker_init.sh" $general_defaults.docker.groupid "$($general_defaults.unix_sock)" "$($general_defaults.wsl_share)/$($general_defaults.docker.share_dir)" "$($general_defaults.docker.sock)"
 
-
-Write-Host "Running VS Code restore"
+Write-Host "Base Setup Complete. Go forth!!!"
+Write-Host "Do not forget to finish setting up things like VS Code or other tools that were only installed."
+# Write-Host "Running VS Code restore"
 
 #ensures wslvs code is initialized
-$scriptBlock_wsl = [Scriptblock]::Create("wsl -d $($general_defaults.main_distro) code")
-Invoke-Command -ScriptBlock $scriptBlock_wsl
+# $scriptBlock_wsl = [Scriptblock]::Create("wsl -d $($general_defaults.main_distro) code")
+# Invoke-Command -ScriptBlock $scriptBlock_wsl
 
-$vsbackup = $(Join-Path -Path $root_path_samples -ChildPath "general_programming_scripting\powershell\vsCode\main.ps1" | Resolve-Path)
-if ( Test-Path $vsbackup ){
-  & $vsbackup -isRestore $true -wsl_command $($general_defaults.main_distro) -skip_win $true
-}
+# $vsbackup = $(Join-Path -Path $root_path_samples -ChildPath "general_programming_scripting\powershell\vsCode\main.ps1" | Resolve-Path)
+# if ( Test-Path $vsbackup ){
+#   & $vsbackup -isRestore $true -wsl_command $($general_defaults.main_distro) -skip_win $true
+# }
 
-wsl -d $($general_defaults.main_distro) rm -Rf $($general_defaults.tmp_directory)
+# wsl -d $($general_defaults.main_distro) rm -Rf $($general_defaults.tmp_directory)
