@@ -52,6 +52,7 @@ Ensure-TempDirectory-Populated `
 $files_copy = $(Get-ChildItem "$($scriptPath_init_mainset)/run_files/*.ps1" -File | Sort-Object -Property Name)
 foreach ( $file in $files_copy){
   Write-Host "Running $($file.Name)"
+  Unblock-File $file.FullName 
   & $file.FullName 
 }
 
