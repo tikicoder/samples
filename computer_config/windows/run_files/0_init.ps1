@@ -19,6 +19,9 @@ function Update-FolderView() {
 write-host "Set folder view settings"
 Update-FolderView
 
+write-host "Enable Hyper-V"
+DISM /Online /Enable-Feature /All /FeatureName:Microsoft-Hyper-V /norestart
+
 write-host "Enable IIS"
 dism /online /enable-feature /all `
   /featurename:WCF-Services45 `
