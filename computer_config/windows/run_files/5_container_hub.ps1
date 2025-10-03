@@ -1,3 +1,4 @@
+Write-Host "I do not think this conainer file is needed as nested virtualization is supported"
 # Switch from Docker to minikube and install kaniko 
 # MiniKube
 # https://minikube.sigs.k8s.io/docs/start/
@@ -17,27 +18,27 @@
 # ~/docker_images\os\linux\rocky_linux\
 
 
-$scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
-. "$(Join-Path -Path $scriptPath_init -ChildPath "..\general\defaults.ps1")"
+# $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
+# . "$(Join-Path -Path $scriptPath_init -ChildPath "..\general\defaults.ps1")"
 
 
-if(-not $is_admin_context ){
-  Write-Host "running as Admin"
-  start-process -verb runas -ArgumentList "-Command $($scriptPath_init)\$($MyInvocation.MyCommand.Name)" pwsh
-  exit
-}
+# if(-not $is_admin_context ){
+#  Write-Host "running as Admin"
+#  start-process -verb runas -ArgumentList "-Command $($scriptPath_init)\$($MyInvocation.MyCommand.Name)" pwsh
+#  exit
+# }
 
-$section_prefix = "5_container_hub"
-Write-Host "Update to use ubuntu as docker. Windows 11 WSL support Virtualization"
-exit
+# $section_prefix = "5_container_hub"
+# Write-Host "Update to use ubuntu as docker. Windows 11 WSL support Virtualization"
+# exit
 
-$scripts_folder = "$(Join-Path -Path $scriptPath_init -ChildPath "scripts\$($section_prefix)")"
+# $scripts_folder = "$(Join-Path -Path $scriptPath_init -ChildPath "scripts\$($section_prefix)")"
 
-. "$(Join-Path -Path $scripts_folder -ChildPath "linux_docker_manager.ps1")"
-run-linux-docker
+# . "$(Join-Path -Path $scripts_folder -ChildPath "linux_docker_manager.ps1")"
+# run-linux-docker
 
-. "$(Join-Path -Path $scripts_folder -ChildPath "win_container_manager.ps1")"
-run-windows
+# . "$(Join-Path -Path $scripts_folder -ChildPath "win_container_manager.ps1")"
+# run-windows
 
 
 
