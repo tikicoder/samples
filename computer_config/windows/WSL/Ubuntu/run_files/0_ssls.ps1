@@ -8,7 +8,12 @@ wsl -d $($general_defaults.main_distro) sudo mv "$($general_defaults.tmp_directo
 wsl -d $($general_defaults.main_distro) sudo chown "root:root" /usr/bin/tiki_auto_cert_update.sh
 wsl -d $($general_defaults.main_distro) sudo chmod 755 /usr/bin/tiki_auto_cert_update.sh
 
-wsl -d $($general_defaults.main_distro) mkdir -p "$($general_defaults.tmp_directory)/missing_certs"
+while(-not (Test-Path -Path "$($general_defaults.wsl_share_path)\$($general_defaults.main_distro)$($general_defaults.tmp_directory)/missing_certs")){
+	Write-Host "Directory Missing - Distro: $($($general_defaults.main_distro)) - Path: $($general_defaults.tmp_directory)/missing_certs"
+	wsl -d $($general_defaults.main_distro) -e mkdir -p "$($general_defaults.tmp_directory)/missing_certs"
+}
+Write-Host "Directory Exists - Distro: $($($general_defaults.main_distro)) - Path: $($general_defaults.tmp_directory)/missing_certs"
+
 Copy-Missing-Certs -DestinationTempFolderInDistro "$($general_defaults.tmp_directory)/missing_certs" -Distro Ubuntu -DestinationSSLFolderInDistro "/usr/local/share/ca-certificates/"
 
 wsl -d $($general_defaults.main_distro) sudo /usr/bin/tiki_auto_cert_update.sh
