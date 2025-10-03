@@ -29,16 +29,15 @@ tmp_directory=$1
 mkdir -p $tmp_directory
 pushd $tmp_directory
 
-sudo apt install -y --fix-missing gedit gimp nautilus vlc x11-apps gtk2-engines-pixbuf
-
+sudo apt install -y gnome-text-editor
+sudo apt install -y gedit gimp nautilus vlc x11-apps gtk2-engines-pixbuf
+sudo apt install --fix-broken-y
 mkdir chrome
 pushd chrome
 
 # https://github.com/microsoft/wslg#install-and-run-gui-apps
 sudo wget -O chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-sudo dpkg -i chrome.deb
-sudo apt install --fix-broken -y
-sudo dpkg -i chrome.deb
+sudo apt install -f -y ./google-chrome-stable_current_amd64.deb
 
 
 popd
@@ -52,8 +51,7 @@ pushd edge
 # sudo apt install /tmp/edge.deb -y
 
 ## Microsoft Edge Stable Browser
-sudo wget -O edge.deb https://packages.microsoft.com/repos/edge/pool/main/m/microsoft-edge-stable/microsoft-edge-stable_109.0.1518.78-1_amd64.deb
-sudo apt install /tmp/edge.deb -y
+# Pending
 
 popd
 rm -Rf edge
@@ -82,5 +80,4 @@ freelens_version="latest"
 freelens_version=$(echo "${freelens_version}" | tr '[:upper:]' '[:lower:]')
 freelens_binary="Freelens-1.6.1-linux-amd64.deb"
 download_release_github "freelensapp" "freelens" "${yq_binary}" "${freelens_version}"
-sudo dpkg -i /tmp/github-release/freelens/Freelens-1.6.1-linux-amd64.deb
-sudo apt install --fix-broken -y
+sudo apt install -f /tmp/github-release/freelens/Freelens-1.6.1-linux-amd64.deb
