@@ -1,6 +1,7 @@
 $scriptPath_init = split-path -parent $MyInvocation.MyCommand.Definition
 
 . "$(Join-Path -Path $scriptPath_init -ChildPath "..\general\defaults.ps1")"
+. "$(Join-Path -Path $scriptPath_init -ChildPath "..\,,\..\general\wsl\runscript_default.ps1")"
 
 if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"}
 Copy-item -Path $(Join-Path -Path $general_defaults.root_path -ChildPath "general\wsl\scripts\auto_cert_update.sh") -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\tiki_auto_cert_update.sh"
