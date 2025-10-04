@@ -81,5 +81,5 @@ echo "freelens"
 freelens_version="latest"
 freelens_version=$(echo "${freelens_version}" | tr '[:upper:]' '[:lower:]')
 freelens_binary="Freelens-1.6.1-linux-amd64.deb"
-download_release_github "freelensapp" "freelens" "${yq_binary}" "${freelens_version}"
+download_release_github "freelensapp" "freelens" "${freelens_binary}" "${freelens_version}"
 sudo apt install -f /tmp/github-release/freelens/Freelens-1.6.1-linux-amd64.deb
