@@ -31,13 +31,13 @@ pushd $tmp_directory
 
 sudo apt install -y gnome-text-editor
 sudo apt install -y gedit gimp nautilus vlc x11-apps gtk2-engines-pixbuf
-sudo apt install --fix-broken-y
+
 mkdir chrome
 pushd chrome
 
 # https://github.com/microsoft/wslg#install-and-run-gui-apps
-sudo wget -O chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-sudo apt install -f -y ./chrome.deb
+sudo wget -O browser.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo apt install -f -y ./browser.deb
 
 
 popd
@@ -51,7 +51,9 @@ pushd edge
 # sudo apt install /tmp/edge.deb -y
 
 ## Microsoft Edge Stable Browser
-# Pending
+sudo wget -O browser.deb https://packages.microsoft.com/repos/edge/pool/main/m/microsoft-edge-stable/microsoft-edge-stable_141.0.3537.57-1_amd64.deb?brand=M102
+sudo apt install -f -y ./browser.deb
+
 
 popd
 rm -Rf edge
