@@ -191,22 +191,23 @@ download_release_github "mikefarah" "yq" "${yq_binary}" "${yq_version}"
 # fi
 # wget https://github.com/mikefarah/yq/releases/download/${yq_version}/yq_linux_amd64 -q -O ~/.local/bin/yq
 
-mv "/tmp/github-release/${yq_binary}" ~/.local/bin/yq
+mv "/tmp/github-release/yq/${yq_binary}" ~/.local/bin/yq
 chmod +x ~/.local/bin/yq
 sudo chown $user_name:$user_name
 
 echo "7zip"
+sudo apt install 7zip
 # https://www.7-zip.org/download.html
-sevenZip_version="2301-linux-x64"
-sevenZip_version_url="https://www.7-zip.org/a/7z${sevenZip_version}.tar.xz"
-mkdir -p /tmp/7zip/contents
-wget $sevenZip_version_url -q -O /tmp/7zip/7zip.tar.xz
-pushd /tmp/7zip/contents
+# sevenZip_version="2301-linux-x64"
+# sevenZip_version_url="https://www.7-zip.org/a/7z${sevenZip_version}.tar.xz"
+# mkdir -p /tmp/7zip/contents
+# wget $sevenZip_version_url -q -O /tmp/7zip/7zip.tar.xz
+#pushd /tmp/7zip/contents
 
-tar -xvzf ../7zip.tar.xz
-mv ./7zz* "${user_home}/.local/bin/"
-popd
-rm -Rf /tmp/7zip
+# tar -xvzf ../7zip.tar.xz
+# mv ./7zz* "${user_home}/.local/bin/"
+# popd
+# rm -Rf /tmp/7zip
 
 echo "NVM"
 # NVM
