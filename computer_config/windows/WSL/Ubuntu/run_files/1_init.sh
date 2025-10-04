@@ -220,6 +220,10 @@ fi
 
 curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_version}/install.sh" | bash
 
+echo "Ensure git installed"
+sudo apt install -y git
+
+
 echo "gh cli"
 # GitHub CLI
 # https://github.com/cli/cli/blob/trunk/docs/install_linux.md
