@@ -74,8 +74,10 @@ EOF
 fi
 
 echo "Ensuring base WSL.conf"
-if [ $(sudo ls /etc/ | grep -ic '^wsl.conf$') -gt 0  ]; then
-  sudo rm -f /etc/wsl.conf
+if [ -f ./wsl.conf ]; then
+  if [ $(sudo ls /etc/ | grep -ic '^wsl.conf$') -gt 0  ]; then
+    sudo mv /etc/wsl.conf /etc/wsl.conf.$(date +"%Y%m%d_%H%M%S")
+  fi
 fi
 sudo cp  ./wsl.conf /etc/wsl.conf
 
