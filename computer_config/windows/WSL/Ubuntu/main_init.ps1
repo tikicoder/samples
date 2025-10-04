@@ -56,8 +56,9 @@ foreach ( $file in $files_copy){
   & $file.FullName 
 }
 
-Write-Host "Running Script user_docker_init.sh"
-wsl -d $($general_defaults.main_distro) bash "$($general_defaults.tmp_directory)/user_docker_init.sh" $general_defaults.docker.groupid "$($general_defaults.unix_sock)" "$($general_defaults.wsl_share)/$($general_defaults.docker.share_dir)" "$($general_defaults.docker.sock)"
+# This is probably no longer needed or needs to be changed, because no longer having docker in own distro
+# Write-Host "Running Script user_docker_init.sh"
+# wsl -d $($general_defaults.main_distro) bash "$($general_defaults.tmp_directory)/user_docker_init.sh" $general_defaults.docker.groupid # "$($general_defaults.unix_sock)" "$($general_defaults.wsl_share)/$($general_defaults.docker.share_dir)" "$($general_defaults.docker.sock)"
 
 Write-Host "Base Setup Complete. Go forth!!!"
 Write-Host "Do not forget to finish setting up things like VS Code or other tools that were only installed."
