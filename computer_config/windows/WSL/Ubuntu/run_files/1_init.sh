@@ -44,14 +44,7 @@ chmod 644 "${HOME}/.gtk-bookmarks"
 sudo apt install -y make bash-completion git pylint
 
 echo "Installing GOLANG"
-mkdir -p /tmp/go
-pushd /tmp/go
-# verify latest https://go.dev/dl/
-# Installing GOLANG to local BIN
-wget -O go1.linux-amd64.tar.gz  https://go.dev/dl/go1.20.linux-amd64.tar.gz
-tar -C "${user_home}/.local/bin" -xzf go1.18.linux-amd64.tar.gz
-popd
-rm -Rf /tmp/go
+sudo apt install -y golang-go
 
 if [ $(grep -ic "\"\$HOME/.local/bin\"" "${user_home}/.profile") -lt 1 ]; then
   cat >> "${user_home}/.profile" << EOF
