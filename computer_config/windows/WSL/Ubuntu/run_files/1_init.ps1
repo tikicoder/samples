@@ -8,7 +8,7 @@ $app_name = "1_init"
 if (Test-Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\$($app_name).sh"){Remove-Item -Path "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\$($app_name).sh"}
 Copy-item -Force -Path $(Join-Path -Path $scriptPath_init -ChildPath "$($app_name).sh" ) -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\$($app_name).sh"
 
-Copy-item -Force -Path $(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\general\wsl\wsl.conf" ) -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\wsl.conf"
+Copy-item -Force -Path $(Join-Path -Path $scriptPath_init -ChildPath "..\..\..\general\wsl\config\wsl.conf" ) -Destination "\\wsl$\$($general_defaults.main_distro)$($general_defaults.tmp_directory)\wsl.conf"
 
 
 wsl -d $general_defaults.main_distro bash "'$($general_defaults.tmp_directory)/$($app_name).sh'" "'$($general_defaults.tmp_directory)'"
