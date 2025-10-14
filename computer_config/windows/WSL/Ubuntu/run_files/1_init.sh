@@ -251,6 +251,13 @@ az bicep upgrade
 # Without Prompt
 # az config set extension.use_dynamic_install=yes_without_prompt
 
+# az CLI Extensions
+az extension add --name account
+az extension add --name ad
+az extension add --name amg
+az extension add --name azure-devops
+az extension add --name bastion
+
 pwsh -c {
   Register-ArgumentCompleter -Native -CommandName az -ScriptBlock {
     param($commandName, $wordToComplete, $cursorPosition)
