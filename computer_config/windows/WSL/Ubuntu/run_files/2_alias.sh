@@ -47,6 +47,9 @@ EOF
 fi
 
 if [ ! $(command -v "gh") ]; then
+  if [ $(grep -ic "alias ghauthtiki='gh auth switch -u tikicoder;gh auth setup-git'" "${user_aliases}" ) -lt 1  ]; then
+    echo "alias ghauthtiki='gh auth switch -u tikicoder;gh auth setup-git" >> "${user_aliases}"
+  fi
   if [ $(grep -ic "alias ghtiki='gh auth switch -u tikicoder;gh auth setup-git;gh'" "${user_aliases}" ) -lt 1  ]; then
     echo "alias ghtiki='gh auth switch -u tikicoder;gh auth setup-git;gh'" >> "${user_aliases}"
   fi
