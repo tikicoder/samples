@@ -46,14 +46,31 @@ done;
 EOF
 fi
 
-if [ $(grep -ic "alias k=kubectl" "${user_aliases}" ) -lt 1  ]; then
-  echo "alias k=kubectl" >> "${user_aliases}"
+if [ ! $(command -v "gh") ]; then
+  if [ $(grep -ic "alias ghtiki='gh auth switch -u tikicoder;gh auth setup-git;gh'" "${user_aliases}" ) -lt 1  ]; then
+    echo "alias ghtiki='gh auth switch -u tikicoder;gh auth setup-git;gh'" >> "${user_aliases}"
+  fi
+  if [ $(grep -ic "alias gittiki='gh auth switch -u tikicoder;gh auth setup-git;git'" "${user_aliases}" ) -lt 1  ]; then
+    echo "alias gittiki='gh auth switch -u tikicoder;gh auth setup-git;git'" >> "${user_aliases}"
+  fi
 fi
-if [ $(grep -ic "ie-edge=" "${user_aliases}" ) -lt 1  ]; then
-  echo "alias ie-edge='2>/dev/null 1>&2 microsoft-edge --enable-unsafe-swiftshader &'" >> "${user_aliases}"
+
+
+
+if [ ! $(command -v "kubectl") ]; then
+  if [ $(grep -ic "alias k=kubectl" "${user_aliases}" ) -lt 1  ]; then
+    echo "alias k=kubectl" >> "${user_aliases}"
+  fi
 fi
-if [ $(grep -ic "chrome-google=" "${user_aliases}" ) -lt 1  ]; then
-  echo "alias chrome-google='2>/dev/null 1>&2 google-chrome --disable-gpu &'" >> "${user_aliases}"
+if [ ! $(command -v "microsoft-edge") ]; then
+  if [ $(grep -ic "ie-edge=" "${user_aliases}" ) -lt 1  ]; then
+    echo "alias ie-edge='2>/dev/null 1>&2 microsoft-edge --enable-unsafe-swiftshader &'" >> "${user_aliases}"
+  fi
+fi
+if [ ! $(command -v "google-chrome") ]; then
+  if [ $(grep -ic "chrome-google=" "${user_aliases}" ) -lt 1  ]; then
+    echo "alias chrome-google='2>/dev/null 1>&2 google-chrome --disable-gpu &'" >> "${user_aliases}"
+  fi
 fi
 echo "" >> "${user_aliases}"
 
@@ -73,41 +90,41 @@ echo "" >> "${user_aliases}"
 # https://docs.docker.com/network/bridge/#differences-between-user-defined-bridges-and-the-default-bridge
 # using --network host while work to figure the bridge config out
 
-if [ $(grep -ic "alias aws=" "${user_aliases}" ) -lt 1  ]; then
-  mkdir -p "${user_home}/.aws"
-  # https://hub.docker.com/r/amazon/aws-cli
+# if [ $(grep -ic "alias aws=" "${user_aliases}" ) -lt 1  ]; then
+#   mkdir -p "${user_home}/.aws"
+#   # https://hub.docker.com/r/amazon/aws-cli
 
-  echo "# alias aws='docker run --network host --rm -it -v ~/.aws:/root/.aws amazon/aws-cli'" >> "${user_aliases}"
-  echo "" >> "${user_aliases}"
-fi
+#   echo "# alias aws='docker run --network host --rm -it -v ~/.aws:/root/.aws amazon/aws-cli'" >> "${user_aliases}"
+#   echo "" >> "${user_aliases}"
+# fi
 
-if [ ! -f "${user_home}/.local/bin/az" ]; then
-  mkdir -p "${user_home}/.azure"
+# if [ ! -f "${user_home}/.local/bin/az" ]; then
+#   mkdir -p "${user_home}/.azure"
 
-  echo "# alias az_update='docker pull mcr.microsoft.com/azure-cli && az config set extension.use_dynamic_install=yes_prompt'" >> "${user_aliases}"
-  echo "# alias az='docker run --network host --rm -it -v ~/.ssh:/root/.ssh -v ~/.azure:/root/.azure tiki/azure_cli /usr/local/bin/az'" >> "${user_aliases}"
+#   echo "# alias az_update='docker pull mcr.microsoft.com/azure-cli && az config set extension.use_dynamic_install=yes_prompt'" >> "${user_aliases}"
+#   echo "# alias az='docker run --network host --rm -it -v ~/.ssh:/root/.ssh -v ~/.azure:/root/.azure tiki/azure_cli /usr/local/bin/az'" >> "${user_aliases}"
 
-# If you would rather a script file to load az
+# # If you would rather a script file to load az
 
-#   cat >> "${user_home}/.local/bin/az" << EOF
-# args=""
-# while (( "$#" )); do
-#   args="${args} ${1}"
-#   shift
-# done
+# #   cat >> "${user_home}/.local/bin/az" << EOF
+# # args=""
+# # while (( "$#" )); do
+# #   args="${args} ${1}"
+# #   shift
+# # done
 
-# docker run --network host --rm -it -v ~/.ssh:/root/.ssh -v ~/.azure:/root/.azure tiki/azure_cli /usr/local/bin/az $args
-# EOF
-# chmod 755 "${user_home}/.local/bin/az"
-fi
+# # docker run --network host --rm -it -v ~/.ssh:/root/.ssh -v ~/.azure:/root/.azure tiki/azure_cli /usr/local/bin/az $args
+# # EOF
+# # chmod 755 "${user_home}/.local/bin/az"
+# fi
 
-if [ $(grep -ic "alias pwsh=" "${user_aliases}" ) -lt 1  ]; then
-  mkdir -p "${user_home}/.aws"
-  # https://hub.docker.com/_/microsoft-powershell
+# if [ $(grep -ic "alias pwsh=" "${user_aliases}" ) -lt 1  ]; then
+#   mkdir -p "${user_home}/.aws"
+#   # https://hub.docker.com/_/microsoft-powershell
 
-  echo "alias pwsh='docker run --network host --rm -it -v ~/*:/root/ -v ~/mnt/c:/mnt/c  mcr.microsoft.com/powershell'" >> "${user_aliases}"
-  echo "" >> "${user_aliases}"
-fi
+#   echo "alias pwsh='docker run --network host --rm -it -v ~/*:/root/ -v ~/mnt/c:/mnt/c  mcr.microsoft.com/powershell'" >> "${user_aliases}"
+#   echo "" >> "${user_aliases}"
+# fi
 
 . "$user_home/.bashrc"
 . "$user_home/.bashrc_alias"
