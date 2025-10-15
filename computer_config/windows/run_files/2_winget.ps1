@@ -135,6 +135,9 @@ powershell -Command "Install-Module -Name Az -Scope CurrentUser -Repository PSGa
 
 winget upgrade --all
 
+# Ensure WSL Extension is installed
+code --install-extension ms-vscode-remote.remote-wsl --force
+
 #refresh Env Path
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User") 
 

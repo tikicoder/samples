@@ -66,7 +66,3 @@ pause
 Write-Host "Running winget search dotnet to ensure nothing needs to be configured"
 winget search --id Microsoft.dotnet
 
-Write-Host "Please install PowerShell Core"
-Write-Host "https://github.com/PowerShell/PowerShell"
-pause
-

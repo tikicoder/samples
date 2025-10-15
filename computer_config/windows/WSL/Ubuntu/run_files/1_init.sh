@@ -85,6 +85,46 @@ sudo cp  ./wsl.conf /etc/wsl.conf
 sudo sh -c "echo \"/ /mnt/wsl/instances/Ubuntu none defaults,bind,X-mount.mkdir 0 0\" >> /etc/fstab"
 sudo mount -a
 
+# Ensure VSCode Extensions
+if [ ! -z "$(command -v code)" ]; then
+  code --install-extension github.copilot
+  code --install-extension ms-azuretools.vscode-azure-github-copilot
+  code --install-extension ms-azuretools.vscode-azurecli
+  code --install-extension ms-dotnettools.vscode-dotnet-pack
+  code --install-extension ms-dotnettools.csharp
+  code --install-extension github.copilot-chat
+  code --install-extension ms-kubernetes-tools.vscode-kubernetes-tools
+  code --install-extension ms-windows-ai-studio.windows-ai-studio
+  code --install-extension ms-python.python
+  code --install-extension ms-python.vscode-pylance
+  code --install-extension bencoleman.armview
+  code --install-extension ms-kubernetes-tools.vscode-aks-tools
+  code --install-extension ms-vscode-remote.remote-containers
+  code --install-extension ms-vscode-remote.remote-ssh
+  code --install-extension ms-azuretools.vscode-bicep
+  code --install-extension hashicorp.terraform
+  code --install-extension github.vscode-codeql
+  code --install-extension ms-azuretools.vscode-containers
+  code --install-extension ms-azuretools.vscode-docker
+  code --install-extension docker.docker
+  code --install-extension golang.go
+  code --install-extension ms-vscode.hexeditor
+  code --install-extension visualstudioexptteam.vscodeintellicode
+  code --install-extension visualstudioexptteam.intellicode-api-usage-examples
+  code --install-extension ms-toolsai.jupyter
+  code --install-extension ms-toolsai.jupyter-keymaps
+  code --install-extension ms-toolsai.jupyter-renderers
+  code --install-extension ms-toolsai.vscode-jupyter-cell-tags
+  code --install-extension ms-toolsai.vscode-jupyter-slideshow
+  code --install-extension ms-python.vscode-pylance
+  code --install-extension ms-python.vscode-pytest
+  code --install-extension ms-vscode.powershell
+  code --install-extension ms-python.pylint
+  code --install-extension ms-python.black-formatter
+  code --install-extension ms-python.vscode-python-envs
+  code --install-extension redhat.vscode-yaml
+fi
+
 echo "install normal zip/unzip"
 # adding the ability to zip/unzip
 sudo apt-get install -y zip unzip
@@ -268,7 +308,7 @@ pwsh -c {
     $env:COMP_POINT = $cursorPosition
     $env:_ARGCOMPLETE = 1
     $env:_ARGCOMPLETE_SUPPRESS_SPACE = 0
-    $env:_ARGCOMPLETE_IFS = "`n"
+    $env:_ARGCOMPLETE_IFS = "\`n"
     $env:_ARGCOMPLETE_SHELL = 'powershell'
     az 2>&1 | Out-Null
     Get-Content $completion_file | Sort-Object | ForEach-Object {
