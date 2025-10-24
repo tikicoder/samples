@@ -182,6 +182,21 @@ if [ $(grep -ic "source "\${HOME}/.local/python"" "${user_bash_file}" ) -lt 1  ]
   echo "" >> "${user_bash_file}"
 fi
 
+
+echo "" >> "${user_bash_file}"
+echo "if [ ! -z '\$(command -v kubectl)' ]; then" >> "${user_bash_file}"
+echo "  complete -o default -F __start_kubectl k" >> "${user_bash_file}"
+echo "fi" >> "${user_bash_file}"
+echo "" >> "${user_bash_file}"
+
+echo "" >> "${user_bash_file}"
+echo "if [ ! -z '\$(command -v terraform)' ]; then" >> "${user_bash_file}"
+echo "  complete -C terraform terraform" >> "${user_bash_file}"
+echo "  complete -C terraform tf" >> "${user_bash_file}"
+echo "fi" >> "${user_bash_file}"
+echo "" >> "${user_bash_file}"
+
+
 echo "Docker Setup"
 # Docker Requirments
 # https://docs.docker.com/engine/install/ubuntu/

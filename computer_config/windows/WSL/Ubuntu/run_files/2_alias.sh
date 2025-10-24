@@ -60,7 +60,11 @@ if [ ! $(command -v "gh") ]; then
 fi
 
 
-
+if [ ! $(command -v "terraform") ]; then
+  if [ $(grep -ic "alias tf=terraform" "${user_aliases}" ) -lt 1  ]; then
+    echo "alias tf=terraform" >> "${user_aliases}"
+  fi
+fi
 if [ ! $(command -v "kubectl") ]; then
   if [ $(grep -ic "alias k=kubectl" "${user_aliases}" ) -lt 1  ]; then
     echo "alias k=kubectl" >> "${user_aliases}"
