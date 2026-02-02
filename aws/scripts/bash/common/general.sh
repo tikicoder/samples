@@ -43,6 +43,11 @@ if [ ! -z "${general_dir_path}" ]; then
   fi  
 fi
 
+# Could update to use jq for the flags in the future
+# Found this method in some Terraform work
+# eval "$(jq -r '@sh "verbose=\(.verbose == true) environment=\(.environment) environment_tier=\(if .environment_tier == null then "" else .environment_tier end) json_path=\(.json_path) main_filename=\(.main_filename) override_directory=\(.override_directory)"')"
+# then to run the script use
+# echo '{"verbose":<true/false>, "environment": "<environment>", "environment_tier": "<environment_tier>", "json_path":"./processed", "override_directory": "./overrides", "main_filename": "values.yaml"}' | ./script.sh
 function validate_flags(){
   # work on system to allow spaces in key values
   while [ -n "$1" ]; do # while loop starts
