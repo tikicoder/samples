@@ -49,28 +49,36 @@ fi
 # then to run the script use
 # echo '{"verbose":<true/false>, "environment": "<environment>", "environment_tier": "<environment_tier>", "json_path":"./processed", "override_directory": "./overrides", "main_filename": "values.yaml"}' | ./script.sh
 function validate_flags(){
-  # work on system to allow spaces in key values
-  while [ -n "$1" ]; do # while loop starts
-    echo "working on $1"
-    case "$1" in    
-      --dry-run) dry_run=1
-      ;;
-      --verbose) verbose=1
-      ;;
-      --apply) apply_general=1
-      ;;
-      --confirm) apply_confirm=1
-      ;;
-      *)
-        if [ "$(type -t validate_flags_custom)" ]; then
-          validate_flags_custom "$1"
-        fi
-      ;;
-    esac
+  if [[ ! -t 0 ]]; then
+    # eval "$(jq -r '@sh "verbose=\(.verbose == true) context=\(if .context == null then "" else .context end) save_ingress_path=\(if .save_ingress_path == null then "" else .save_ingress_path end)"')"
+    echo "NOT FINISHED YET"
+  else
+    dry_run=0
+    verbose=0
+    apply_general=0
+    apply_confirm=0
+    while [ -n "$1" ]; do # while loop starts
+      echo "working on $1"
+      case "$1" in    
+        --dry-run) dry_run=1
+        ;;
+        --verbose) verbose=1
+        ;;
+        --apply) apply_general=1
+        ;;
+        --confirm) apply_confirm=1
+        ;;
+        *)
+          if [ "$(type -t validate_flags_custom)" ]; then
+            validate_flags_custom "$1"
+          fi
+        ;;
+      esac
 
-    shift
+      shift
 
-  done
+    done
+  fi
 
 }
 
